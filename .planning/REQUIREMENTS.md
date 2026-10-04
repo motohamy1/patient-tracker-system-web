@@ -387,247 +387,247 @@ Deferred until after the 26-phase v1 release; not included in the v1 roadmap.
 
 ## Traceability
 
-Complete requirement inventory; phase assignments remain pending until roadmap approval.
+Each v1 requirement maps to exactly one roadmap phase; all requirement statuses remain Pending.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FND-01 | TBD | Pending |
-| FND-02 | TBD | Pending |
-| FND-03 | TBD | Pending |
-| FND-04 | TBD | Pending |
-| FND-05 | TBD | Pending |
-| FND-06 | TBD | Pending |
-| FND-07 | TBD | Pending |
-| FND-08 | TBD | Pending |
-| FND-09 | TBD | Pending |
-| FND-10 | TBD | Pending |
-| IDN-01 | TBD | Pending |
-| IDN-02 | TBD | Pending |
-| IDN-03 | TBD | Pending |
-| IDN-04 | TBD | Pending |
-| IDN-05 | TBD | Pending |
-| IDN-06 | TBD | Pending |
-| IDN-07 | TBD | Pending |
-| IDN-08 | TBD | Pending |
-| IDN-09 | TBD | Pending |
-| IDN-10 | TBD | Pending |
-| IDN-11 | TBD | Pending |
-| IDN-12 | TBD | Pending |
-| CDM-01 | TBD | Pending |
-| CDM-02 | TBD | Pending |
-| CDM-03 | TBD | Pending |
-| CDM-04 | TBD | Pending |
-| CDM-05 | TBD | Pending |
-| CDM-06 | TBD | Pending |
-| CDM-07 | TBD | Pending |
-| CDM-08 | TBD | Pending |
-| CDM-09 | TBD | Pending |
-| CDM-10 | TBD | Pending |
-| CDM-11 | TBD | Pending |
-| CDM-12 | TBD | Pending |
-| CDM-13 | TBD | Pending |
-| CDM-14 | TBD | Pending |
-| CDM-15 | TBD | Pending |
-| CDM-16 | TBD | Pending |
-| CDM-17 | TBD | Pending |
-| CDM-18 | TBD | Pending |
-| PWS-01 | TBD | Pending |
-| PWS-02 | TBD | Pending |
-| PWS-03 | TBD | Pending |
-| PWS-04 | TBD | Pending |
-| PWS-05 | TBD | Pending |
-| PWS-06 | TBD | Pending |
-| PWS-07 | TBD | Pending |
-| PWS-08 | TBD | Pending |
-| PWS-09 | TBD | Pending |
-| PWS-10 | TBD | Pending |
-| TLN-01 | TBD | Pending |
-| TLN-02 | TBD | Pending |
-| TLN-03 | TBD | Pending |
-| TLN-04 | TBD | Pending |
-| TLN-05 | TBD | Pending |
-| TLN-06 | TBD | Pending |
-| TLN-07 | TBD | Pending |
-| TLN-08 | TBD | Pending |
-| TLN-09 | TBD | Pending |
-| TLN-10 | TBD | Pending |
-| TLN-11 | TBD | Pending |
-| TLN-12 | TBD | Pending |
-| TLN-13 | TBD | Pending |
-| PROV-01 | TBD | Pending |
-| PROV-02 | TBD | Pending |
-| PROV-03 | TBD | Pending |
-| PROV-04 | TBD | Pending |
-| PROV-05 | TBD | Pending |
-| PROV-06 | TBD | Pending |
-| PROV-07 | TBD | Pending |
-| PROV-08 | TBD | Pending |
-| PROV-09 | TBD | Pending |
-| PROV-10 | TBD | Pending |
-| PROV-11 | TBD | Pending |
-| PROV-12 | TBD | Pending |
-| PROV-13 | TBD | Pending |
-| PROV-14 | TBD | Pending |
-| MED-01 | TBD | Pending |
-| MED-02 | TBD | Pending |
-| MED-03 | TBD | Pending |
-| MED-04 | TBD | Pending |
-| MED-05 | TBD | Pending |
-| MED-06 | TBD | Pending |
-| MED-07 | TBD | Pending |
-| MED-08 | TBD | Pending |
-| VIS-01 | TBD | Pending |
-| VIS-02 | TBD | Pending |
-| VIS-03 | TBD | Pending |
-| VIS-04 | TBD | Pending |
-| VIS-05 | TBD | Pending |
-| VIS-06 | TBD | Pending |
-| VIS-07 | TBD | Pending |
-| VIT-01 | TBD | Pending |
-| VIT-02 | TBD | Pending |
-| VIT-03 | TBD | Pending |
-| VIT-04 | TBD | Pending |
-| VIT-05 | TBD | Pending |
-| VIT-06 | TBD | Pending |
-| VIT-07 | TBD | Pending |
-| VIT-08 | TBD | Pending |
-| LAB-01 | TBD | Pending |
-| LAB-02 | TBD | Pending |
-| LAB-03 | TBD | Pending |
-| LAB-04 | TBD | Pending |
-| LAB-05 | TBD | Pending |
-| LAB-06 | TBD | Pending |
-| LAB-07 | TBD | Pending |
-| IMG-01 | TBD | Pending |
-| IMG-02 | TBD | Pending |
-| IMG-03 | TBD | Pending |
-| IMG-04 | TBD | Pending |
-| IMG-05 | TBD | Pending |
-| IMG-06 | TBD | Pending |
-| ALG-01 | TBD | Pending |
-| ALG-02 | TBD | Pending |
-| ALG-03 | TBD | Pending |
-| ALG-04 | TBD | Pending |
-| ALG-05 | TBD | Pending |
-| GEN-01 | TBD | Pending |
-| GEN-02 | TBD | Pending |
-| GEN-03 | TBD | Pending |
-| GEN-04 | TBD | Pending |
-| RXI-01 | TBD | Pending |
-| RXI-02 | TBD | Pending |
-| RXI-03 | TBD | Pending |
-| RXI-04 | TBD | Pending |
-| RXI-05 | TBD | Pending |
-| RXI-06 | TBD | Pending |
-| RXI-07 | TBD | Pending |
-| RXI-08 | TBD | Pending |
-| RXI-09 | TBD | Pending |
-| RXI-10 | TBD | Pending |
-| RXI-11 | TBD | Pending |
-| RXI-12 | TBD | Pending |
-| RXI-13 | TBD | Pending |
-| ATT-01 | TBD | Pending |
-| ATT-02 | TBD | Pending |
-| ATT-03 | TBD | Pending |
-| ATT-04 | TBD | Pending |
-| ATT-05 | TBD | Pending |
-| ATT-06 | TBD | Pending |
-| ATT-07 | TBD | Pending |
-| ATT-08 | TBD | Pending |
-| AI-01 | TBD | Pending |
-| AI-02 | TBD | Pending |
-| AI-03 | TBD | Pending |
-| AI-04 | TBD | Pending |
-| AI-05 | TBD | Pending |
-| AI-06 | TBD | Pending |
-| AI-07 | TBD | Pending |
-| AI-08 | TBD | Pending |
-| AI-09 | TBD | Pending |
-| PAT-01 | TBD | Pending |
-| PAT-02 | TBD | Pending |
-| PAT-03 | TBD | Pending |
-| PAT-04 | TBD | Pending |
-| PAT-05 | TBD | Pending |
-| PAT-06 | TBD | Pending |
-| PAT-07 | TBD | Pending |
-| PAT-08 | TBD | Pending |
-| PAT-09 | TBD | Pending |
-| PAT-10 | TBD | Pending |
-| CARE-01 | TBD | Pending |
-| CARE-02 | TBD | Pending |
-| CARE-03 | TBD | Pending |
-| CARE-04 | TBD | Pending |
-| CARE-05 | TBD | Pending |
-| CARE-06 | TBD | Pending |
-| COM-01 | TBD | Pending |
-| COM-02 | TBD | Pending |
-| COM-03 | TBD | Pending |
-| COM-04 | TBD | Pending |
-| COM-05 | TBD | Pending |
-| COM-06 | TBD | Pending |
-| COM-07 | TBD | Pending |
-| COM-08 | TBD | Pending |
-| MSG-01 | TBD | Pending |
-| MSG-02 | TBD | Pending |
-| MSG-03 | TBD | Pending |
-| MSG-04 | TBD | Pending |
-| MSG-05 | TBD | Pending |
-| MSG-06 | TBD | Pending |
-| MSG-07 | TBD | Pending |
-| MSG-08 | TBD | Pending |
-| TELE-01 | TBD | Pending |
-| TELE-02 | TBD | Pending |
-| TELE-03 | TBD | Pending |
-| TELE-04 | TBD | Pending |
-| TELE-05 | TBD | Pending |
-| TELE-06 | TBD | Pending |
-| TELE-07 | TBD | Pending |
-| PAY-01 | TBD | Pending |
-| PAY-02 | TBD | Pending |
-| PAY-03 | TBD | Pending |
-| PAY-04 | TBD | Pending |
-| PAY-05 | TBD | Pending |
-| PAY-06 | TBD | Pending |
-| PAY-07 | TBD | Pending |
-| PAY-08 | TBD | Pending |
-| SYNC-01 | TBD | Pending |
-| SYNC-02 | TBD | Pending |
-| SYNC-03 | TBD | Pending |
-| SYNC-04 | TBD | Pending |
-| SYNC-05 | TBD | Pending |
-| SYNC-06 | TBD | Pending |
-| SYNC-07 | TBD | Pending |
-| SYNC-08 | TBD | Pending |
-| FHIR-01 | TBD | Pending |
-| FHIR-02 | TBD | Pending |
-| FHIR-03 | TBD | Pending |
-| FHIR-04 | TBD | Pending |
-| FHIR-05 | TBD | Pending |
-| FHIR-06 | TBD | Pending |
-| FHIR-07 | TBD | Pending |
-| SEC-01 | TBD | Pending |
-| SEC-02 | TBD | Pending |
-| SEC-03 | TBD | Pending |
-| SEC-04 | TBD | Pending |
-| SEC-05 | TBD | Pending |
-| SEC-06 | TBD | Pending |
-| SEC-07 | TBD | Pending |
-| SEC-08 | TBD | Pending |
-| SEC-09 | TBD | Pending |
-| SEC-10 | TBD | Pending |
-| QA-01 | TBD | Pending |
-| QA-02 | TBD | Pending |
-| QA-03 | TBD | Pending |
-| QA-04 | TBD | Pending |
-| QA-05 | TBD | Pending |
-| QA-06 | TBD | Pending |
-| QA-07 | TBD | Pending |
-| QA-08 | TBD | Pending |
+| FND-01 | Phase 1 | Pending |
+| FND-02 | Phase 1 | Pending |
+| FND-03 | Phase 1 | Pending |
+| FND-04 | Phase 1 | Pending |
+| FND-05 | Phase 1 | Pending |
+| FND-06 | Phase 1 | Pending |
+| FND-07 | Phase 1 | Pending |
+| FND-08 | Phase 1 | Pending |
+| FND-09 | Phase 1 | Pending |
+| FND-10 | Phase 1 | Pending |
+| IDN-01 | Phase 2 | Pending |
+| IDN-02 | Phase 2 | Pending |
+| IDN-03 | Phase 2 | Pending |
+| IDN-04 | Phase 2 | Pending |
+| IDN-05 | Phase 2 | Pending |
+| IDN-06 | Phase 2 | Pending |
+| IDN-07 | Phase 2 | Pending |
+| IDN-08 | Phase 2 | Pending |
+| IDN-09 | Phase 2 | Pending |
+| IDN-10 | Phase 2 | Pending |
+| IDN-11 | Phase 2 | Pending |
+| IDN-12 | Phase 2 | Pending |
+| CDM-01 | Phase 3 | Pending |
+| CDM-02 | Phase 3 | Pending |
+| CDM-03 | Phase 3 | Pending |
+| CDM-04 | Phase 3 | Pending |
+| CDM-05 | Phase 3 | Pending |
+| CDM-06 | Phase 3 | Pending |
+| CDM-07 | Phase 3 | Pending |
+| CDM-08 | Phase 3 | Pending |
+| CDM-09 | Phase 3 | Pending |
+| CDM-10 | Phase 3 | Pending |
+| CDM-11 | Phase 3 | Pending |
+| CDM-12 | Phase 3 | Pending |
+| CDM-13 | Phase 3 | Pending |
+| CDM-14 | Phase 3 | Pending |
+| CDM-15 | Phase 3 | Pending |
+| CDM-16 | Phase 3 | Pending |
+| CDM-17 | Phase 3 | Pending |
+| CDM-18 | Phase 3 | Pending |
+| PWS-01 | Phase 4 | Pending |
+| PWS-02 | Phase 4 | Pending |
+| PWS-03 | Phase 4 | Pending |
+| PWS-04 | Phase 4 | Pending |
+| PWS-05 | Phase 4 | Pending |
+| PWS-06 | Phase 4 | Pending |
+| PWS-07 | Phase 4 | Pending |
+| PWS-08 | Phase 4 | Pending |
+| PWS-09 | Phase 4 | Pending |
+| PWS-10 | Phase 4 | Pending |
+| TLN-01 | Phase 5 | Pending |
+| TLN-02 | Phase 5 | Pending |
+| TLN-03 | Phase 5 | Pending |
+| TLN-04 | Phase 5 | Pending |
+| TLN-05 | Phase 5 | Pending |
+| TLN-06 | Phase 5 | Pending |
+| TLN-07 | Phase 5 | Pending |
+| TLN-08 | Phase 5 | Pending |
+| TLN-09 | Phase 5 | Pending |
+| TLN-10 | Phase 5 | Pending |
+| TLN-11 | Phase 5 | Pending |
+| TLN-12 | Phase 5 | Pending |
+| TLN-13 | Phase 5 | Pending |
+| PROV-01 | Phase 6 | Pending |
+| PROV-02 | Phase 6 | Pending |
+| PROV-03 | Phase 6 | Pending |
+| PROV-04 | Phase 6 | Pending |
+| PROV-05 | Phase 6 | Pending |
+| PROV-06 | Phase 6 | Pending |
+| PROV-07 | Phase 6 | Pending |
+| PROV-08 | Phase 6 | Pending |
+| PROV-09 | Phase 6 | Pending |
+| PROV-10 | Phase 6 | Pending |
+| PROV-11 | Phase 6 | Pending |
+| PROV-12 | Phase 6 | Pending |
+| PROV-13 | Phase 6 | Pending |
+| PROV-14 | Phase 6 | Pending |
+| MED-01 | Phase 7 | Pending |
+| MED-02 | Phase 7 | Pending |
+| MED-03 | Phase 7 | Pending |
+| MED-04 | Phase 7 | Pending |
+| MED-05 | Phase 7 | Pending |
+| MED-06 | Phase 7 | Pending |
+| MED-07 | Phase 7 | Pending |
+| MED-08 | Phase 7 | Pending |
+| VIS-01 | Phase 8 | Pending |
+| VIS-02 | Phase 8 | Pending |
+| VIS-03 | Phase 8 | Pending |
+| VIS-04 | Phase 8 | Pending |
+| VIS-05 | Phase 8 | Pending |
+| VIS-06 | Phase 8 | Pending |
+| VIS-07 | Phase 8 | Pending |
+| VIT-01 | Phase 9 | Pending |
+| VIT-02 | Phase 9 | Pending |
+| VIT-03 | Phase 9 | Pending |
+| VIT-04 | Phase 9 | Pending |
+| VIT-05 | Phase 9 | Pending |
+| VIT-06 | Phase 9 | Pending |
+| VIT-07 | Phase 9 | Pending |
+| VIT-08 | Phase 9 | Pending |
+| LAB-01 | Phase 10 | Pending |
+| LAB-02 | Phase 10 | Pending |
+| LAB-03 | Phase 10 | Pending |
+| LAB-04 | Phase 10 | Pending |
+| LAB-05 | Phase 10 | Pending |
+| LAB-06 | Phase 10 | Pending |
+| LAB-07 | Phase 10 | Pending |
+| IMG-01 | Phase 11 | Pending |
+| IMG-02 | Phase 11 | Pending |
+| IMG-03 | Phase 11 | Pending |
+| IMG-04 | Phase 11 | Pending |
+| IMG-05 | Phase 11 | Pending |
+| IMG-06 | Phase 11 | Pending |
+| ALG-01 | Phase 12 | Pending |
+| ALG-02 | Phase 12 | Pending |
+| ALG-03 | Phase 12 | Pending |
+| ALG-04 | Phase 12 | Pending |
+| ALG-05 | Phase 12 | Pending |
+| GEN-01 | Phase 13 | Pending |
+| GEN-02 | Phase 13 | Pending |
+| GEN-03 | Phase 13 | Pending |
+| GEN-04 | Phase 13 | Pending |
+| RXI-01 | Phase 14 | Pending |
+| RXI-02 | Phase 14 | Pending |
+| RXI-03 | Phase 14 | Pending |
+| RXI-04 | Phase 14 | Pending |
+| RXI-05 | Phase 14 | Pending |
+| RXI-06 | Phase 14 | Pending |
+| RXI-07 | Phase 14 | Pending |
+| RXI-08 | Phase 14 | Pending |
+| RXI-09 | Phase 14 | Pending |
+| RXI-10 | Phase 14 | Pending |
+| RXI-11 | Phase 14 | Pending |
+| RXI-12 | Phase 14 | Pending |
+| RXI-13 | Phase 14 | Pending |
+| ATT-01 | Phase 15 | Pending |
+| ATT-02 | Phase 15 | Pending |
+| ATT-03 | Phase 15 | Pending |
+| ATT-04 | Phase 15 | Pending |
+| ATT-05 | Phase 15 | Pending |
+| ATT-06 | Phase 15 | Pending |
+| ATT-07 | Phase 15 | Pending |
+| ATT-08 | Phase 15 | Pending |
+| AI-01 | Phase 16 | Pending |
+| AI-02 | Phase 16 | Pending |
+| AI-03 | Phase 16 | Pending |
+| AI-04 | Phase 16 | Pending |
+| AI-05 | Phase 16 | Pending |
+| AI-06 | Phase 16 | Pending |
+| AI-07 | Phase 16 | Pending |
+| AI-08 | Phase 16 | Pending |
+| AI-09 | Phase 16 | Pending |
+| PAT-01 | Phase 17 | Pending |
+| PAT-02 | Phase 17 | Pending |
+| PAT-03 | Phase 17 | Pending |
+| PAT-04 | Phase 17 | Pending |
+| PAT-05 | Phase 17 | Pending |
+| PAT-06 | Phase 17 | Pending |
+| PAT-07 | Phase 17 | Pending |
+| PAT-08 | Phase 17 | Pending |
+| PAT-09 | Phase 17 | Pending |
+| PAT-10 | Phase 17 | Pending |
+| CARE-01 | Phase 18 | Pending |
+| CARE-02 | Phase 18 | Pending |
+| CARE-03 | Phase 18 | Pending |
+| CARE-04 | Phase 18 | Pending |
+| CARE-05 | Phase 18 | Pending |
+| CARE-06 | Phase 18 | Pending |
+| COM-01 | Phase 19 | Pending |
+| COM-02 | Phase 19 | Pending |
+| COM-03 | Phase 19 | Pending |
+| COM-04 | Phase 19 | Pending |
+| COM-05 | Phase 19 | Pending |
+| COM-06 | Phase 19 | Pending |
+| COM-07 | Phase 19 | Pending |
+| COM-08 | Phase 19 | Pending |
+| MSG-01 | Phase 20 | Pending |
+| MSG-02 | Phase 20 | Pending |
+| MSG-03 | Phase 20 | Pending |
+| MSG-04 | Phase 20 | Pending |
+| MSG-05 | Phase 20 | Pending |
+| MSG-06 | Phase 20 | Pending |
+| MSG-07 | Phase 20 | Pending |
+| MSG-08 | Phase 20 | Pending |
+| TELE-01 | Phase 21 | Pending |
+| TELE-02 | Phase 21 | Pending |
+| TELE-03 | Phase 21 | Pending |
+| TELE-04 | Phase 21 | Pending |
+| TELE-05 | Phase 21 | Pending |
+| TELE-06 | Phase 21 | Pending |
+| TELE-07 | Phase 21 | Pending |
+| PAY-01 | Phase 22 | Pending |
+| PAY-02 | Phase 22 | Pending |
+| PAY-03 | Phase 22 | Pending |
+| PAY-04 | Phase 22 | Pending |
+| PAY-05 | Phase 22 | Pending |
+| PAY-06 | Phase 22 | Pending |
+| PAY-07 | Phase 22 | Pending |
+| PAY-08 | Phase 22 | Pending |
+| SYNC-01 | Phase 23 | Pending |
+| SYNC-02 | Phase 23 | Pending |
+| SYNC-03 | Phase 23 | Pending |
+| SYNC-04 | Phase 23 | Pending |
+| SYNC-05 | Phase 23 | Pending |
+| SYNC-06 | Phase 23 | Pending |
+| SYNC-07 | Phase 23 | Pending |
+| SYNC-08 | Phase 23 | Pending |
+| FHIR-01 | Phase 24 | Pending |
+| FHIR-02 | Phase 24 | Pending |
+| FHIR-03 | Phase 24 | Pending |
+| FHIR-04 | Phase 24 | Pending |
+| FHIR-05 | Phase 24 | Pending |
+| FHIR-06 | Phase 24 | Pending |
+| FHIR-07 | Phase 24 | Pending |
+| SEC-01 | Phase 25 | Pending |
+| SEC-02 | Phase 25 | Pending |
+| SEC-03 | Phase 25 | Pending |
+| SEC-04 | Phase 25 | Pending |
+| SEC-05 | Phase 25 | Pending |
+| SEC-06 | Phase 25 | Pending |
+| SEC-07 | Phase 25 | Pending |
+| SEC-08 | Phase 25 | Pending |
+| SEC-09 | Phase 25 | Pending |
+| SEC-10 | Phase 25 | Pending |
+| QA-01 | Phase 26 | Pending |
+| QA-02 | Phase 26 | Pending |
+| QA-03 | Phase 26 | Pending |
+| QA-04 | Phase 26 | Pending |
+| QA-05 | Phase 26 | Pending |
+| QA-06 | Phase 26 | Pending |
+| QA-07 | Phase 26 | Pending |
+| QA-08 | Phase 26 | Pending |
 
 **Coverage:**
 - v1 requirements: 232 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 232 (pending roadmap creation)
+- Mapped to phases: 232
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-04*  
