@@ -15,7 +15,7 @@ A UI-first, dual-sided healthcare platform for providers and patients, centered 
 - **Security**: Enforce permissions in the database, not only in UI; preserve tenant isolation and auditable access.
 - **Clinical safety**: AI suggestions require clinician confirmation; never autonomously diagnose, prescribe, or change treatment.
 - **Internationalization**: Arabic and English from the first component; logical CSS properties, RTL support, explicit units, and Western digits for clinical values.
-- **Visual authority**: Do not invent image-derived design tokens before the five missing reference assets are supplied and inspected.
+- **Visual authority**: Use ref-A as theme authority and B1–B3 only for layout where A is silent; use B4 for folder form only. Do not infer B4 measurements or claim visual approval before owner review.
 - **Scope**: Preserve the owner-defined 26-phase order and boundaries; do not implement later-phase work early or add P1–P3 to v1.
 
 <!-- GSD:project-end -->

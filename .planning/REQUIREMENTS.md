@@ -20,7 +20,7 @@ Requirements for the initial release. Each maps to exactly one of roadmap Phases
 - [ ] **FND-09**: The Supabase client is wired without exposing privileged service credentials to browser code.
 - [ ] **FND-10**: Every approved foundation token is traceable to ref-A or explicitly marked for an owner decision, and the gallery receives owner visual approval against ref-A.
 
-**Boundary:** No authentication, clinical data, patient screens, charts, or timeline in this phase. Reference-derived tokens and visual approval are blocked until the five source images are supplied.
+**Boundary:** No authentication, clinical data, patient screens, charts, or timeline in this phase. Derive tokens from supplied reference evidence; visual approval remains pending owner review.
 
 ### IDN — Identity, organizations, roles, RBAC, RLS, audit (Phase 002)
 
@@ -383,7 +383,7 @@ Deferred until after the 26-phase v1 release; not included in the v1 roadmap.
 |---------|--------|
 | Items listed as phase-local boundaries above | Prevents later-phase work or explicitly excluded behavior from leaking into earlier phases. |
 | Real patient data before the owner-signed Phase 025 compliance gate | Production data remains prohibited until the hosting/legal review, provider agreements, breach-response plan, and other gate controls are approved. |
-| Any design tokens or measurements inferred from absent reference images | The five required assets are missing; inventing image-derived design decisions would contradict the reference authority. |
+| Design decisions unsupported by reference evidence | Do not invent measurements or clinical meaning; ref-A is the theme authority and low-resolution ref-B4 informs folder form only. |
 
 ## Traceability
 
@@ -631,4 +631,4 @@ Each v1 requirement maps to exactly one roadmap phase; all requirement statuses 
 
 ---
 *Requirements defined: 2026-10-04*  
-*Last updated: 2026-10-04 after initial requirements derivation*
+*Last updated: 2026-10-05 after design reference assets were supplied*

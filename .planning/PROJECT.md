@@ -55,7 +55,7 @@ Understand the patient → act on what matters → track what happens next.
 - The approved stack is Next.js App Router, React, TypeScript, Tailwind CSS driven by design tokens, Supabase (Postgres, Auth, Storage, RLS, Edge Functions), TanStack Query, D3 for timeline geometry, Framer Motion for UI motion, and GSAP only where a documented advantage exists.
 - D1 is resolved: Arabic and English are supported from the first component, with RTL via CSS logical properties. Clinical values use Western digits and Egypt-appropriate units: kg, °C, mmHg, and mg/dL. Timeline axes remain chronological left-to-right within RTL pages unless the owner decides otherwise.
 - Reference hierarchy: `docs/design/ref-A-theme.png` is the theme authority; `ref-B1` through `ref-B3` guide layout/content structure, restyled with A's tokens; `ref-B4-folder-style.png` guides folder shape/behavior only, never measurements or colors. A wins visual conflicts; B applies only where A is silent. Sample image content is illustrative, not clinical data.
-- The five reference images are absent from `docs/design/`. This blocks reference-UI extraction and Phase 1 visual approval. Do not invent image-derived measurements, tokens, or claims of visual approval.
+- The five reference images are now present in `docs/design/`: ref-A theme (735×511), ref-B1 provider home (2816×1536), ref-B2 patient overview (2486×1728), ref-B3 patient home (2816×1536), and ref-B4 folder form (107×147). Ref-A is the theme authority; B1–B3 guide layout/content structure; B4 guides folder form only, never measurements or colors. Reference-UI extraction and owner visual approval remain Phase 1 work; do not claim approval before review.
 - Patient Workspace primary tabs, exact order: Overview | AI Analytics | Visits | Medications | Labs | Imaging | Allergies | Genetics. Vital Signs live inside Overview. Communication is under the doctor's profile dropdown. Unbuilt tabs remain visible with designed honest empty states.
 - Patient folders use the B4 form with ref-A styling; peeking cards show only record types and dates, never clinical images, results, or diagnoses. A compact list is the fallback. D11 governs colors. No gamification.
 - D3 owns timeline scales, zoom, geometry, and paths; React renders and owns the DOM. D3 must not mutate React-owned DOM. Framer Motion handles UI motion; GSAP requires a documented advantage.
@@ -72,7 +72,7 @@ Understand the patient → act on what matters → track what happens next.
 - **Security**: Enforce permissions in the database, not only in UI; preserve tenant isolation and auditable access.
 - **Clinical safety**: AI suggestions require clinician confirmation; never autonomously diagnose, prescribe, or change treatment.
 - **Internationalization**: Arabic and English from the first component; logical CSS properties, RTL support, explicit units, and Western digits for clinical values.
-- **Visual authority**: Do not invent image-derived design tokens before the five missing reference assets are supplied and inspected.
+- **Visual authority**: Use ref-A as theme authority and B1–B3 only for layout where A is silent; use B4 for folder form only. Do not infer B4 measurements or claim visual approval before owner review.
 - **Scope**: Preserve the owner-defined 26-phase order and boundaries; do not implement later-phase work early or add P1–P3 to v1.
 
 ## Key Decisions
@@ -109,4 +109,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-10-04 after initialization*
+*Last updated: 2026-10-05 after design reference assets were supplied*

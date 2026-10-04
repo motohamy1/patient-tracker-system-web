@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-10-04)
 Phase: 1 of 26 (Foundation, app shell, design-system infrastructure, i18n/RTL base, visual-regression harness)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-10-04 — Approved the 26-phase roadmap and mapped all v1 requirements.
+Last activity: 2026-10-05 — Added the supplied reference assets; Phase 1 extraction and owner visual approval remain pending.
 
 Progress: ░░░░░░░░░░ 0%
 
@@ -60,7 +60,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 1 visual-reference extraction and visual approval are blocked: all five reference images are missing from `docs/design/`.
+- Phase 1 reference assets are now present in `docs/design/`; reference-UI extraction and owner visual approval remain outstanding.
 - Real patient data is blocked until the owner signs the Phase 025 compliance gate.
 
 ## Deferred Items
@@ -73,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-04
-Stopped at: Project initialization after roadmap approval; Phase 1 is ready to plan.
+Last session: 2026-10-05
+Stopped at: Added all five approved reference assets; Phase 1 remains ready to plan with reference extraction and visual approval pending.
 Resume file: None

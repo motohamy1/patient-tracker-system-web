@@ -2,7 +2,7 @@
 
 ## Overview
 
-Deliver the owner-defined 26-phase clinical workspace in its fixed foundation-to-release order. Build the shared app shell and secure data foundation first, then provider and patient workflows, clinical modules, intelligence, communication/business capabilities, synchronization/interoperability, compliance hardening, and final cross-product release QA. The product remains synthetic-data-only until the owner signs the Phase 025 compliance gate. Phase 1 reference-derived visual extraction and approval are blocked until all five design reference images are added under `docs/design/`.
+Deliver the owner-defined 26-phase clinical workspace in its fixed foundation-to-release order. Build the shared app shell and secure data foundation first, then provider and patient workflows, clinical modules, intelligence, communication/business capabilities, synchronization/interoperability, compliance hardening, and final cross-product release QA. The product remains synthetic-data-only until the owner signs the Phase 025 compliance gate. The five reference images are now present in `docs/design/`; Phase 1 reference-UI extraction and owner visual approval remain outstanding.
 
 ## Phases
 
@@ -42,10 +42,10 @@ Deliver the owner-defined 26-phase clinical workspace in its fixed foundation-to
 **Success Criteria** (what must be TRUE):
 1. App shell and design-gallery primitives render with LTR/RTL and desktop/mobile states, and tokens are available to Tailwind and CSS.
 2. Arabic/English, logical-property RTL, reduced-motion primitives, Supabase client wiring, and lint/type-check/test/CI checks are operational.
-3. The Playwright visual-regression harness captures the gallery; owner visual comparison is approved only after ref-A and all other required reference assets are present.
-4. Every token is traceable to ref-A or explicitly marked as an owner decision; no image-derived measurements are invented while images are absent.
+3. The Playwright visual-regression harness captures the gallery and the owner approves comparison against the supplied references.
+4. Every token is traceable to ref-A or explicitly marked as an owner decision; ref-B4 informs folder form only and is not used for measurements.
 **Non-goals:** Authentication, clinical data, patient screens, charts, timeline.
-**Prerequisite / blocker:** Add `ref-A-theme.png`, `ref-B1-provider-home.jpg`, `ref-B2-patient-overview.jpg`, `ref-B3-patient-home.jpg`, and `ref-B4-folder-style.png` to `docs/design/`. Reference-UI extraction and Phase 1 visual approval remain blocked until then.
+**Prerequisite / pending approval:** The five reference images are present in `docs/design/`. Complete reference-UI extraction and obtain owner visual approval; ref-B4 is form-only and too low-resolution for measurements.
 **Plans:** TBD.
 
 ### Phase 2: Identity, organizations, roles, RBAC, RLS, audit foundation
