@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: Project Constitution + Reference UI Specification
 status: executing
-stopped_at: Completed 01-04-PLAN.md
-last_updated: "2026-10-06T02:13:30.000Z"
+stopped_at: Completed 01-05-PLAN.md
+last_updated: "2026-10-05T23:25:00.000Z"
 last_activity: 2026-10-06
-last_activity_desc: "01-04 complete: `docs/governance/reference-ui-specification.md` — shared core, provenance record, three surface grammars, QA mirror, Playwright contract"
+last_activity_desc: "01-05 complete: `docs/governance/ui-invariants.md` (INV-01…INV-17) and `docs/governance/visual-qa-rules.md` (12-row §21 gate + Playwright contract)"
 progress:
   total_phases: 22
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
-  percent: 67
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -29,35 +29,36 @@ See: .planning/PROJECT.md (updated 2026-10-05)
 ## Current Position
 
 Phase: 01 (Project Constitution + Reference UI Specification) — EXECUTING
-Plan: 4 of 6 complete (01-01, 01-02, 01-03, 01-04); next 01-05
+Plan: 5 of 6 complete (01-01, 01-02, 01-03, 01-04, 01-05); next 01-06
 Status: Executing Phase 01
-Last activity: 2026-10-06 — 01-04 complete: `docs/governance/reference-ui-specification.md` written (shared design-system core, non-normative provenance record, the three per-surface grammars, the 12-row QA gate mirror, the Playwright harness contract as specification, zero raw hex literals)
+Last activity: 2026-10-06 — 01-05 complete: `docs/governance/ui-invariants.md` written with INV-01…INV-17 across visual character, geometry and depth, each with an objectively checkable condition, and `docs/governance/visual-qa-rules.md` written with the normative 12-row §21 gate (mirroring §8.1) plus the Playwright harness contract as specification only
 
-Progress: [███████░░░] 67%
+Progress: [████████▍░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
-- Average duration: 43m
-- Total execution time: 2h 53m
+- Total plans completed: 5
+- Average duration: 37m
+- Total execution time: 3h 5m
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 4/6 | 2h 53m | 43m |
+| 01 | 5/6 | 3h 5m | 37m |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (2h 10m), 01-02 (4min), 01-03 (25min), 01-04 (14min)
+- Last 5 plans: 01-01 (2h 10m), 01-02 (4min), 01-03 (25min), 01-04 (14min), 01-05 (12min)
 - Trend: —
 
 *Updated after each plan completion*
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
+| Phase 01 P01-05 | 12min | 3 tasks | 2 files |
 | Phase 01 P01-04 | 14min | 3 tasks | 1 file |
 | Phase 01 P01-03 | 25min | 3 tasks | 1 file |
 | Phase 01 P01-02 | 4min | 2 tasks | 4 files |
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-04: §3 provenance citations follow the real JSON shape — `provenance.tokens` is an array of 14 per-token entries, not an object keyed by token — so rows cite `provenance.tokens[n].windows[i].rgb` and copy window coordinates plus the numeric ±4px delta only, never an RGB triple; `frameForeground`, `textSecondary` and `warning` are named as thin-stroke risk zones for the D-08 gate
 - [Phase 01]: 01-04: §8.1 mirrors the 12-row visual QA gate and explicitly names `docs/governance/visual-qa-rules.md` (plan 01-05) as the normative copy; §8.2 specifies the Playwright harness (viewports `1440x900`/`1280x800`/`768x1024`/`390x844`, `tests/visual/baselines/{surface}/{viewport}/{state}.png`, `maxDiffPixelRatio: 0.01`, `threshold: 0.2`) as built in Phase 002 — nothing implemented in this phase
 - [Phase 01]: 01-04: §4-§6 were derived from direct visual inspection of the three binding primaries (the read tool renders them); §9's do-not-reuse list is verified entry-for-entry against `reference-manifest.json` → `doNotReuse`, and the diagnostic asset is registered as never a design source and never sampled
+- [Phase 01]: 01-05: `docs/governance/ui-invariants.md` carries the 17-ID registry (INV-01…INV-06 visual character §2.1, INV-07…INV-12 geometry §2.3, INV-13…INV-17 depth §2.4), every row with an objectively checkable condition; the machine-enforceable subset (INV-01/03/13/14) is mapped to the Phase-002 checks `no-raw-hex`/`no-generic-healthcare-blue`/`token-reference-required`, specified here and implemented in Phase 002 — no lint rule or CI config was written
+- [Phase 01]: 01-05: `docs/governance/visual-qa-rules.md` is the normative 12-row §21 gate and `reference-ui-specification.md` §8.1 mirrors it; the row numbers and check names agree row-for-row (`QA-MIRROR-OK`), and per the executor scope fence the mirror file was left unmodified rather than pulled into this plan's diff
+- [Phase 01]: 01-05: neither document holds a matchable raw hex literal — the illegal construct is written only as the safe fragment `#` followed by `[0-9A-Fa-f]{6}`; the invariant vocabulary lists the frozen 14 color names only (the conditional `accentSoft` is withheld from `tokens.json` pending the D-02 gate), and `motion.duration.slow` is cited by its exact JSON path
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-06T02:13:30.000Z
-Stopped at: Completed 01-04-PLAN.md
+Last session: 2026-10-05T23:25:00.000Z
+Stopped at: Completed 01-05-PLAN.md
 Resume file: None
