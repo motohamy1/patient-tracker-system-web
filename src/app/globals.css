@@ -1,7 +1,23 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
+@import "../styles/tokens.dark.css";
 
 /*
  * Tailwind v4 is CSS-first: there is no tailwind.config.js.
- * Design tokens land in src/styles/tokens.css (Plan 01-02) as an
- * `@theme static` block; this file only wires Tailwind into the app.
+ * This file owns the single `@import "tailwindcss";` entry and wires the token layer
+ * (src/styles/tokens.css) plus the reserved dark-override file into the app.
+ * Token VALUES and their ref-A provenance live only in src/styles/tokens.css.
  */
+
+@layer base {
+  /* Reset the outer field to the single accent so the olive frame reads against it. */
+  body {
+    background-color: var(--color-accent);
+    color: var(--color-ink-strong);
+  }
+
+  /* Clinical numerals stay Western in every locale (locked decision D1). */
+  :root {
+    --clinical-numbering: latn;
+  }
+}

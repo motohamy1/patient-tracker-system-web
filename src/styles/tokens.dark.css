@@ -1,0 +1,16 @@
+/*
+ * RESERVED — dark-mode value overrides.
+ *
+ * Intentionally empty: Phase 1 ships light only.
+ *
+ * When dark mode is authorized, dark values go in `:root` inside a media query HERE:
+ *
+ *   @media (prefers-color-scheme: dark) {
+ *     :root {
+ *       --color-canvas: <dark value>;
+ *     }
+ *   }
+ *
+ * Never declare a nested `@theme` block here — `@theme` nested in a selector or a media
+ * query silently does nothing (research Pitfall / Tailwind v4 anti-pattern).
+ */
