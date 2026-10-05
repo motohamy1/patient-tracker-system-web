@@ -355,7 +355,7 @@ Plans:
 **Goal**: Perform visual QA, interaction QA, responsive QA, accessibility QA, performance QA, authorization QA, regression QA, and production build verification.
 **Mode**: convergence pass, not a user-capability slice
 **Depends on**: Phase 21
-**Requirements**: QA-01, QA-02, QA-03, UX-06
+**Requirements**: QA-01, QA-02, QA-03
 **Success Criteria** (what must be TRUE):
   1. Every QA dimension (visual, interaction, responsive, accessibility, performance, authorization, regression) has recorded results.
   2. Each UI phase passed the reference-UI acceptance gate — anything resembling a generic SaaS dashboard is rejected and corrected.
