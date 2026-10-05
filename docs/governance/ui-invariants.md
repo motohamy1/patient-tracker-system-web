@@ -42,7 +42,7 @@ stated objective check and recorded in the phase's verification artifact.
 **Token vocabulary.** Every color value resolves through `docs/governance/tokens.json` → `color`.
 The canonical names are `frame`, `frameForeground`, `canvas`, `surface`, `surfaceMuted`,
 `surfaceRaised`, `textPrimary`, `textSecondary`, `borderSubtle`, `accent`, `success`, `warning`,
-`critical` and `info`, plus `accentSoft` only if the D-02 split is confirmed at the design gate.
+`critical` and `info`; no additional color token may be invented.
 A raw color literal is written as a hash followed by six hexadecimal digits; that construct is
 **never** legal in product styling and is written in this document only as the pattern
 `#` followed by `[0-9A-Fa-f]{6}`.
