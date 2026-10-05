@@ -64,7 +64,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - Initialization: greenfield rebuild in place; old implementation committed as reset (`132afb6`), history retained as diagnostic evidence only.
-- Initialization: per-surface reference primaries under `docs/reference/`; `diagnostic-current-implementation.png` is diagnostic evidence only, never a design source.
+- Initialization: per-surface reference primaries under `docs/reference/`; `patient-tracking-dashboard.jpg` is diagnostic evidence only, never a design source.
 - Initialization: `model_overrides` copied verbatim from PRODUCT-MASTER-SPEC.md §0.1; `model_profile: inherit`; `workflow.auto_advance: false` (human review stop after initialization per §29 Step 4).
 - 01-01: Frozen `docs/governance/tokens.json` with all 14 canonical color tokens sampled by ffmpeg region-average (5–6 disjoint windows each, 4x4 sub-scan spread ≤4/255 and ±4px agreement ≤2/255, value = channel-wise median). Shadow ink derives from the sampled `textPrimary` `#32353A` → `rgba(50,53,58,…)`; `accentSoft` withheld pending owner confirmation of the D-02 split (measured hue separation 17.12°).
 - 01-01: `textPrimary` frozen from the timeline's scrubber viewport window / MRI card overlay (`#32353A`) because the reference's primary ink is `#000000` with 3px strokes and D-06 forbids freezing pure black; `frameForeground` (`#A9ACB0`) and `textSecondary` (`#C5C7CB`) are ink/background blends flagged `visionEstimate`; `critical` (`#FFCBC8`) and `warning` (`#FFC30C`) flagged `ownerConfirm`. All four must be adjudicated at the D-08 owner gate (plan 01-06).

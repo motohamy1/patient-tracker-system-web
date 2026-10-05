@@ -4,7 +4,7 @@
 **Researched:** 2026-10-05
 **Confidence:** HIGH (grounded in documented incidents for the exact stack components, plus the project's own diagnostic history in PRODUCT-MASTER-SPEC.md §3)
 
-Every pitfall below is either (a) a documented, recurring failure mode for this stack, or (b) a failure the previous implementation already committed (spec §3, evidenced by `docs/reference/diagnostic-current-implementation.png`). Phase numbers refer to the 22-phase roadmap (Phase 1 = spec Phase 001 Project Constitution … Phase 22 = spec Phase 022 Final QA).
+Every pitfall below is either (a) a documented, recurring failure mode for this stack, or (b) a failure the previous implementation already committed (spec §3, evidenced by `docs/reference/patient-tracking-dashboard.jpg`). Phase numbers refer to the 22-phase roadmap (Phase 1 = spec Phase 001 Project Constitution … Phase 22 = spec Phase 022 Final QA).
 
 ---
 
@@ -141,7 +141,7 @@ Provenance is invisible when it works. Each feature phase adds "just one more fi
 ### Pitfall 6: Generic-SaaS visual drift away from the olive/ivory/yellow reference
 
 **What goes wrong:**
-The reference images define a restrained olive/ivory palette with a single yellow accent (spec §2.1–2.2). Drift starts invisibly: a shadcn default lands in one component, Tailwind's `blue-500` in a link, a gradient in a card. Six months in, the app looks like every other dashboard — which spec §27 prohibits outright ("dashboard design unrelated to the reference," "saturated multi-color redesign"), and the diagnostic screenshot (`docs/reference/diagnostic-current-implementation.png`) proves the previous build already failed this way (§3.7: "current colors are incorrect").
+The reference images define a restrained olive/ivory palette with a single yellow accent (spec §2.1–2.2). Drift starts invisibly: a shadcn default lands in one component, Tailwind's `blue-500` in a link, a gradient in a card. Six months in, the app looks like every other dashboard — which spec §27 prohibits outright ("dashboard design unrelated to the reference," "saturated multi-color redesign"), and the diagnostic screenshot (`docs/reference/patient-tracking-dashboard.jpg`) proves the previous build already failed this way (§3.7: "current colors are incorrect").
 
 **Why it happens:**
 Default component libraries ship with their own palette; developers grab the nearest familiar color under deadline; nothing mechanically forbids raw hex or Tailwind default colors.

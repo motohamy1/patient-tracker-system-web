@@ -44,7 +44,7 @@ This roadmap operationalizes PRODUCT-MASTER-SPEC.md §19 (Phase 001–022) as a 
 **Requirements**: GOV-01, GOV-02, GOV-03, GOV-04, GOV-05, GOV-06
 **Success Criteria** (what must be TRUE):
 
-  1. The constitution records the source-of-truth hierarchy with the per-surface reference images (`provider-home-primary.jpg`, `patient-workspace-timeline-primary.jpg`, `patient-home-primary.jpg`) registered under `docs/reference/` as binding design grammar and `diagnostic-current-implementation.png` recorded as diagnostic evidence only.
+  1. The constitution records the source-of-truth hierarchy with the per-surface reference images (`provider-home-primary.jpg`, `patient-workspace-timeline-primary.jpg`, `patient-home-primary.jpg`) registered under `docs/reference/` as binding design grammar and `patient-tracking-dashboard.jpg` recorded as diagnostic evidence only.
   2. Semantic design tokens (frame/canvas/surface/accent families in olive/ivory/yellow) are frozen in a permanent token file and no component-level raw hex exists.
   3. UI invariants, visual QA rules, responsive rules, and motion rules are written down and the anti-generic/anti-gamification constraints are explicit.
   4. No product code was written in this phase.

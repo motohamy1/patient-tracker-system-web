@@ -83,7 +83,7 @@ Also out of scope for v1: FHIR-shaped UI screens (mapping may come later in Phas
   - `docs/reference/provider-home-primary.jpg` — Provider Home primary: folder grid, Today's Schedule, Critical Alerts, yellow accent.
   - `docs/reference/patient-workspace-timeline-primary.jpg` — Patient Workspace + D3 timeline primary: timeline and bottom scrubber.
   - `docs/reference/patient-home-primary.jpg` — Patient Home primary: Next Action, Health Snapshot, Quick Log, My Care Plan.
-  - `docs/reference/diagnostic-current-implementation.png` — **diagnostic evidence only**: the source of the §3.3 Cardiology failure, the §3.4 duplicate filter row, the §3.5 static-timeline failure, and the §3.7 color drift. Never a design source.
+  - `docs/reference/patient-tracking-dashboard.jpg` — **diagnostic evidence only**: the source of the §3.3 Cardiology failure, the §3.4 duplicate filter row, the §3.5 static-timeline failure, and the §3.7 color drift. Never a design source.
 - **Visual language** (§2): premium, clinical, calm, highly organized, information-dense but easy to scan, modern, tactile, restrained. Three color families: dark olive/khaki structural framing and navigation, warm ivory/off-white workspace surfaces, bright vivid yellow used selectively. Never generic Tailwind blue/indigo/purple healthcare colors.
 - **Known problems to eliminate** (§3): unauthorized cross-role dashboard switching, unauthorized clinical data entry forms, hardcoded Cardiology shell content, incorrect secondary filter row, static timeline, reference-mismatched timeline language, incorrect colors, heavy inconsistent layout.
 - **Execution framework.** GSD is mandatory (§20). Model orchestration separates planning/review (GLM-5.3) from routine execution (GLM-5.3-Flash) per §0.1; Phases 003 (RBAC/RLS) and 006 (D3 timeline) are flagged high-risk — first implementation passes there may be escalated to the stronger model.
@@ -109,7 +109,7 @@ Also out of scope for v1: FHIR-shaped UI screens (mapping may come later in Phas
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Greenfield rebuild in place; old implementation deleted and kept as git history | Spec §19 Phase 000 and §1: old repo is diagnostic evidence only, never patched forward | — Pending |
-| Per-surface reference primaries (provider home / patient workspace+timeline / patient home); old screenshot demoted to `diagnostic-current-implementation.png` | Each surface has a binding visual source; the old screenshot documents the failures being eliminated (§3.3–§3.5) | — Pending |
+| Per-surface reference primaries (provider home / patient workspace+timeline / patient home); old screenshot demoted to `patient-tracking-dashboard.jpg` | Each surface has a binding visual source; the old screenshot documents the failures being eliminated (§3.3–§3.5) | — Pending |
 | Patient workspace primary nav is exactly Overview \| AI Analytics \| Visits \| Medications \| Labs \| Imaging \| Allergies \| Genetics | §6 exact tab structure; no specialty/Vital Signs/Communication primary tabs (§3.4) | — Pending |
 | Provider patient collection is a visual folder grid (folder-first), with Recent/Today/Needs Attention/Critical/Search coexisting | §5 folder principle; folders are premium digital clinical folders, not gamification | — Pending |
 | D3 timeline as a projection over a unified Care/Clinical Event model | §8.1–§8.2: D3 mandatory; database remains source of truth; timeline is a view, not canonical storage | — Pending |
