@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: Project Constitution + Reference UI Specification
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-10-05T22:56:00.202Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-10-06T00:00:00.000Z"
 last_activity: 2026-10-06
-last_activity_desc: "01-01 complete: `docs/governance/tokens.json` and `docs/governance/reference-manifest.json` frozen"
+last_activity_desc: "01-03 complete: `docs/governance/project-constitution.md` — hierarchy, D-01 grounding, registry, reject criteria, Phase-002 machine checks"
 progress:
   total_phases: 22
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
-  percent: 33
+  completed_plans: 3
+  percent: 50
 ---
 
 # Project State
@@ -29,35 +29,36 @@ See: .planning/PROJECT.md (updated 2026-10-05)
 ## Current Position
 
 Phase: 01 (Project Constitution + Reference UI Specification) — EXECUTING
-Plan: 2 of 6 complete (01-01, 01-02); next 01-03
+Plan: 3 of 6 complete (01-01, 01-02, 01-03); next 01-04
 Status: Executing Phase 01
-Last activity: 2026-10-06 — 01-02 complete: six stale D-12 path references corrected across four planning documents
+Last activity: 2026-10-06 — 01-03 complete: `docs/governance/project-constitution.md` written (9-level hierarchy, D-01 light-frame grounding, reference registry, do-not-reuse list, reject criteria, three named Phase-002 machine checks)
 
-Progress: [███░░░░░░░] 33%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 2
-- Average duration: 1h 7m
-- Total execution time: 2h 14m
+- Total plans completed: 3
+- Average duration: 49m
+- Total execution time: 2h 39m
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 2/6 | 2h 14m | 1h 7m |
+| 01 | 3/6 | 2h 39m | 53m |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (2h 10m), 01-02 (4min)
+- Last 5 plans: 01-01 (2h 10m), 01-02 (4min), 01-03 (25min)
 - Trend: —
 
 *Updated after each plan completion*
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
+| Phase 01 P01-03 | 25min | 3 tasks | 1 file |
 | Phase 01 P01-02 | 4min | 2 tasks | 4 files |
 
 ## Accumulated Context
@@ -75,6 +76,9 @@ Recent decisions affecting current work:
 - 01-01: `docs/governance/reference-manifest.json` registers the four reference assets (3 `binding`, 1 `diagnostic`) with `certutil`-verified sha256 values matching 01-RESEARCH.md exactly; the diagnostic asset keeps its filename and is never a design source.
 - [Phase 01]: 01-02: D-12 path corrections applied from the verified six-row research table, not from D-12's prose list; REQUIREMENTS.md and AGENTS.md had no match and STATE.md plus research/PITFALLS.md were the real omissions — Repo-wide grep during research proved D-12's list over- and under-inclusive
 - [Phase 01]: 01-02: ROADMAP.md criterion 1 token corrected at line 47, not the researched line 44 — 01-01's roadmap rewrite shifted it; policy is to re-locate the token, never trust the recorded line number — Plan 01-01 rewrote ROADMAP.md during wave 1
+- [Phase 01]: 01-03: `docs/governance/project-constitution.md` written as the top of the authority hierarchy it defines; it reproduces the §1 order as 8 numbered levels carrying 9 named artifacts and states that the existing repository is NEVER a higher authority than the approved design/specification
+- [Phase 01]: 01-03: the D-01 light-frame interpretation is recorded in the constitution with its reason (the §2.2 text names the hue neighborhood while the primaries render that family at high lightness) and a standing prohibition against restoring a dark frame — the resolution is deliberately not reopenable
+- [Phase 01]: 01-03: the three Phase-002 machine checks are named (`no-raw-hex`, `no-generic-healthcare-blue`, `token-reference-required`) with written rule text and marked specified-now / implemented-in-Phase-002; no lint rule or CI config was written — the constitution holds zero raw hex literals and cites token names only
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-05T22:55:00.528Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-10-06T00:00:00.000Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
