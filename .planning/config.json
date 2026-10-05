@@ -1,0 +1,112 @@
+{
+  "model_profile": "inherit",
+  "commit_docs": true,
+  "parallelization": true,
+  "search_gitignored": false,
+  "brave_search": false,
+  "firecrawl": false,
+  "exa_search": false,
+  "tavily_search": false,
+  "ref_search": false,
+  "perplexity": false,
+  "jina": false,
+  "git": {
+    "branching_strategy": "none",
+    "create_tag": true,
+    "phase_branch_template": "gsd/phase-{phase}-{slug}",
+    "milestone_branch_template": "gsd/{milestone}-{slug}",
+    "quick_branch_template": null
+  },
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": true,
+    "auto_advance": false,
+    "node_repair": true,
+    "node_repair_budget": 2,
+    "ui_phase": true,
+    "ui_safety_gate": true,
+    "ai_integration_phase": true,
+    "human_verify_mode": "end-of-phase",
+    "context_guard_mode": "warn",
+    "text_mode": false,
+    "research_before_questions": false,
+    "discuss_mode": "discuss",
+    "skip_discuss": false,
+    "code_review": true,
+    "code_review_depth": "standard",
+    "code_review_command": null,
+    "pattern_mapper": true,
+    "plan_bounce": false,
+    "plan_bounce_script": null,
+    "plan_bounce_passes": 2,
+    "auto_prune_state": false,
+    "post_planning_gaps": true,
+    "security_enforcement": true,
+    "security_asvs_level": 1,
+    "security_block_on": "high"
+  },
+  "ship": {
+    "pr_body_sections": [
+      {
+        "heading": "User Stories & Acceptance Criteria",
+        "enabled": true,
+        "source": "REQUIREMENTS.md ## User Stories || REQUIREMENTS.md ## Acceptance Criteria",
+        "fallback": "- Acceptance criteria are covered by the linked requirements and verification evidence."
+      },
+      {
+        "heading": "Risks & Dependencies",
+        "enabled": true,
+        "source": "PLAN.md ## Risks || PLAN.md ## Dependencies",
+        "fallback": "- No plan-level risks or dependencies recorded for this increment."
+      },
+      {
+        "heading": "Success Metrics & Release Criteria",
+        "enabled": false,
+        "source": "PLAN.md ## Success Metrics || PLAN.md ## Release Criteria",
+        "fallback": "- No release criteria recorded for this increment."
+      },
+      {
+        "heading": "Stakeholder Review & Approval",
+        "enabled": false,
+        "source": "PLAN.md ## Stakeholder Review",
+        "fallback": "- No stakeholder sign-off recorded for this increment."
+      }
+    ]
+  },
+  "hooks": {
+    "context_warnings": true
+  },
+  "project_code": null,
+  "phase_naming": "sequential",
+  "agent_skills": {},
+  "claude_md_path": "./.claude/CLAUDE.md",
+  "plan_review": {
+    "source_grounding": true,
+    "source_grounding_authority": "grep"
+  },
+  "resolve_model_ids": "omit",
+  "mode": "yolo",
+  "granularity": "standard",
+  "runtime": "kimi",
+  "model_overrides": {
+    "gsd-planner": "opencode-go/glm-5.3",
+    "gsd-roadmapper": "opencode-go/glm-5.3",
+    "gsd-phase-researcher": "opencode-go/glm-5.3",
+    "gsd-project-researcher": "opencode-go/glm-5.3",
+    "gsd-research-synthesizer": "opencode-go/glm-5.3",
+    "gsd-codebase-mapper": "opencode-go/glm-5.3",
+    "gsd-executor": "opencode-go/glm-5.3-flash",
+    "gsd-debugger": "opencode-go/glm-5.3-flash",
+    "gsd-verifier": "opencode-go/glm-5.3",
+    "gsd-plan-checker": "opencode-go/glm-5.3",
+    "gsd-integration-checker": "opencode-go/glm-5.3",
+    "gsd-nyquist-auditor": "opencode-go/glm-5.3",
+    "gsd-ui-researcher": "opencode-go/glm-5.3",
+    "gsd-ui-checker": "opencode-go/glm-5.3",
+    "gsd-ui-auditor": "opencode-go/glm-5.3",
+    "gsd-doc-writer": "opencode-go/glm-5.3-flash",
+    "gsd-doc-verifier": "opencode-go/glm-5.3"
+  }
+}
