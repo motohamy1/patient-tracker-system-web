@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "generated": "2026-10-06T00:00:00Z",
+  "assets": [
+    {
+      "path": "docs/reference/provider-home-primary.jpg",
+      "role": "binding",
+      "sha256": "f2a0f03b34c705585ee7ef47705576cd17b34638b75ba9d0f43b2f418e92c3da",
+      "governs": [
+        "§2",
+        "§2.1",
+        "§2.2",
+        "§2.3",
+        "§2.4",
+        "§21",
+        "reference-ui-specification.md#provider-home-grammar"
+      ]
+    },
+    {
+      "path": "docs/reference/patient-workspace-timeline-primary.jpg",
+      "role": "binding",
+      "sha256": "820b6bac4fed46dcf3da7aeb269a20e8437bbb2f8ac11ce216c0176fb2fc93e2",
+      "governs": [
+        "§2",
+        "§8.1",
+        "§8.2",
+        "§8.6",
+        "reference-ui-specification.md#patient-workspace-and-d3-timeline-grammar"
+      ]
+    },
+    {
+      "path": "docs/reference/patient-home-primary.jpg",
+      "role": "binding",
+      "sha256": "7491790279688f4b48651c7e0950102da4d05594eb690d950e962ef8bfb06501",
+      "governs": [
+        "§2",
+        "§14",
+        "reference-ui-specification.md#patient-home-grammar"
+      ]
+    },
+    {
+      "path": "docs/reference/patient-tracking-dashboard.jpg",
+      "role": "diagnostic",
+      "sha256": "e1b0b74a5fc248750695ee95b1238d2c84932c5c9c4d5570b88dfa3b23c30c02",
+      "governs": [
+        "§3.3",
+        "§3.4",
+        "§3.5",
+        "§3.7",
+        "never a design source (D-12/D-14)"
+      ]
+    }
+  ],
+  "doNotReuse": {
+    "names": [
+      "Sarah Miller",
+      "Robert Garcia",
+      "Tiffany Woodward",
+      "Dr. Eleanor Vance"
+    ],
+    "labels": [
+      "Cardiology",
+      "Vital Signs",
+      "Communication"
+    ],
+    "medications": [
+      "Lisinopril 10mg",
+      "Metformin 500mg"
+    ],
+    "rule": "sample content is not binding grammar - see reference-ui-specification.md#sample-content-do-not-reuse"
+  }
+}
