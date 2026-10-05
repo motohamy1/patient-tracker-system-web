@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 is CSS-first: there is no tailwind.config.js.
+ * Design tokens land in src/styles/tokens.css (Plan 01-02) as an
+ * `@theme static` block; this file only wires Tailwind into the app.
+ */
