@@ -11,7 +11,7 @@ This roadmap operationalizes PRODUCT-MASTER-SPEC.md §19 (Phase 001–022) as a 
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Project Constitution + Reference UI Specification** - Constitution, reference UI design contract, UI invariants, semantic tokens, visual/responsive/motion QA rules
+- [x] **Phase 1: Project Constitution + Reference UI Specification** - Constitution, reference UI design contract, UI invariants, semantic tokens, visual/responsive/motion QA rules (completed 2026-10-05)
 - [ ] **Phase 2: Foundation and App Shell** - Next.js shell, routes, layout primitives, tokens, typography, surfaces, controls, a11y + motion baseline
 - [ ] **Phase 3: Authentication, Organizations, RBAC and RLS** - Server-side identity, org membership, role resolution, RLS policies, audit foundation
 - [ ] **Phase 4: Provider Home + Patient Folder Workspace** - Visual patient-folder collection with retrieval controls
@@ -50,7 +50,7 @@ This roadmap operationalizes PRODUCT-MASTER-SPEC.md §19 (Phase 001–022) as a 
   4. No product code was written in this phase.
 
 **UI hint**: yes
-**Plans**: 5/6 plans executed
+**Plans**: 6/6 plans complete
 
 Plans:
 
@@ -59,7 +59,7 @@ Plans:
 - [x] 01-03-PLAN.md
 - [x] 01-04-PLAN.md
 - [x] 01-05-PLAN.md
-- [ ] 01-06-PLAN.md
+- [x] 01-06-PLAN.md
 - [x] 01-01: TBD
 
 ### Phase 2: Foundation and App Shell
@@ -468,7 +468,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Project Constitution + Reference UI Specification | 5/6 | In Progress|  |
+| 1. Project Constitution + Reference UI Specification | 6/6 | Complete   | 2026-10-05 |
 | 2. Foundation and App Shell | 0/TBD | Not started | - |
 | 3. Authentication, Organizations, RBAC and RLS | 0/TBD | Not started | - |
 | 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |

@@ -117,7 +117,7 @@ Each task was committed atomically:
 3. **Task 3: run the D-08 owner design gate and record the decision** - `658e7b0` (docs — gate decision in tokens.json), `9b98c93` (docs — accentSoft vocabulary sweep across the three governance docs)
 4. **Task 4: close the phase — full-package verification sweep** - `085426e` (docs, intentionally empty: read-only verification)
 
-**Plan metadata:** pending (this summary commit)
+**Plan metadata:** `55c1af2` (docs: add plan summary)
 
 ## Files Created/Modified
 

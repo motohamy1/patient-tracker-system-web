@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 01
 current_phase_name: Project Constitution + Reference UI Specification
-status: executing
-stopped_at: Completed 01-05-PLAN.md
-last_updated: "2026-10-05T23:25:00.000Z"
+status: phase-complete
+stopped_at: Completed 01-06-PLAN.md
+last_updated: "2026-10-05T23:50:36.000Z"
 last_activity: 2026-10-06
-last_activity_desc: "01-05 complete: `docs/governance/ui-invariants.md` (INV-01…INV-17) and `docs/governance/visual-qa-rules.md` (12-row §21 gate + Playwright contract)"
+last_activity_desc: "01-06 complete: `docs/governance/responsive-rules.md` (§26 bands) and `motion-rules.md` (tokenized two-layer motion), and the D-08 owner gate written into `tokens.json` (`accentSoft` admitted, `gateStatus: approved-with-changes`); full-package sweep passed 8/8 files — Phase 002 unblocked"
 progress:
   total_phases: 22
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 5
-  percent: 83
+  completed_plans: 6
+  percent: 100
 ---
 
 # Project State
@@ -28,36 +28,37 @@ See: .planning/PROJECT.md (updated 2026-10-05)
 
 ## Current Position
 
-Phase: 01 (Project Constitution + Reference UI Specification) — EXECUTING
-Plan: 5 of 6 complete (01-01, 01-02, 01-03, 01-04, 01-05); next 01-06
-Status: Executing Phase 01
-Last activity: 2026-10-06 — 01-05 complete: `docs/governance/ui-invariants.md` written with INV-01…INV-17 across visual character, geometry and depth, each with an objectively checkable condition, and `docs/governance/visual-qa-rules.md` written with the normative 12-row §21 gate (mirroring §8.1) plus the Playwright harness contract as specification only
+Phase: 01 (Project Constitution + Reference UI Specification) — COMPLETE
+Plan: 6 of 6 complete (01-01, 01-02, 01-03, 01-04, 01-05, 01-06)
+Status: Phase 01 complete — the D-08 owner gate is closed (`tokens.json` → `review.gateStatus: approved-with-changes`); Phase 002 is unblocked
+Last activity: 2026-10-06 — 01-06 complete: `docs/governance/responsive-rules.md` records the three §26 bands and their adaptation contract; `docs/governance/motion-rules.md` records the tokenized motion values and the mandatory reduced-motion contract; the D-08 gate admitted `accentSoft` and the governance vocabulary was swept from 14 to 15 keys; the full-package verification sweep passed every criterion
 
-Progress: [████████▍░] 83%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 5
-- Average duration: 37m
-- Total execution time: 3h 5m
+- Total plans completed: 6
+- Average duration: 34m
+- Total execution time: 3h 27m
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 5/6 | 3h 5m | 37m |
+| 01 | 6/6 | 3h 27m | 34m |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (2h 10m), 01-02 (4min), 01-03 (25min), 01-04 (14min), 01-05 (12min)
+- Last 5 plans: 01-02 (4min), 01-03 (25min), 01-04 (14min), 01-05 (12min), 01-06 (22min)
 - Trend: —
 
 *Updated after each plan completion*
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
+| Phase 01 P01-06 | 22min | 4 tasks | 6 files |
 | Phase 01 P01-05 | 12min | 3 tasks | 2 files |
 | Phase 01 P01-04 | 14min | 3 tasks | 1 file |
 | Phase 01 P01-03 | 25min | 3 tasks | 1 file |
@@ -73,7 +74,7 @@ Recent decisions affecting current work:
 - Initialization: greenfield rebuild in place; old implementation committed as reset (`132afb6`), history retained as diagnostic evidence only.
 - Initialization: per-surface reference primaries under `docs/reference/`; `patient-tracking-dashboard.jpg` is diagnostic evidence only, never a design source.
 - Initialization: `model_overrides` copied verbatim from PRODUCT-MASTER-SPEC.md §0.1; `model_profile: inherit`; `workflow.auto_advance: false` (human review stop after initialization per §29 Step 4).
-- 01-01: Frozen `docs/governance/tokens.json` with all 14 canonical color tokens sampled by ffmpeg region-average (5–6 disjoint windows each, 4x4 sub-scan spread ≤4/255 and ±4px agreement ≤2/255, value = channel-wise median). Shadow ink derives from the sampled `textPrimary` `#32353A` → `rgba(50,53,58,…)`; `accentSoft` withheld pending owner confirmation of the D-02 split (measured hue separation 17.12°).
+- 01-01: Frozen `docs/governance/tokens.json` with all 14 canonical color tokens sampled by ffmpeg region-average (5–6 disjoint windows each, 4x4 sub-scan spread ≤4/255 and ±4px agreement ≤2/255, value = channel-wise median). Shadow ink derives from the sampled `textPrimary` `#32353A` → `rgba(50,53,58,…)`; the D-02 `accentSoft` key was withheld at freeze time and was admitted at the D-08 owner gate (plan 01-06).
 - 01-01: `textPrimary` frozen from the timeline's scrubber viewport window / MRI card overlay (`#32353A`) because the reference's primary ink is `#000000` with 3px strokes and D-06 forbids freezing pure black; `frameForeground` (`#A9ACB0`) and `textSecondary` (`#C5C7CB`) are ink/background blends flagged `visionEstimate`; `critical` (`#FFCBC8`) and `warning` (`#FFC30C`) flagged `ownerConfirm`. All four must be adjudicated at the D-08 owner gate (plan 01-06).
 - 01-01: `docs/governance/reference-manifest.json` registers the four reference assets (3 `binding`, 1 `diagnostic`) with `certutil`-verified sha256 values matching 01-RESEARCH.md exactly; the diagnostic asset keeps its filename and is never a design source.
 - [Phase 01]: 01-02: D-12 path corrections applied from the verified six-row research table, not from D-12's prose list; REQUIREMENTS.md and AGENTS.md had no match and STATE.md plus research/PITFALLS.md were the real omissions — Repo-wide grep during research proved D-12's list over- and under-inclusive
@@ -87,7 +88,11 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-04: §4-§6 were derived from direct visual inspection of the three binding primaries (the read tool renders them); §9's do-not-reuse list is verified entry-for-entry against `reference-manifest.json` → `doNotReuse`, and the diagnostic asset is registered as never a design source and never sampled
 - [Phase 01]: 01-05: `docs/governance/ui-invariants.md` carries the 17-ID registry (INV-01…INV-06 visual character §2.1, INV-07…INV-12 geometry §2.3, INV-13…INV-17 depth §2.4), every row with an objectively checkable condition; the machine-enforceable subset (INV-01/03/13/14) is mapped to the Phase-002 checks `no-raw-hex`/`no-generic-healthcare-blue`/`token-reference-required`, specified here and implemented in Phase 002 — no lint rule or CI config was written
 - [Phase 01]: 01-05: `docs/governance/visual-qa-rules.md` is the normative 12-row §21 gate and `reference-ui-specification.md` §8.1 mirrors it; the row numbers and check names agree row-for-row (`QA-MIRROR-OK`), and per the executor scope fence the mirror file was left unmodified rather than pulled into this plan's diff
-- [Phase 01]: 01-05: neither document holds a matchable raw hex literal — the illegal construct is written only as the safe fragment `#` followed by `[0-9A-Fa-f]{6}`; the invariant vocabulary lists the frozen 14 color names only (the conditional `accentSoft` is withheld from `tokens.json` pending the D-02 gate), and `motion.duration.slow` is cited by its exact JSON path
+- [Phase 01]: 01-05: neither document holds a matchable raw hex literal — the illegal construct is written only as the safe fragment `#` followed by `[0-9A-Fa-f]{6}`; the invariant vocabulary then listed the 14 frozen color names only (the conditional `accentSoft` was withheld from `tokens.json` pending the D-02 gate) — superseded by 01-06, which admitted `accentSoft` and swept every governance vocabulary to 15 keys — and `motion.duration.slow` is cited by its exact JSON path
+- [Phase 01]: 01-06: `docs/governance/responsive-rules.md` records the three §26 bands (desktop ≥1024px, tablet 768–1023px, mobile <768px), the per-band adaptation contract, the 44px touch-target minimum and the shrink prohibition, with zero raw hex; `docs/governance/motion-rules.md` copies the four tokenized motion values from `tokens.json`, locks the Framer Motion / GSAP two-layer split (`never both` for one animation) and the mandatory reduced-motion contract (`useReducedMotion`, `gsap.matchMedia`)
+- [Phase 01]: 01-06: D-08 owner gate adjudicated by the product owner on 2026-10-06 — `gateStatus: approved-with-changes`; exactly one color key `accentSoft` (`#FFCE03`, the recorded `provenance.crossChecks[0].median`, not the plan prose `#FFCE04`) admitted immediately after `accent`; all four weak-evidence tokens (`frameForeground` `#A9ACB0`, `textSecondary` `#C5C7CB`, `warning` `#FFC30C`, `critical` `#FFCBC8`) and the D-01 gray reading confirmed frozen as sampled
+- [Phase 01]: 01-06: clean-cutover vocabulary sweep — `project-constitution.md` §4.3, `reference-ui-specification.md` §2.1/§3 and `ui-invariants.md` §1 now enumerate 15 tokens; no governance document still claims a 14-key complete set or that `accentSoft` is withheld; raw hex remains confined to `tokens.json`
+- [Phase 01]: 01-06: full-package sweep passed — 8/8 governance files, GOV-01…GOV-06 evidenced, 17 INV rows, 12 QA rows, zero stray hex outside `tokens.json`, the D-12 rows point at `patient-tracking-dashboard.jpg`, the phase fence held (no `package.json`/`src`/`tokens.css`/configs/tests), and `GATE-CLOSED`. Phase 002 is unblocked
 
 ### Pending Todos
 
@@ -108,6 +113,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-05T23:25:00.000Z
-Stopped at: Completed 01-05-PLAN.md
+Last session: 2026-10-05T23:50:36.000Z
+Stopped at: Completed 01-06-PLAN.md
 Resume file: None
