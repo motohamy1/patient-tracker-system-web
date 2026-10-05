@@ -105,11 +105,35 @@ export function GalleryStateMatrix({ locale }: { locale: Locale }) {
           "الحقل الخارجي المميز مع الإطار الزيتي المستدير داخله.",
         )}
       >
-        <AppFrame>
-          <div className="rounded-module bg-canvas p-[var(--space-4)] text-label text-ink-strong">
-            {t(locale, "Frame", "الإطار")}
+        {/* WHY `fill={false}`: the specimen embeds AppFrame INSIDE this section, which
+            already sits in a flex-wrap row. With the page-level `min-h-dvh` inherited,
+            the accent field became a full-viewport-tall element squeezed to its content
+            width — a narrow lime stripe, not a frame. The specimen opts out of the fill and
+            takes its height from the content stack below instead.
+            WHY `w-full` ON THE ROW ITEM ITSELF: the section's children row is `flex-wrap`,
+            so an item without an explicit width shrinks to its content. `w-full` is set on
+            the row item, not on a wrapper inside `Cell` — a percentage width inside a
+            shrink-to-fit cell resolves to `auto` and stays narrow.
+            WHY A FIXED HEIGHT: `h-72` is Tailwind's spacing scale (--spacing = 0.25rem), not
+            a new pixel literal, and keeps the specimen deterministic for the baselines.
+            WHY NOT `Cell`: `Cell` is a shrink-to-fit caption column; the frame specimen has
+            to own the full section width, so it repeats the caption markup at row-item
+            level instead of nesting inside a narrow cell. */}
+        <div className="flex w-full flex-col items-start gap-2">
+          <span className="text-label text-ink-muted">
+            {t(locale, "bounded size", "بحجم محدود")}
+          </span>
+          <div className="w-full">
+            <AppFrame fill={false}>
+              <div className="flex h-72 flex-col gap-[var(--space-3)]">
+                <NotchHeader title={t(locale, "Aa", "أب")} />
+                <ModuleSurface title={t(locale, "Aa", "أب")}>
+                  <p className="text-body text-start text-ink">{t(locale, "Aa", "أب")}</p>
+                </ModuleSurface>
+              </div>
+            </AppFrame>
           </div>
-        </AppFrame>
+        </div>
       </GallerySection>
 
       <GallerySection
