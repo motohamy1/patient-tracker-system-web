@@ -1,23 +1,12 @@
-import type { Metadata } from "next";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Clinical Patient Workspace",
-  description: "Foundation shell — design-system and i18n base.",
-};
-
 /**
- * Placeholder root layout. Plan 01-03 Task 3 replaces this with the
- * `src/app/[locale]/` structure that resolves `lang`/`dir` per locale.
+ * Root layout is a `{children}` PASSTHROUGH. It deliberately emits no document element:
+ * the locale layout (`src/app/[locale]/layout.tsx`) owns the document element with its
+ * `lang` and `dir` attributes, because direction and language are per-locale and must be
+ * resolved on the server. Next still requires an ancestor layout chain for every route —
+ * including the `/` redirect — so this file stays, it simply renders nothing but children.
  */
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en" dir="ltr">
-      <body>{children}</body>
-    </html>
-  );
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }
