@@ -239,4 +239,333 @@ the authority, not the trend names.
 
 ---
 
-_Sections 3 through 9 follow._
+## 3. Token provenance (non-normative record)
+
+This section is the **non-normative** evidence record for the frozen values. The normative
+values are `docs/governance/tokens.json` → `color`; nothing in this section is read by the
+Phase-002 token generator. It exists so the D-08 owner gate can audit how each value was
+derived without re-running sampling, and so the sampling coordinates live somewhere the owner
+can read.
+
+The record lives in `docs/governance/tokens.json` → `provenance.tokens`, an array of one
+entry per token in the canonical token order used below. Each entry carries its source image,
+the sampling method, its windows with their re-sample reads and deltas, the frozen median, and
+the `visionEstimate` / `ownerConfirm` flags. This document copies the **window coordinates and
+deltas only**; every sampled value is cited as a JSON path, because raw color values have
+exactly one home under `docs/governance/` and it is not this file.
+
+### 3.1 frame — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 116 | 191 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[0].rgb` | 0 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1520 | 191 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[1].rgb` | 0 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2198 | 191 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[2].rgb` | 0 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1940 | 193 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[3].rgb` | 0 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1072 | 129 | 24 | 24 | `tokens.json → provenance.tokens[0].windows[4].rgb` | 0 |
+
+Frozen value: `tokens.json → provenance.tokens[0].median`; the normative value is
+`docs/governance/tokens.json` → `color.frame`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.2 frameForeground — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1342 | 148 | 24 | 24 | `tokens.json → provenance.tokens[1].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2170 | 124 | 24 | 24 | `tokens.json → provenance.tokens[1].windows[1].rgb` | 2 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 828 | 142 | 24 | 24 | `tokens.json → provenance.tokens[1].windows[2].rgb` | 1 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1572 | 144 | 24 | 24 | `tokens.json → provenance.tokens[1].windows[3].rgb` | 2 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 680 | 142 | 24 | 24 | `tokens.json → provenance.tokens[1].windows[4].rgb` | 1 |
+
+Frozen value: `tokens.json → provenance.tokens[1].median`; the normative value is
+`docs/governance/tokens.json` → `color.frameForeground`. Flags: `visionEstimate: true`,
+`ownerConfirm: true`.
+
+**Risk zone — owner confirmation required.** `frameForeground` is a thin-stroke
+anti-aliasing risk zone: the reference's frame icon strokes are 2–3px wide, so no conforming
+window can sit wholly inside the ink and the frozen value is an ink/background blend. It is
+flagged for owner confirmation at the D-08 design gate.
+
+### 3.3 canvas — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 20 | 780 | 24 | 24 | `tokens.json → provenance.tokens[2].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 8 | 840 | 24 | 24 | `tokens.json → provenance.tokens[2].windows[1].rgb` | 0 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 8 | 900 | 24 | 24 | `tokens.json → provenance.tokens[2].windows[2].rgb` | 0 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 10 | 808 | 24 | 24 | `tokens.json → provenance.tokens[2].windows[3].rgb` | 0 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 38 | 840 | 24 | 24 | `tokens.json → provenance.tokens[2].windows[4].rgb` | 0 |
+
+Frozen value: `tokens.json → provenance.tokens[2].median`; the normative value is
+`docs/governance/tokens.json` → `color.canvas`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.4 surface — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 756 | 266 | 24 | 24 | `tokens.json → provenance.tokens[3].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 836 | 268 | 24 | 24 | `tokens.json → provenance.tokens[3].windows[1].rgb` | 0 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 600 | 332 | 24 | 24 | `tokens.json → provenance.tokens[3].windows[2].rgb` | 1 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 680 | 332 | 24 | 24 | `tokens.json → provenance.tokens[3].windows[3].rgb` | 0 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 720 | 268 | 24 | 24 | `tokens.json → provenance.tokens[3].windows[4].rgb` | 0 |
+
+Frozen value: `tokens.json → provenance.tokens[3].median`; the normative value is
+`docs/governance/tokens.json` → `color.surface`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.5 surfaceMuted — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 320 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 408 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[1].rgb` | 1 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 564 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[2].rgb` | 1 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 660 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[3].rgb` | 0 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 798 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[4].rgb` | 0 |
+
+Frozen value: `tokens.json → provenance.tokens[4].median`; the normative value is
+`docs/governance/tokens.json` → `color.surfaceMuted`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.6 surfaceRaised — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 670 | 170 | 12 | 12 | `tokens.json → provenance.tokens[5].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 712 | 126 | 20 | 20 | `tokens.json → provenance.tokens[5].windows[1].rgb` | 1 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 778 | 136 | 16 | 16 | `tokens.json → provenance.tokens[5].windows[2].rgb` | 2 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 664 | 128 | 12 | 12 | `tokens.json → provenance.tokens[5].windows[3].rgb` | 1 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 716 | 170 | 12 | 12 | `tokens.json → provenance.tokens[5].windows[4].rgb` | 1 |
+
+Frozen value: `tokens.json → provenance.tokens[5].median`; the normative value is
+`docs/governance/tokens.json` → `color.surfaceRaised`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.7 textPrimary — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2108 | 1216 | 24 | 24 | `tokens.json → provenance.tokens[6].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2188 | 1218 | 24 | 24 | `tokens.json → provenance.tokens[6].windows[1].rgb` | 1 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2146 | 1250 | 24 | 24 | `tokens.json → provenance.tokens[6].windows[2].rgb` | 0 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2138 | 1216 | 24 | 24 | `tokens.json → provenance.tokens[6].windows[3].rgb` | 0 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2216 | 1220 | 24 | 24 | `tokens.json → provenance.tokens[6].windows[4].rgb` | 1 |
+
+Frozen value: `tokens.json → provenance.tokens[6].median`; the normative value is
+`docs/governance/tokens.json` → `color.textPrimary`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.8 textSecondary — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2256 | 1116 | 24 | 24 | `tokens.json → provenance.tokens[7].windows[0].rgb` | 2 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 316 | 1118 | 24 | 24 | `tokens.json → provenance.tokens[7].windows[1].rgb` | 2 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1912 | 1116 | 24 | 24 | `tokens.json → provenance.tokens[7].windows[2].rgb` | 2 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2304 | 1112 | 24 | 24 | `tokens.json → provenance.tokens[7].windows[3].rgb` | 2 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 270 | 494 | 24 | 24 | `tokens.json → provenance.tokens[7].windows[4].rgb` | 2 |
+
+Frozen value: `tokens.json → provenance.tokens[7].median`; the normative value is
+`docs/governance/tokens.json` → `color.textSecondary`. Flags: `visionEstimate: true`,
+`ownerConfirm: true`.
+
+**Risk zone — owner confirmation required.** `textSecondary` is a thin-stroke
+anti-aliasing risk zone: the reference's label and axis glyphs are 2–3px wide, so the frozen
+value is an ink/background blend. It is flagged for owner confirmation at the D-08 design
+gate.
+
+### 3.9 borderSubtle — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 90 | 772 | 24 | 2 | `tokens.json → provenance.tokens[8].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 182 | 772 | 24 | 2 | `tokens.json → provenance.tokens[8].windows[1].rgb` | 1 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 750 | 772 | 24 | 2 | `tokens.json → provenance.tokens[8].windows[2].rgb` | 1 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 806 | 772 | 24 | 2 | `tokens.json → provenance.tokens[8].windows[3].rgb` | 2 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 838 | 772 | 24 | 2 | `tokens.json → provenance.tokens[8].windows[4].rgb` | 1 |
+
+Frozen value: `tokens.json → provenance.tokens[8].median`; the normative value is
+`docs/governance/tokens.json` → `color.borderSubtle`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.10 accent — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 452 | 846 | 20 | 20 | `tokens.json → provenance.tokens[9].windows[0].rgb` | 0 |
+| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1544 | 898 | 20 | 20 | `tokens.json → provenance.tokens[9].windows[1].rgb` | 1 |
+| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 126 | 960 | 24 | 24 | `tokens.json → provenance.tokens[9].windows[2].rgb` | 1 |
+| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 884 | 950 | 20 | 20 | `tokens.json → provenance.tokens[9].windows[3].rgb` | 0 |
+| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1410 | 728 | 24 | 24 | `tokens.json → provenance.tokens[9].windows[4].rgb` | 1 |
+
+Frozen value: `tokens.json → provenance.tokens[9].median`; the normative value is
+`docs/governance/tokens.json` → `color.accent`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.11 success — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-home-primary.jpg` | 768 | 1104 | 24 | 24 | `tokens.json → provenance.tokens[10].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-home-primary.jpg` | 602 | 1056 | 24 | 24 | `tokens.json → provenance.tokens[10].windows[1].rgb` | 1 |
+| 3 | `docs/reference/patient-home-primary.jpg` | 798 | 1054 | 24 | 24 | `tokens.json → provenance.tokens[10].windows[2].rgb` | 1 |
+| 4 | `docs/reference/patient-home-primary.jpg` | 668 | 1064 | 24 | 24 | `tokens.json → provenance.tokens[10].windows[3].rgb` | 0 |
+| 5 | `docs/reference/patient-home-primary.jpg` | 1626 | 732 | 16 | 16 | `tokens.json → provenance.tokens[10].windows[4].rgb` | 1 |
+| 6 | `docs/reference/patient-home-primary.jpg` | 1702 | 734 | 16 | 16 | `tokens.json → provenance.tokens[10].windows[5].rgb` | 1 |
+
+Frozen value: `tokens.json → provenance.tokens[10].median`; the normative value is
+`docs/governance/tokens.json` → `color.success`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.12 warning — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/provider-home-primary.jpg` | 1712 | 518 | 16 | 6 | `tokens.json → provenance.tokens[11].windows[0].rgb` | 1 |
+| 2 | `docs/reference/provider-home-primary.jpg` | 1732 | 518 | 16 | 6 | `tokens.json → provenance.tokens[11].windows[1].rgb` | 1 |
+| 3 | `docs/reference/provider-home-primary.jpg` | 1752 | 518 | 16 | 6 | `tokens.json → provenance.tokens[11].windows[2].rgb` | 1 |
+| 4 | `docs/reference/provider-home-primary.jpg` | 1772 | 518 | 16 | 6 | `tokens.json → provenance.tokens[11].windows[3].rgb` | 1 |
+| 5 | `docs/reference/provider-home-primary.jpg` | 1792 | 518 | 16 | 6 | `tokens.json → provenance.tokens[11].windows[4].rgb` | 1 |
+
+Frozen value: `tokens.json → provenance.tokens[11].median`; the normative value is
+`docs/governance/tokens.json` → `color.warning`. Flags: `visionEstimate: false`,
+`ownerConfirm: true`.
+
+**Risk zone — owner confirmation required.** `warning` is the weakest-evidence token: the
+follow-up status amber is carried by a thin saturated track and a small pill, so the value is
+a thin-stroke anti-aliasing risk zone. It is flagged for owner confirmation at the D-08
+design gate.
+
+### 3.13 critical — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/provider-home-primary.jpg` | 2336 | 360 | 16 | 16 | `tokens.json → provenance.tokens[12].windows[0].rgb` | 1 |
+| 2 | `docs/reference/provider-home-primary.jpg` | 2274 | 406 | 16 | 16 | `tokens.json → provenance.tokens[12].windows[1].rgb` | 1 |
+| 3 | `docs/reference/provider-home-primary.jpg` | 2418 | 402 | 16 | 16 | `tokens.json → provenance.tokens[12].windows[2].rgb` | 1 |
+| 4 | `docs/reference/provider-home-primary.jpg` | 2398 | 406 | 16 | 16 | `tokens.json → provenance.tokens[12].windows[3].rgb` | 1 |
+| 5 | `docs/reference/provider-home-primary.jpg` | 2310 | 546 | 16 | 16 | `tokens.json → provenance.tokens[12].windows[4].rgb` | 1 |
+| 6 | `docs/reference/provider-home-primary.jpg` | 2306 | 318 | 16 | 16 | `tokens.json → provenance.tokens[12].windows[5].rgb` | 1 |
+
+Frozen value: `tokens.json → provenance.tokens[12].median`; the normative value is
+`docs/governance/tokens.json` → `color.critical`. Flags: `visionEstimate: false`,
+`ownerConfirm: true`.
+
+### 3.14 info — sampling record
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/patient-home-primary.jpg` | 1106 | 1030 | 20 | 20 | `tokens.json → provenance.tokens[13].windows[0].rgb` | 0 |
+| 2 | `docs/reference/patient-home-primary.jpg` | 1134 | 1090 | 20 | 20 | `tokens.json → provenance.tokens[13].windows[1].rgb` | 1 |
+| 3 | `docs/reference/patient-home-primary.jpg` | 1130 | 1040 | 16 | 16 | `tokens.json → provenance.tokens[13].windows[2].rgb` | 1 |
+| 4 | `docs/reference/patient-home-primary.jpg` | 1076 | 1094 | 16 | 16 | `tokens.json → provenance.tokens[13].windows[3].rgb` | 0 |
+| 5 | `docs/reference/patient-home-primary.jpg` | 1068 | 1072 | 12 | 12 | `tokens.json → provenance.tokens[13].windows[4].rgb` | 2 |
+
+Frozen value: `tokens.json → provenance.tokens[13].median`; the normative value is
+`docs/governance/tokens.json` → `color.info`. Flags: `visionEstimate: false`,
+`ownerConfirm: false`.
+
+### 3.15 Sampling method
+
+Per token, at least five disjoint 8-to-24px windows were placed at least 12px away from any
+text, icon, card edge, divider or node boundary. Each window was sub-scanned on a 4x4 grid and
+rejected if its per-channel spread exceeded 4/255. Each accepted window was re-sampled shifted
+plus and minus 4px horizontally and required to agree within plus/minus 2/255 per channel. The
+frozen value is the channel-wise median of the accepted windows. The method is ffmpeg
+region-average pixel sampling (crop, area-scale to a single pixel, rgb24). Every window and its
+reads are recorded in `docs/governance/tokens.json` → `provenance.tokens`.
+
+`docs/reference/patient-tracking-dashboard.jpg` was never sampled for design values because it
+is diagnostic evidence only — it is the old implementation, its role is `diagnostic`, and it is
+never a design source.
+
+## 4. Provider Home grammar
+
+**Binding source: `docs/reference/provider-home-primary.jpg`**
+
+- **Outer structure.** A left thin icon rail in the light `frame` carrying thin line icons
+  with no labels at this density; a top bar with a pill search input, the gold primary CTA
+  pill (icon plus dark text), a notification bell, and a provider profile with a chevron; a
+  three-column body with the Today's Schedule rail on the left (stacked compact appointment
+  cards carrying a time block, a name, an appointment type and action icons), the patient
+  folder grid in the centre, and a Critical Alerts panel plus Daily Stats on the right as 2x2
+  mini stat cards with sparklines.
+- **Accessible names (binding).** Every icon-only control ships an accessible name — rail
+  items, appointment-card action icons, the notification bell and the tab-bar icons. An
+  icon-only control with no accessible name never ships in the DOM; Phase 002 implements this
+  rather than guessing it.
+- **Folder grid.** `3 columns` measured at desktop; each folder is a `radius.lg` card
+  floating on `canvas`, with `surface` lighter than `canvas`; concise identity (name,
+  minimal age/sex or MRN, a compact status label, last activity, small contextual indicators).
+- **Status encoding.** Subtle semantic pills riding thin progress lines, using `success` for
+  normal, `info` for pending and `warning` for follow-up, and nothing else (D-04). Never one
+  saturated color per folder.
+- **Critical Alerts.** A soft salmon panel — the `critical` family at low intensity over
+  `surface` — with 3 to 4 alert rows and warning icons.
+- **Density.** Dense-but-scannable, with compact controls and no bulky tiles.
+- **Pop-out filter panel.** The Recent / Critical / Today's Schedule toggles are reference
+  interaction grammar for retrieval controls; Phase 004 owns the panel's exact form.
+
+Binding: layout, geometry, density, proportion, interaction patterns, color relationships.
+Not binding: the sample content visible in this image — see §9.
+
+## 5. Patient Workspace and D3 Timeline grammar
+
+**Binding source: `docs/reference/patient-workspace-timeline-primary.jpg`**
+
+- **Top bar.** A pill search input, a pill tab bar where the active tab is a raised pill in
+  the `surfaceRaised` family with an icon and the inactive tabs are flat text on the
+  container, an avatar with a name, and a bell with a state dot.
+- **Canonical tab set.** **Exactly** `Overview | AI Analytics | Visits | Medications | Labs | Imaging | Allergies | Genetics`. The `Vital Signs` and `Communication` tabs visible in the reference are sample content, not layout rules (D-13); vitals belong inside Overview and Communication is a provider/profile surface, not a primary clinical tab.
+- **Upper rows.** A compact patient identity card on the left spanning rows, plus stat cards
+  with large tabular numerals (Heart Rate, Blood Pressure with small pill chips, ECG
+  sparklines). Card and canvas tones sit at near parity and are separated by `shadow.raised`
+  (D-03, D-06).
+- **Timeline band** — the product's centerpiece and Phase 006's scope. A horizontal axis with
+  hairline month dividers and month labels below; circular event nodes with filled active
+  nodes in `accent` chartreuse carrying dark line icons; inactive/past nodes light with soft
+  shadows; small `accent` count badges on dense nodes; thin, calm, curved branch arcs to child
+  sub-events (medication and lab nodes) that are collision-aware and never cross into
+  spaghetti; event cards hanging from the line at overlay-level depth (`shadow.overlay`).
+- **Bottom scrubber (TL-06).** A full-width capsule track in the `surfaceMuted` family with
+  circular plus/minus zoom buttons, thin tick marks of varying heights, year labels, and a
+  dark rounded viewport window whose scrim is derived from `textPrimary` marking the current
+  visible range — the one sanctioned dark element, rendered at the overlay elevation (D-03).
+- **Bottom row.** Three cards with grabber dashes: Vital Signs History (wide, about `55`%) with
+  Month/Week range toggles as pills where the active one is emphasized, Recent Records (salmon
+  `critical`-family type pill) at about `22.5`%, and Labs (compact value rows with thin semantic
+  segments) at about `22.5`%.
+- **Interaction grammar (binding for Phase 006).** Drag-to-pan horizontally; `semantic zoom`
+  clustering individual events into micro-cards; event selection with contextual detail;
+  branch reveal; scrubber-driven range navigation; keyboard and touch where practical;
+  thousands of events without jank.
+
+Binding: layout, geometry, density, proportion, interaction patterns, color relationships.
+Not binding: the sample content visible in this image — see §9.
+
+## 6. Patient Home grammar
+
+**Binding source: `docs/reference/patient-home-primary.jpg`**
+
+- **Structure.** No persistent sidebar; a minimal top nav with a menu control, a label plus an
+  avatar with a state dot, and a bell; a 2x2 chunk layout.
+- **Next Action hero.** An eyebrow plus a bold action heading plus a subline plus a white
+  raised pill action. The medication object illustration is related-content illustration and is
+  allowed only where the reference shows it — never as unrelated decorative 3D.
+- **Health Snapshot.** Two stacked metric cards, each with a sparkline, a large tabular value,
+  and last/target lines.
+- **Quick Log.** One-tap entry with circular chips grouped into Symptoms and Vitals and split
+  by a hairline; the chips are decorative tints rendered from `canvas`, `surface` and
+  `borderSubtle` per D-04; below them sits a full-width inset note field at `surfaceMuted`.
+- **My Care Plan.** Nested cards — a Daily Checklist with checkbox states, Appointments, and a
+  Weight Goal.
+- **Density.** Sparse and airy, using the upper end of the same spacing scale (`space.xl`
+  through `space.2xl`), and the same tokens, geometry, depth and motion as the provider
+  surfaces. Lower density, identical design language.
+- **Never gamified.** No points, levels, streaks, fireworks or cartoon rewards.
+
+Binding: layout, geometry, density, proportion, interaction patterns, color relationships.
+Not binding: the sample content visible in this image — see §9.
+
