@@ -50,14 +50,14 @@ This roadmap operationalizes PRODUCT-MASTER-SPEC.md §19 (Phase 001–022) as a 
   4. No product code was written in this phase.
 
 **UI hint**: yes
-**Plans**: 3/6 plans executed
+**Plans**: 4/6 plans executed
 
 Plans:
 
 - [x] 01-01-PLAN.md
 - [x] 01-02-PLAN.md
 - [x] 01-03-PLAN.md
-- [ ] 01-04-PLAN.md
+- [x] 01-04-PLAN.md
 - [ ] 01-05-PLAN.md
 - [ ] 01-06-PLAN.md
 - [x] 01-01: TBD
@@ -468,7 +468,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Project Constitution + Reference UI Specification | 3/6 | In Progress|  |
+| 1. Project Constitution + Reference UI Specification | 4/6 | In Progress|  |
 | 2. Foundation and App Shell | 0/TBD | Not started | - |
 | 3. Authentication, Organizations, RBAC and RLS | 0/TBD | Not started | - |
 | 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |
