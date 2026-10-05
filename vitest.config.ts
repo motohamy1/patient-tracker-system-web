@@ -6,7 +6,9 @@ export default defineConfig({
     environment: "jsdom",
     include: ["tests/unit/**/*.test.ts", "tests/unit/**/*.test.tsx"],
     globals: true,
-    setupFiles: ["./tests/unit/setup.ts"],
+    // Explicit entry so the Testing Library matchers and cleanup are visible in the
+    // config rather than hidden behind an import inside setup.ts.
+    setupFiles: ["./tests/unit/setup.ts", "./tests/unit/testing-library.ts"],
   },
   resolve: {
     // MUST match the `paths` mapping in tsconfig.json so unit tests and the
