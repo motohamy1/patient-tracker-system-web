@@ -569,3 +569,100 @@ Not binding: the sample content visible in this image — see §9.
 Binding: layout, geometry, density, proportion, interaction patterns, color relationships.
 Not binding: the sample content visible in this image — see §9.
 
+---
+
+## 7. Copywriting contract
+
+**Binding rules.** Sentence case. No exclamation marks. Calm clinical verbs. No gamified
+vocabulary — no points, levels, streaks, rewards or celebration. No fabricated urgency.
+Destructive or clinically significant actions are always confirmed. Every major workspace has
+deliberate loading, empty, error, retry, permission-denied and offline-sync states: no generic
+"Loading…" screens (token-derived skeletons instead) and no blank panels. Permission-denied
+copy explains what access is lacking without leaking the existence of data.
+
+**Contract defaults.** These are defaults, not implemented copy — this phase ships no screens.
+Each owning phase finalizes its own strings within these rules.
+
+| Element | Contract default |
+|---|---|
+| Primary CTA (Provider Home — Phase 004 owns the final label) | A single verb plus noun, for example "Add New Patient". Never a vague "Get Started". |
+| Empty state heading | "No {record-type} yet" |
+| Empty state body | One line of what will appear here plus one next step, for example "Records will appear here as care progresses." |
+| Error state | Problem plus path: "Couldn't load {surface}. Check your connection and try again." plus a "Try again" action. |
+| Destructive confirmation | The explicit clinical verb as the heading, one consequence line, and a confirm button labeled with the verb itself (for example "Stop Lisinopril"). Never "OK/Cancel" for a clinical action. |
+
+---
+
+## 8. Acceptance gates
+
+### 8.1 Visual QA checklist
+
+`docs/governance/visual-qa-rules.md` is the **normative** copy of this gate; the table below
+mirrors it. That file is written by plan 01-05, which owns the mirror verification that the two
+tables agree — this plan neither reads nor diffs it.
+
+| # | Check | Pass condition |
+|---|---|---|
+| 1 | Outer structure | Columns, rails and grid match the cited per-surface grammar section (§4, §5 or §6); no reflow is invented. |
+| 2 | Color relationships | The frame renders as a light warm-gray (D-01); cards separate by shadow, not by border; accent occupies no more than 10% of the visible area (pixel-share estimate on a screenshot). |
+| 3 | Spacing rhythm | Every gap and padding value is one of `space.xs` through `space.2xl`; no page-level section gap exceeds 32px. |
+| 4 | Compactness | No control or card height exceeds its closest reference counterpart; no card carries one line of content or less. |
+| 5 | Card proportions | The provider folder grid is 3 columns at 1024px and above; the workspace bottom row is approximately 55 / 22.5 / 22.5 within plus or minus 3% of the measured widths. |
+| 6 | Pill controls | Navigation and compact controls use `radius.pill`; no control has a corner radius of 4px or less. |
+| 7 | Typography hierarchy | Only `font.size` values and the weights 400 and 600 appear; `tabular-nums` is set on every clinical and statistical value. |
+| 8 | Timeline proportions | Axis height, month-divider spacing, node diameter and branch stroke width are within plus or minus 10% of the reference measurements. |
+| 9 | Node/branch behavior | Filled nodes use `accent`; branches are thin, smooth and collision-free, with no crossings between sibling sub-event arcs. |
+| 10 | Bottom scrubber | The capsule track is in the `surfaceMuted` family, tick marks are present, year labels are present, and the dark viewport window renders at the overlay shadow level. |
+| 11 | Visual density | Provider and workspace surfaces read dense-but-scannable; patient home reads sparse at the upper spacing range; both read as one visual language. |
+| 12 | Accent restraint | Accent appears only on the reserved list (§2.1); status color is limited to `success` / `info` / `warning` (D-04). |
+
+**Reject conditions (§21).** Reject the phase if the surface looks like a generic SaaS dashboard
+even when the requested functionality works. Reject the phase if a new feature introduces a
+different visual language. Reject the phase if anything becomes gamified.
+
+### 8.2 Playwright visual-regression harness contract
+
+This is a **specification only**. The harness and its baselines are **built in Phase 002**
+(D-18); nothing in this phase implements, configures or runs it. No test file, no
+`tests/visual/` directory and no Playwright config exists in this phase.
+
+- **Viewports.** `1440x900` (canonical desktop), `1280x800`, `768x1024` (tablet), `390x844`
+  (mobile).
+- **Baseline naming.** `tests/visual/baselines/{surface}/{viewport}/{state}.png`, for example
+  `provider-home/1440x900/default.png`.
+- **States.** `default` and `reduced-motion`.
+- **Capture.** Against a production build; CSS animations disabled during capture;
+  `reduced-motion` captured via emulation.
+- **Tolerance.** `maxDiffPixelRatio: 0.01` and per-pixel `threshold: 0.2`. Any diff beyond
+  tolerance fails the gate.
+- **Baselines.** Committed, not gitignored. Regeneration is a deliberate
+  `--update-snapshots` act recorded in the phase that regenerated it.
+
+---
+
+## 9. Sample content — do not reuse
+
+**Rule first.** Layout, geometry, density and interaction patterns are the binding grammar;
+sample content is never copied into the product.
+
+The following categories of sample content visible in the reference images are never rendered
+by the product:
+
+- **Patient names** — `Sarah Miller`, `Robert Garcia`, `Tiffany Woodward`,
+  `Dr. Eleanor Vance`, `Dr. Smith`.
+- **Numeric IDs and MRNs.**
+- **Medications** — `Lisinopril 10mg`, `Metformin 500mg`.
+- **The `Cardiology` specialty label** — specialty is data-driven, never hardcoded in the
+  shell.
+- **The `Vital Signs` and `Communication` tabs** — the canonical patient-workspace nav is the
+  fixed 8-tab set in §5.
+- **Vitals values** — `72 bpm`, `118/75`, `98%`, `36.8°C`.
+- **Lab names** — `CBC Panel`, `Lipid Profile`, `Glucose`.
+- **Appointment and sample rows.**
+- **"Daily Stats" numbers.**
+
+Layout, geometry, density and interaction patterns are the binding grammar; sample content is
+not. `docs/governance/reference-manifest.json` carries the same list under `doNotReuse`, and
+the two lists must agree.
+
+
