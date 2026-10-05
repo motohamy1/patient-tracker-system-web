@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { MotionProvider } from "@/components/motion/motion-provider";
 import { directionOf, isLocale, locales } from "@/i18n/routing";
 
 /*
@@ -15,6 +16,11 @@ import { directionOf, isLocale, locales } from "@/i18n/routing";
  * strings in Phase 4, and locale negotiation (Accept-Language) belongs to the single
  * `proxy.ts` that Phase 2 also needs for Supabase session refresh — one proxy, two concerns,
  * composed deliberately rather than by accident.
+ *
+ * Motion: CSS owns static hover/focus affordances (Tailwind `motion-safe` /
+ * `motion-reduce`, keyed off `prefers-reduced-motion`); Motion owns enter/exit/layout
+ * motion via the single `<MotionProvider>` below. The two are independent mechanisms
+ * and both are configured.
  */
 
 export function generateStaticParams() {
@@ -36,7 +42,12 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={directionOf(locale)}>
-      <body>{children}</body>
+      <body>
+        {/* Client boundary starts and ends here: the provider is the only client
+            component in this shell, so lang/dir stay server-resolved on first paint
+            while every descendant inherits the reduced-motion policy. */}
+        <MotionProvider>{children}</MotionProvider>
+      </body>
     </html>
   );
 }
