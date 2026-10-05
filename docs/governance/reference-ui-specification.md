@@ -77,7 +77,7 @@ event card), which render at the overlay elevation and never as a frame.
 The core is shared by every surface. Surfaces vary their **density and composition**, never
 the token vocabulary, the geometry scale, the type scale or the elevation model.
 
-### 2.1 Color — the 14-token semantic contract
+### 2.1 Color — the 15-token semantic contract
 
 **60 / 30 / 10 role summary.** The visual weight of any surface splits roughly 60 / 30 / 10.
 
@@ -110,16 +110,18 @@ The table below is the human-facing token contract. The `Resolves to` cell of ev
 | `textSecondary` | Secondary text and axis labels | `docs/governance/tokens.json` → `color.textSecondary` | Muted gray for secondary text and axis labels. A thin-glyph blend flagged `visionEstimate` + `ownerConfirm` in `docs/governance/tokens.json` → `review`. |
 | `borderSubtle` | Hairline dividers and axis | `docs/governance/tokens.json` → `color.borderSubtle` | Hairline weight only (D-05): true dividers, table row lines, the timeline axis and the scrubber track. Never a card outline. |
 | `accent` | Chartreuse accent — see the reserved list | `docs/governance/tokens.json` → `color.accent` | Sampled from the filled circular event nodes of the timeline primary — D-02's named source. |
+| `accentSoft` | CTA gold accent — the provider-home primary CTA and key interaction buttons | `docs/governance/tokens.json` → `color.accentSoft` | Admitted at the D-08 owner design gate (2026-10-06): the D-02 accent split is confirmed, so this gold is a distinct hue from the timeline `accent` chartreuse (measured separation 17.12°). Sampled from the provider-home primary CTA pill. There is no third yellow token. |
 | `success` | Semantic "normal" status | `docs/governance/tokens.json` → `color.success` | The provider/patient "normal" status family. |
 | `warning` | Semantic "follow-up" status | `docs/governance/tokens.json` → `color.warning` | The "follow-up" amber; the weakest-evidence token, flagged `ownerConfirm` in `docs/governance/tokens.json` → `review` and pixel-confirmed at the D-08 gate. |
 | `critical` | Destructive and critical-alert accent | `docs/governance/tokens.json` → `color.critical` | The salmon-rose family measured on the Critical Alerts panel. Soft fills render at reduced opacity over `surface` — never a new token. |
 | `info` | Semantic "pending" status | `docs/governance/tokens.json` → `color.info` | The "pending" soft-blue pill family. |
 
-**Conditional fifteenth token.** `accentSoft` appears in `docs/governance/tokens.json` only if
-the D-02 split is confirmed at the design gate — timeline chartreuse for event nodes,
-milestones, active emphasis and state indicators; CTA gold for the primary CTA and key
-interaction buttons. No third yellow token, ever. Until the gate confirms the split, the
-single `accent` family carries both duties.
+**Admitted fifteenth token.** `accentSoft` was admitted at the D-08 owner design gate
+(2026-10-06). The D-02 accent split is confirmed: the timeline chartreuse (`accent`) carries
+event nodes, milestones, active emphasis and state indicators, while the CTA gold
+(`accentSoft`) carries the primary CTA and key interaction buttons. They are two distinct hues
+— the measured separation is 17.12°, above the 8° threshold — and there is no third yellow
+token, ever.
 
 #### Accent reserved for
 
@@ -248,11 +250,14 @@ derived without re-running sampling, and so the sampling coordinates live somewh
 can read.
 
 The record lives in `docs/governance/tokens.json` → `provenance.tokens`, an array of one
-entry per token in the canonical token order used below. Each entry carries its source image,
-the sampling method, its windows with their re-sample reads and deltas, the frozen median, and
-the `visionEstimate` / `ownerConfirm` flags. This document copies the **window coordinates and
-deltas only**; every sampled value is cited as a JSON path, because raw color values have
-exactly one home under `docs/governance/` and it is not this file.
+entry per sampled token in the canonical token order used below. Each entry carries its source
+image, the sampling method, its windows with their re-sample reads and deltas, the frozen
+median, and the `visionEstimate` / `ownerConfirm` flags. `accentSoft` was admitted at the
+D-08 owner design gate and is not a `provenance.tokens` entry; its window evidence is the
+D-02 cross-check recorded in `docs/governance/tokens.json` → `provenance.crossChecks[0]`, cited
+in §3.15. This document copies the **window coordinates and deltas only**; every sampled value
+is cited as a JSON path, because raw color values have exactly one home under
+`docs/governance/` and it is not this file.
 
 ### 3.1 frame — sampling record
 
@@ -467,7 +472,26 @@ Frozen value: `tokens.json → provenance.tokens[13].median`; the normative valu
 `docs/governance/tokens.json` → `color.info`. Flags: `visionEstimate: false`,
 `ownerConfirm: false`.
 
-### 3.15 Sampling method
+### 3.15 accentSoft — sampling record (D-02 cross-check)
+
+`accentSoft` was admitted at the D-08 owner design gate. Its evidence is the provider-home
+primary-CTA cross-check, not a `provenance.tokens` entry.
+
+| Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
+|---|---|---|---|---|---|---|---|
+| 1 | `docs/reference/provider-home-primary.jpg` | 1482 | 70 | 24 | 24 | `tokens.json → provenance.crossChecks[0].windows[0].rgb` | 0 |
+| 2 | `docs/reference/provider-home-primary.jpg` | 1568 | 70 | 24 | 24 | `tokens.json → provenance.crossChecks[0].windows[1].rgb` | 0 |
+| 3 | `docs/reference/provider-home-primary.jpg` | 1706 | 70 | 24 | 24 | `tokens.json → provenance.crossChecks[0].windows[2].rgb` | 0 |
+| 4 | `docs/reference/provider-home-primary.jpg` | 1820 | 70 | 24 | 24 | `tokens.json → provenance.crossChecks[0].windows[3].rgb` | 0 |
+| 5 | `docs/reference/provider-home-primary.jpg` | 1958 | 70 | 24 | 24 | `tokens.json → provenance.crossChecks[0].windows[4].rgb` | 0 |
+
+Frozen value: `tokens.json → provenance.crossChecks[0].median`; the normative value is
+`docs/governance/tokens.json` → `color.accentSoft`. The cross-check note records the timeline
+event-node median (the `accent` chartreuse) beside the provider-home CTA median (the
+`accentSoft` gold). Owner-confirmed at the D-08 gate: `review.accentSplit.ownerConfirmed` is
+`true` and the measured hue separation is 17.12°.
+
+### 3.16 Sampling method
 
 Per token, at least five disjoint 8-to-24px windows were placed at least 12px away from any
 text, icon, card edge, divider or node boundary. Each window was sub-scanned on a 4x4 grid and
@@ -475,7 +499,8 @@ rejected if its per-channel spread exceeded 4/255. Each accepted window was re-s
 plus and minus 4px horizontally and required to agree within plus/minus 2/255 per channel. The
 frozen value is the channel-wise median of the accepted windows. The method is ffmpeg
 region-average pixel sampling (crop, area-scale to a single pixel, rgb24). Every window and its
-reads are recorded in `docs/governance/tokens.json` → `provenance.tokens`.
+reads are recorded in `docs/governance/tokens.json` → `provenance.tokens` (`accentSoft`'s reads are
+the D-02 cross-check in `provenance.crossChecks`).
 
 `docs/reference/patient-tracking-dashboard.jpg` was never sampled for design values because it
 is diagnostic evidence only — it is the old implementation, its role is `diagnostic`, and it is

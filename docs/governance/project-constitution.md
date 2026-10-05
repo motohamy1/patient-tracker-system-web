@@ -143,15 +143,16 @@ elevation level, not as a frame.
 
 ### 4.3 Token discipline
 
-The 14 semantic color tokens are the only color vocabulary. They are named exactly:
+The 15 semantic color tokens are the only color vocabulary. They are named exactly:
 
 `frame`, `frameForeground`, `canvas`, `surface`, `surfaceMuted`, `surfaceRaised`,
-`textPrimary`, `textSecondary`, `borderSubtle`, `accent`, `success`, `warning`, `critical`,
-`info`.
+`textPrimary`, `textSecondary`, `borderSubtle`, `accent`, `accentSoft`, `success`, `warning`,
+`critical`, `info`.
 
-A fifteenth token, `accentSoft`, is admitted **only if** the D-02 accent split is confirmed
-at the design gate; when it is admitted it is added to this enumeration in the same edit.
-No other color token may be invented.
+`accentSoft` was admitted at the D-08 owner design gate (2026-10-06): the D-02 accent split is
+confirmed, so the timeline chartreuse (`accent`) and the provider-home primary-CTA gold
+(`accentSoft`) are two distinct hues — there is no third yellow token. No other color token may
+be invented.
 
 The canonical values live in `docs/governance/tokens.json`. This constitution deliberately
 restates no hex value — resolve every color through the JSON.
