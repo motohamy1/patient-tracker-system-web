@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 2
 current_phase_name: Foundation and App Shell
 status: executing
-stopped_at: Plan 02-05 complete
-last_updated: "2026-10-06T20:25:00.000Z"
+stopped_at: Completed 02-06-PLAN.md
+last_updated: "2026-10-06T20:45:58.569Z"
 last_activity: 2026-10-06
-last_activity_desc: Plan 02-05 complete (Surface/Icon/Button primitives; interrupted run recovered at the safe-resume gate)
+last_activity_desc: Plan 02-06 completed (commits 6f44677, 848cb4e, 2651f4e)
 progress:
   total_phases: 22
   completed_phases: 1
   total_plans: 17
-  completed_plans: 11
+  completed_plans: 12
   percent: 5
 ---
 
@@ -29,32 +29,32 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 ## Current Position
 
 Phase: 2 — Foundation and App Shell
-Plan: 5 of 11 complete (02-01…02-05 done; next: 02-06)
-Status: Executing phase 02. Plan 02-05 complete — the primitive set (`Surface`, `Icon`, `Button`, `index.ts` barrel) is built and its three tasks verified (24/24 unit tests, `npm run lint` 0 violations, `npm run build` exit 0). The run stalled after writing task-3's tests; the safe-resume gate caught it and the orchestrator closed it out (tests committed `221ee6a`, SUMMARY authored by the orchestrator). Next: plan 02-06 (motion module + `Pill`/`TabBar`/`CompactControl`).
-Last activity: 2026-10-06 — Plan 02-05 completed (commits 1ffdc2e, 7559754, 221ee6a)
+Plan: 6 of 11 complete (02-01…02-06 done; next: 02-07)
+Status: Executing phase 02. Plan 02-06 complete — the motion foundation (`src/lib/motion.ts`, `useShellMotion`) and the three interactive primitives (`Pill`, `TabBar`/`SegmentedControl`, `CompactControl`) are built and verified (91 unit tests, `npm run lint` 0 violations, `npm run build` type-check exit 0). Next: plan 02-07 (`Overlay`, which consumes `useShellMotion`).
+Last activity: 2026-10-06 — Plan 02-06 completed (commits 6f44677, 848cb4e, 2651f4e)
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
-Progress: [█████░░░░░░] 5/11 plans (45%)
+Progress: [██████░░░░░] 6/11 plans (55%)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 11
-- Average duration: 22m
-- Total execution time: 3h 36m (ten timed plans; 01-01 duration not recorded)
+- Total plans completed: 12
+- Average duration: 21m
+- Total execution time: 3h 47m (eleven timed plans; 01-01 duration not recorded)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 6 | - | - |
-| 02 | 5 | 2h19min | 28min |
+| 02 | 6 | 2h30min | 25min |
 
 **Recent Trend:**
 
-- Last 5 plans: 02-01 (1h26min), 02-02 (19min), 02-03 (11min), 02-04 (12min), 02-05 (11min)
+- Last 5 plans: 02-02 (19min), 02-03 (11min), 02-04 (12min), 02-05 (11min), 02-06 (11min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -71,6 +71,7 @@ Progress: [█████░░░░░░] 5/11 plans (45%)
 | Phase 01 P01-04 | 14min | 3 tasks | 1 file |
 | Phase 01 P01-03 | 25min | 3 tasks | 1 file |
 | Phase 01 P01-02 | 4min | 2 tasks | 4 files |
+| Phase 2 P02-06 | 11min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,9 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-02: the D-05/D-13 hook contract is load-bearing in package.json — prebuild = generate-tokens && check-design-tokens, lint = check-design-tokens only; the `_comment` field tells future readers the check must be appended to, never replaced by, an ESLint/Biome/Prettier pass (02-RESEARCH Pitfall 4)
 - [Phase 02]: 02-02: generated token artifacts made structurally uncommittable (.gitignore lists src/styles/tokens.generated.css and .ts; D-06); expected loud failure recorded live — `npm run tokens:generate` → exit 1, Cannot find module scripts/generate-tokens.mjs, intended until plan 02-03 (02-RESEARCH Pitfall 5)
 - [Phase 02]: 02-05: the primitive set is built — `Surface` (four variants over the frozen fills, no `border`/`ring` utility, `surfaceMuted` shadow-free), `Icon`/`makeIcon` (`strokeWidth` omitted from the public props and fixed at 1.5 after the rest spread) and `Button` (four variants, `accentSoft` primary never `accent`, `textPrimary` ink only, `iconOnly` `ariaLabel` required at the type level, 44px in both axes below 768px, `useReducedMotion` branch opacity-only at the fastest tokenized duration). 24 unit tests render with `react-dom/server` and a parsed DOM — no `@testing-library/react` added; `npm run lint` 0 violations, `npm run build` exit 0. The run stalled after writing task-3's tests; the safe-resume gate caught it and the orchestrator closed it out (tests committed `221ee6a`)
+- [Phase 2]: 02-06: useShellMotion resolves reduced motion truthily so a falsy first server render cannot flash full motion on hydration
+- [Phase 2]: 02-06: TabBar imports INSET_FILL from CompactControl rather than inlining a fill class, so the search wrapper and the tab container share one gate-selected value and a D-27 re-open needs no per-call-site edit
+- [Phase 2]: 02-06: the CompactControl test derives its expected inset fill from review.gateStatus and asserts the exported INSET_FILL against it, so re-opening the gate cannot leave a stale expectation
 
 ### Pending Todos
 
@@ -127,6 +131,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-06T20:25:00.000Z
-Stopped at: Plan 02-05 complete
-Resume file: .planning/phases/02-foundation-and-app-shell/02-CONTEXT.md
+Last session: 2026-10-06T20:43:41.546Z
+Stopped at: Completed 02-06-PLAN.md
+Resume file: None

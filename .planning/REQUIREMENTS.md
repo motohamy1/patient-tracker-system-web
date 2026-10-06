@@ -16,10 +16,10 @@ Derived from PRODUCT-MASTER-SPEC.md (authoritative control pack). Auto mode: all
 ### FOUND — App Shell, Routing, Primitives, Accessibility + Motion Baseline (Phase 2)
 
 - [ ] **FOUND-01**: As a user, the application presents a Next.js application shell with route structure and layout primitives, containing no fake clinical dashboard and no sample patient data beyond isolated development fixtures. (§19 Ph002)
-- [ ] **FOUND-02**: As a developer, I can build any screen from the shared primitive set — surfaces, buttons, pills, compact controls, modal/sheet primitives — instead of hand-rolling per-screen components. (§19 Ph002)
+- [x] **FOUND-02**: As a developer, I can build any screen from the shared primitive set — surfaces, buttons, pills, compact controls, modal/sheet primitives — instead of hand-rolling per-screen components. (§19 Ph002)
 - [ ] **FOUND-03**: As a user, typography and surface styling across the app follow one hierarchy derived from the reference (compact, precise, information-dense), not per-screen improvisation. (§2.3, §19 Ph002)
-- [ ] **FOUND-04**: As a keyboard or assistive-technology user, the shell and primitives meet the accessibility baseline (focus order, labels, contrast against frozen tokens). (§19 Ph002)
-- [ ] **FOUND-05**: As a user with reduced-motion preference, all shell-level motion (entrance/exit, layout transitions) is fast, smooth, subtle, interruptible, and fully disabled or reduced when my OS requests it. (§9)
+- [x] **FOUND-04**: As a keyboard or assistive-technology user, the shell and primitives meet the accessibility baseline (focus order, labels, contrast against frozen tokens). (§19 Ph002)
+- [x] **FOUND-05**: As a user with reduced-motion preference, all shell-level motion (entrance/exit, layout transitions) is fast, smooth, subtle, interruptible, and fully disabled or reduced when my OS requests it. (§9)
 
 ### AUTH — Authentication, Org Membership, RBAC, RLS, Audit (Phase 3)
 
@@ -205,10 +205,10 @@ Deferred without a phase in v1:
 | GOV-05 | 1 | Complete |
 | GOV-06 | 1 | Complete |
 | FOUND-01 | 2 | Pending |
-| FOUND-02 | 2 | Pending |
+| FOUND-02 | 2 | Complete |
 | FOUND-03 | 2 | Pending |
-| FOUND-04 | 2 | Pending |
-| FOUND-05 | 2 | Pending |
+| FOUND-04 | 2 | Complete |
+| FOUND-05 | 2 | Complete |
 | AUTH-01 | 3 | Pending |
 | AUTH-02 | 3 | Pending |
 | AUTH-03 | 3 | Pending |

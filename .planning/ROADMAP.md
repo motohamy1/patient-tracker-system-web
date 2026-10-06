@@ -75,7 +75,7 @@ Plans:
   4. No fake clinical dashboard or sample patient data exists outside isolated development fixtures.
 
 **UI hint**: yes
-**Plans**: 5/11 plans executed
+**Plans**: 6/11 plans executed
 
 Plans:
 
@@ -84,7 +84,7 @@ Plans:
 - [x] 02-03-PLAN.md — token codegen (`@theme inline` + `:root`), globals.css, root layout, vitest config
 - [x] 02-04-PLAN.md — `scripts/check-design-tokens.mjs` (the three machine checks)
 - [x] 02-05-PLAN.md — `Surface`, `Icon`, `Button`
-- [ ] 02-06-PLAN.md — motion vocabulary, `Pill`, `TabBar`/`SegmentedControl`, `CompactControl`
+- [x] 02-06-PLAN.md — motion vocabulary, `Pill`, `TabBar`/`SegmentedControl`, `CompactControl`
 - [ ] 02-07-PLAN.md — `EmptyState`, hand-rolled `Overlay` (modal/sheet)
 - [ ] 02-08-PLAN.md — provider route group, icon rail, 8 tab routes
 - [ ] 02-09-PLAN.md — auth/patient route groups, `not-found.tsx`, dev fixtures
@@ -491,7 +491,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Project Constitution + Reference UI Specification | 6/6 | Complete    | 2026-10-05 |
-| 2. Foundation and App Shell | 5/11 | In Progress|  |
+| 2. Foundation and App Shell | 6/11 | In Progress|  |
 | 3. Authentication, Organizations, RBAC and RLS | 0/TBD | Not started | - |
 | 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |
 | 5. Patient Workspace / Overview | 0/TBD | Not started | - |
