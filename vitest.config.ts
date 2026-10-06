@@ -20,7 +20,10 @@ export default defineConfig({
         test: {
           name: 'node',
           environment: 'node',
-          include: ['tests/unit/scripts/**'],
+          // `tests/unit/scripts/**` is the codegen/check tooling; the top-level
+          // `.test.ts` glob owns non-component unit tests that read the
+          // filesystem (the D-18 fixture scope/reachability test).
+          include: ['tests/unit/scripts/**', 'tests/unit/*.test.ts'],
         },
       },
       {
