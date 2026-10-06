@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Test and coverage output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Environment variables — never commit any variant (D-26)
+.env
+.env.local
+.env.production
+.env*.local
+
+# Generated token artifacts — D-06: `docs/governance/tokens.json` is the only
+# committed source of token values; these are build outputs of
+# scripts/generate-tokens.mjs (plan 02-03) and must never be committed.
+src/styles/tokens.generated.css
+src/styles/tokens.generated.ts
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
