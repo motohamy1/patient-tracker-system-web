@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 2
 current_phase_name: Foundation and App Shell
 status: executing
-stopped_at: Completed 02-07-PLAN.md
-last_updated: "2026-10-06T21:20:46.479Z"
+stopped_at: Completed 02-08-PLAN.md
+last_updated: "2026-10-06T21:52:32.005Z"
 last_activity: 2026-10-06
-last_activity_desc: Plan 02-07 completed (commits 52ffa48, 94701ab, 8e3c146)
+last_activity_desc: Plan 02-08 completed (commits ec928de, 84a9835)
 progress:
   total_phases: 22
   completed_phases: 1
   total_plans: 17
-  completed_plans: 13
+  completed_plans: 14
   percent: 5
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 ## Current Position
 
 Phase: 2 — Foundation and App Shell
-Plan: 7 of 11 complete (02-01…02-07 done; next: 02-08)
-Status: Executing phase 02. Plan 02-07 complete — the shared `EmptyState` primitive and the hand-rolled `Overlay` (modal ≥1024px / bottom sheet below, `useFocusTrap`, `useScrollLock`) are built and verified (109 unit tests, `npm run lint` 0 violations, `npm run build` type-check exit 0). Next: plan 02-08 (the five empty shells, each rendering `EmptyState`).
-Last activity: 2026-10-06 — Plan 02-07 completed (commits 52ffa48, 94701ab, 8e3c146)
+Plan: 8 of 11 complete (02-01…02-08 done; next: 02-09)
+Status: Executing phase 02. Plan 02-08 complete — the provider route group is built: the persistent rail, the provider top bar, the mobile pill strip, the workspace top bar, and the ten provider routes (the eight workspace tabs as real nested routes, the workspace redirect, and the `/provider` home). `npm run build` lists every route, `npm run lint` is 0 violations, 109 unit tests pass. Next: plan 02-09.
+Last activity: 2026-10-06 — Plan 02-08 completed (commits ec928de, 84a9835)
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
-Progress: [███████░░░] 7/11 plans (64%)
+Progress: [████████░░] 8/11 plans (73%)
 
 ## Performance Metrics
 
@@ -73,6 +73,7 @@ Progress: [███████░░░] 7/11 plans (64%)
 | Phase 01 P01-02 | 4min | 2 tasks | 4 files |
 | Phase 2 P02-06 | 11min | 3 tasks | 8 files |
 | Phase 02 P02-07 | 14min | 3 tasks | 7 files |
+| Phase 02 P02-08 | 33 min | 2 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,9 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-07: EmptyState wrapper/body max-widths are explicit rem values (max-w-[32rem]/max-w-[24rem]) because max-w-lg/max-w-sm collide with the --spacing-lg/--spacing-sm tokens and resolve to 16px/8px in this theme
 - [Phase 02]: 02-07: the Overlay gates its focus-trap/scroll-lock active flag on open && mounted, because the portal and its container ref only exist after the client mount effect
 - [Phase 02]: 02-07: the useShellMotion().ease() cubic-bezier tuple assertion lives at the Overlay call site; src/lib/motion.ts is outside this plan's files_modified set and was left untouched
+- [Phase 02]: WorkspaceTopBar stays a Server Component and receives its activeSlug from each workspace route; the workspace layout hosts only the frame, because an App Router layout cannot read its child segment and D-03 forbids middleware and client-side path/role reads
+- [Phase 02]: the tab glyphs are rendered as elements and passed to the client Button as children, because a Lucide component reference is a function and cannot cross the Server-to-Client boundary
+- [Phase 02]: the eight workspace routes each inline the fixed 02-UI-SPEC.md 9.1 empty-state copy so a directory grep matches exactly the eight tab pages, and the shared route data lives in tabs.ts
 
 ### Pending Todos
 
@@ -135,6 +139,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-06T21:19:53.996Z
-Stopped at: Completed 02-07-PLAN.md
+Last session: 2026-10-06T21:52:31.991Z
+Stopped at: Completed 02-08-PLAN.md
 Resume file: None
