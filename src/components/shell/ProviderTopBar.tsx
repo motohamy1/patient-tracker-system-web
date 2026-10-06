@@ -17,6 +17,11 @@ import { Bell, ChevronDown, ScanLine } from 'lucide-react';
 import { Button, makeIcon } from '@/components/primitives';
 import { CompactControl } from '@/components/primitives/CompactControl';
 
+// The glyphs are rendered HERE, as elements, and passed to `Button` as children:
+// a component reference (the `icon` prop) is a function and cannot cross the
+// Server-to-Client boundary into the client `Button`, but a rendered element can.
+const ScanGlyph = makeIcon(ScanLine);
+const BellGlyph = makeIcon(Bell);
 const ChevronGlyph = makeIcon(ChevronDown);
 
 export function ProviderTopBar() {
@@ -30,10 +35,13 @@ export function ProviderTopBar() {
         className="max-md:hidden"
       />
       <div className="ml-auto flex items-center gap-md">
-        <Button variant="primary" icon={ScanLine} disabled>
+        <Button variant="primary" disabled>
+          <ScanGlyph size="sm" />
           Add new patient
         </Button>
-        <Button variant="iconOnly" ariaLabel="Notifications" icon={Bell} />
+        <Button variant="iconOnly" ariaLabel="Notifications">
+          <BellGlyph size="lg" />
+        </Button>
         <div className="flex items-center gap-sm">
           <span aria-hidden="true" className="size-11 shrink-0 rounded-pill bg-surface-raised" />
           <span className="flex flex-col">
