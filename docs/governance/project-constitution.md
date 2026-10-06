@@ -116,7 +116,8 @@ The reference establishes three major visual families:
    milestones, active emphasis, and key state indicators only.
 
 **Substitution ban.** Never substitute these families with generic Tailwind
-blue/indigo/purple healthcare colors, and never choose arbitrary theme colors merely
+blue/indigo/purple healthcare colors — the `blue-`, `indigo-`, `violet-` and `purple-`
+utilities banned by `INV-01`/`INV-03` — and never choose arbitrary theme colors merely
 because they look "modern."
 
 ### 4.2 The D-01 light-frame interpretation
@@ -229,8 +230,8 @@ them is rejected at its review gate.
 
 **Explicit violations (reject on sight, §27 / §16), each with its reason:**
 
-- Generic Tailwind `blue/indigo/purple` healthcare substitution — violates the §2.2
-  substitution ban.
+- Generic Tailwind `blue/indigo/purple` healthcare substitution — including the `violet-`
+  utility that `INV-03` bans — violates the §2.2 substitution ban.
 - Generic dashboard chrome unrelated to the reference — abandons the reference grammar.
 - A `saturated multi-color` redesign (every folder a different color) — breaks the D-04
   multi-hue restriction.
@@ -269,7 +270,9 @@ written rules only.
 - **`no-generic-healthcare-blue`** — no generic Tailwind blue/indigo/purple default
   palette anywhere in styling (§2.2 substitution ban). **Scope:** every source file
   including theme and config. **Failure:** a generic blue/indigo/purple default-palette
-  color in any styling location.
+  color in any styling location. The check implements the `INV-01`/`INV-03` grep
+  vocabulary exactly — `blue-`, `indigo-`, `violet-` and `purple-` — so a `violet-`
+  utility fails this check too.
 - **`token-reference-required`** — component styling must reference the semantic token
   utilities; ad-hoc color literals and default Tailwind color utilities are rejected.
   **Scope:** every component and layout file. **Failure:** component styling that does
