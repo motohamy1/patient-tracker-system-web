@@ -20,6 +20,16 @@ import { Gallery } from '@/components/dev/Gallery';
 import { isDevRouteAllowed } from '@/lib/dev/dev-route-gate';
 import { EMPTY_PATIENT_LIST } from '@/lib/dev/fixtures';
 
+// The gate MUST be evaluated per request, so the route is forced dynamic. A
+// statically prerendered route bakes the gate's build-time result into the
+// served HTML: a build without the flag would serve a frozen 404 (the visual
+// harness could never reach the gallery), and a build WITH the flag would ship
+// the gallery inside the deployment artifacts, defeating D-26's claim that the
+// route is absent from every real deployment. Runtime evaluation is what makes
+// `ALLOW_DEV_ROUTES` a real switch and keeps the dev route out of production
+// (ASVS V14).
+export const dynamic = 'force-dynamic';
+
 export default function DevGalleryPage() {
   if (!isDevRouteAllowed()) notFound();
 
