@@ -148,6 +148,18 @@ Out of scope:
   `surfaceRaised` (elevated card). Separation is by the two frozen shadows only; **no card
   renders a visible full-perimeter border** (INV-16).
 
+### Owner amendment (2026-10-06, after research)
+
+- **D-26:** **Amends D-16.** The dev-only gallery is gated on
+  `NODE_ENV === 'production' && !process.env.ALLOW_DEV_ROUTES`, where
+  `ALLOW_DEV_ROUTES` is set **only** in `playwright.config.ts` → `webServer.env`. Reason:
+  D-16's literal `NODE_ENV` gate made the gallery unreachable under `next start`, which
+  contradicted D-14 (baselines for the gallery) and `docs/governance/visual-qa-rules.md`
+  §2 (capture against a production build). The gallery remains absent from every real
+  deployment and out of the product route map; only the visual harness can reach it.
+  `ALLOW_DEV_ROUTES` must never appear in `.env`, `.env.production`, or any deployment
+  config — a dev-only route leaking to production is a security finding (ASVS V14).
+
 ### Carried forward from Phase 001 (already decided — not re-litigated)
 
 - 15 frozen color tokens plus the radius / spacing / font / shadow / motion scales in
