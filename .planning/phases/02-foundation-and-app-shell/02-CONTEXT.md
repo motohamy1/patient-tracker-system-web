@@ -159,6 +159,20 @@ Out of scope:
   deployment and out of the product route map; only the visual harness can reach it.
   `ALLOW_DEV_ROUTES` must never appear in `.env`, `.env.production`, or any deployment
   config — a dev-only route leaking to production is a security finding (ASVS V14).
+- **D-27:** **Amends the frozen palette for two tokens only.** `frame`, `surface`
+  and `surfaceMuted` are byte-identical at the frozen values, so a `surfaceMuted`
+  control (search field, inset note field, scrubber track, icon toggles, tab bar
+  container) renders with **no visible boundary** — and `INV-15`/`INV-16` forbid the
+  border that would fix it while `INV-13` forbids a third shadow. Owner decision
+  (2026-10-06): **re-open `frame` and `surfaceMuted` and re-sample them from the
+  binding references** using the Phase 001 method
+  (`docs/governance/reference-ui-specification.md` §3 — ≥5 disjoint 8–24px windows,
+  4×4 sub-scan spread ≤4/255, ±4px agreement, channel-wise median), so the four
+  surface roles are visually distinct. **All 13 other tokens stay frozen**; no new
+  token may be added (INV-01). The re-sampled values require the same owner visual
+  review the original freeze required. Until they are frozen, `surfaceRaised` +
+  `shadow.raised` is the fallback permitted treatment for any control needing a
+  visible edge — recorded in `02-UI-SPEC.md` §6 as Reviewer item C.
 
 ### Carried forward from Phase 001 (already decided — not re-litigated)
 
