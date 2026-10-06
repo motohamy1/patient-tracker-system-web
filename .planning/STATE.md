@@ -4,11 +4,11 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 2
 current_phase_name: Foundation and App Shell
-status: completed
-stopped_at: Phase 2 context gathered
-last_updated: "2026-10-06T01:47:38.975Z"
+status: in_progress
+stopped_at: Plan 02-01 complete
+last_updated: "2026-10-06T19:04:00.000Z"
 last_activity: 2026-10-06
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
+last_activity_desc: Plan 02-01 complete (D-27 re-sample + owner re-freeze gate closed)
 progress:
   total_phases: 22
   completed_phases: 1
@@ -29,37 +29,40 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 ## Current Position
 
 Phase: 2 — Foundation and App Shell
-Plan: Not started (11 plans ready to execute)
-Status: Ready to execute — planning complete on every gate. 11 plans across 10 waves; plan-checker passed with 0 blockers; decision coverage 27/27 and post-planning gap analysis 33/33 items covered. Research (`02-RESEARCH.md`), validation (`02-VALIDATION.md`, `nyquist_compliant: true`) and the verified UI design contract (`02-UI-SPEC.md`, approved 6/6 dimensions) are all in place.
-Last activity: 2026-10-06 — Phase 02 planned (11 plans, 10 waves)
+Plan: 3 of 11 complete (02-01 done, 02-02 done; next: 02-03)
+Status: Executing phase 02 wave 1. Plan 02-01 complete (D-27 re-sampled color.frame #F1F4F8 and color.surfaceMuted #E8E8ED with four-gate provenance; owner re-freeze gate closed approved-with-changes on 2026-10-06, ownerConfirm true on both records, resume signal resume:02-03). Plan 02-02 complete (repository scaffold, 13 pinned packages with committed lockfile, Chromium installed, D-05/D-13 hook contract in package.json, D-06 gitignore). Next: plan 02-03 (app shell + routes).
+Last activity: 2026-10-06 — Plan 02-01 completed (re-sample committed b3997e2, gate + summary committed 07398f4, 004d98c)
 
-Execution note: plan 02-01 opens with a **blocking owner visual-review gate** (CONTEXT.md D-27) — it re-samples `frame` and `surfaceMuted`, which are byte-identical to `surface` at the frozen values, so every inset control currently renders with no visible boundary. The gate must close before plan 02-05 onward consumes the tokens.
+Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
-Progress: [░░░░░░░░░░░░░░░░] 0/11 plans (0%)
+Progress: [██░░░░░░░░░░░░░░] 2/11 plans (18%)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 6
-- Average duration: 34m
-- Total execution time: 3h 27m
+- Total plans completed: 8
+- Average duration: 39m
+- Total execution time: 5h 12m
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 6 | - | - |
+| 02 | 2 | 1h45min | 52min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-02 (4min), 01-03 (25min), 01-04 (14min), 01-05 (12min), 01-06 (22min)
+- Last 5 plans: 01-04 (14min), 01-05 (12min), 01-06 (22min), 02-02 (19min), 02-01 (1h26min)
 - Trend: —
 
 *Updated after each plan completion*
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
+| Phase 02 P02-01 | 1h26min | 3 tasks | 2 files |
+| Phase 02 P02-02 | 19min | 2 tasks | 7 files |
 | Phase 01 P01-06 | 22min | 4 tasks | 6 files |
 | Phase 01 P01-05 | 12min | 3 tasks | 2 files |
 | Phase 01 P01-04 | 14min | 3 tasks | 1 file |
@@ -95,6 +98,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-06: D-08 owner gate adjudicated by the product owner on 2026-10-06 — `gateStatus: approved-with-changes`; exactly one color key `accentSoft` (`#FFCE03`, the recorded `provenance.crossChecks[0].median`, not the plan prose `#FFCE04`) admitted immediately after `accent`; all four weak-evidence tokens (`frameForeground` `#A9ACB0`, `textSecondary` `#C5C7CB`, `warning` `#FFC30C`, `critical` `#FFCBC8`) and the D-01 gray reading confirmed frozen as sampled
 - [Phase 01]: 01-06: clean-cutover vocabulary sweep — `project-constitution.md` §4.3, `reference-ui-specification.md` §2.1/§3 and `ui-invariants.md` §1 now enumerate 15 tokens; no governance document still claims a 14-key complete set or that `accentSoft` is withheld; raw hex remains confined to `tokens.json`
 - [Phase 01]: 01-06: full-package sweep passed — 8/8 governance files, GOV-01…GOV-06 evidenced, 17 INV rows, 12 QA rows, zero stray hex outside `tokens.json`, the D-12 rows point at `patient-tracking-dashboard.jpg`, the phase fence held (no `package.json`/`src`/`tokens.css`/configs/tests), and `GATE-CLOSED`. Phase 002 is unblocked
+- [Phase 02]: 02-02: scaffold locked — 13 audited packages pinned exactly (next 16.3.8, react/react-dom 19.3.0, tailwindcss + @tailwindcss/postcss 4.3.3, motion 14.0.0, gsap 3.15.0, lucide-react 1.52.0; typescript ~5.9 → 5.9.3, @playwright/test 1.63.0, vitest 5.0.3, @vitejs/plugin-react 6.1.2, jsdom 30.1.2, @types/* 26.6.4/19.3.0/19.3.0); package-lock.json (199 packages) committed at `a69156a`; Chromium chromium-1243 installed
+- [Phase 02]: 02-02: the D-05/D-13 hook contract is load-bearing in package.json — prebuild = generate-tokens && check-design-tokens, lint = check-design-tokens only; the `_comment` field tells future readers the check must be appended to, never replaced by, an ESLint/Biome/Prettier pass (02-RESEARCH Pitfall 4)
+- [Phase 02]: 02-02: generated token artifacts made structurally uncommittable (.gitignore lists src/styles/tokens.generated.css and .ts; D-06); expected loud failure recorded live — `npm run tokens:generate` → exit 1, Cannot find module scripts/generate-tokens.mjs, intended until plan 02-03 (02-RESEARCH Pitfall 5)
 
 ### Pending Todos
 
@@ -117,6 +123,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-06T01:47:38.963Z
-Stopped at: Phase 2 context gathered
+Last session: 2026-10-06T19:04:00.000Z
+Stopped at: Plan 02-01 complete
 Resume file: .planning/phases/02-foundation-and-app-shell/02-CONTEXT.md
