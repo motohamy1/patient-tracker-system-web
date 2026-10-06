@@ -60,7 +60,6 @@ Plans:
 - [x] 01-04-PLAN.md
 - [x] 01-05-PLAN.md
 - [x] 01-06-PLAN.md
-- [x] 01-01: TBD
 
 ### Phase 2: Foundation and App Shell
 
@@ -468,7 +467,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Project Constitution + Reference UI Specification | 6/6 | Complete   | 2026-10-05 |
+| 1. Project Constitution + Reference UI Specification | 6/6 | Complete    | 2026-10-05 |
 | 2. Foundation and App Shell | 0/TBD | Not started | - |
 | 3. Authentication, Organizations, RBAC and RLS | 0/TBD | Not started | - |
 | 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |

@@ -6,12 +6,12 @@ Derived from PRODUCT-MASTER-SPEC.md (authoritative control pack). Auto mode: all
 
 ### GOV — Project Constitution, UI Design Contract, Invariants, Tokens (Phase 1)
 
-- [ ] **GOV-01**: As a team member, I can consult a permanent project constitution that records the source-of-truth hierarchy (constitution → reference images → UI spec → phase spec → plan → tasks → repository) so every later decision has a defined authority order. (§1, §19 Ph001)
-- [ ] **GOV-02**: As a team member, I can consult a Reference UI Specification / UI design contract that registers the three per-surface primary references (`provider-home-primary.jpg`, `patient-workspace-timeline-primary.jpg`, `patient-home-primary.jpg`) and states the old screenshot is diagnostic evidence only. (§2, §19 Ph001)
-- [ ] **GOV-03**: As a team member, I can consult UI invariants that must not drift (visual character: premium, clinical, calm, organized, dense-but-scannable, restrained; geometry: pills, rounded cards, soft corners; depth: subtle) so any implementation can be checked against them. (§2.1–§2.4, §19 Ph001)
-- [ ] **GOV-04**: As a team member, I can consult frozen semantic design tokens (`frame`, `frameForeground`, `canvas`, `surface`, `surfaceMuted`, `surfaceRaised`, `textPrimary`, `textSecondary`, `borderSubtle`, `accent`, `success`, `warning`, `critical`, `info`) derived from the olive/ivory/yellow reference families, with no scattered raw hex anywhere in the product. (§2.2)
-- [ ] **GOV-05**: As a team member, I can consult recorded visual QA rules, responsive design rules, and motion rules so phase acceptance has objective visual criteria. (§19 Ph001, §21, §26, §9)
-- [ ] **GOV-06**: As a team member, I can consult explicit anti-generic-SaaS and anti-gamification constraints in the constitution so drift is rejected at review time, not after release. (§2.1, §19 Ph001)
+- [x] **GOV-01**: As a team member, I can consult a permanent project constitution that records the source-of-truth hierarchy (constitution → reference images → UI spec → phase spec → plan → tasks → repository) so every later decision has a defined authority order. (§1, §19 Ph001)
+- [x] **GOV-02**: As a team member, I can consult a Reference UI Specification / UI design contract that registers the three per-surface primary references (`provider-home-primary.jpg`, `patient-workspace-timeline-primary.jpg`, `patient-home-primary.jpg`) and states the old screenshot is diagnostic evidence only. (§2, §19 Ph001)
+- [x] **GOV-03**: As a team member, I can consult UI invariants that must not drift (visual character: premium, clinical, calm, organized, dense-but-scannable, restrained; geometry: pills, rounded cards, soft corners; depth: subtle) so any implementation can be checked against them. (§2.1–§2.4, §19 Ph001)
+- [x] **GOV-04**: As a team member, I can consult frozen semantic design tokens (`frame`, `frameForeground`, `canvas`, `surface`, `surfaceMuted`, `surfaceRaised`, `textPrimary`, `textSecondary`, `borderSubtle`, `accent`, `success`, `warning`, `critical`, `info`) derived from the olive/ivory/yellow reference families, with no scattered raw hex anywhere in the product. (§2.2)
+- [x] **GOV-05**: As a team member, I can consult recorded visual QA rules, responsive design rules, and motion rules so phase acceptance has objective visual criteria. (§19 Ph001, §21, §26, §9)
+- [x] **GOV-06**: As a team member, I can consult explicit anti-generic-SaaS and anti-gamification constraints in the constitution so drift is rejected at review time, not after release. (§2.1, §19 Ph001)
 
 ### FOUND — App Shell, Routing, Primitives, Accessibility + Motion Baseline (Phase 2)
 
@@ -198,12 +198,12 @@ Deferred without a phase in v1:
 
 | REQ-ID | Phase | Status |
 |---|---|---|
-| GOV-01 | 1 | Pending |
-| GOV-02 | 1 | Pending |
-| GOV-03 | 1 | Pending |
-| GOV-04 | 1 | Pending |
-| GOV-05 | 1 | Pending |
-| GOV-06 | 1 | Pending |
+| GOV-01 | 1 | Complete |
+| GOV-02 | 1 | Complete |
+| GOV-03 | 1 | Complete |
+| GOV-04 | 1 | Complete |
+| GOV-05 | 1 | Complete |
+| GOV-06 | 1 | Complete |
 | FOUND-01 | 2 | Pending |
 | FOUND-02 | 2 | Pending |
 | FOUND-03 | 2 | Pending |
