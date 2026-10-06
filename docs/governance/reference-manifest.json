@@ -13,7 +13,7 @@
         "§2.3",
         "§2.4",
         "§21",
-        "reference-ui-specification.md#provider-home-grammar"
+        "reference-ui-specification.md#4-provider-home-grammar"
       ]
     },
     {
@@ -25,7 +25,7 @@
         "§8.1",
         "§8.2",
         "§8.6",
-        "reference-ui-specification.md#patient-workspace-and-d3-timeline-grammar"
+        "reference-ui-specification.md#5-patient-workspace-and-d3-timeline-grammar"
       ]
     },
     {
@@ -35,7 +35,7 @@
       "governs": [
         "§2",
         "§14",
-        "reference-ui-specification.md#patient-home-grammar"
+        "reference-ui-specification.md#6-patient-home-grammar"
       ]
     },
     {
@@ -91,6 +91,6 @@
       "category": "Daily Stats numbers",
       "note": "value-level category: no reference statistic is a product value"
     },
-    "rule": "sample content is not binding grammar - see reference-ui-specification.md#sample-content-do-not-reuse"
+    "rule": "sample content is not binding grammar - see reference-ui-specification.md#9-sample-content--do-not-reuse"
   }
 }
