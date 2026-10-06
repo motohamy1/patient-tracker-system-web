@@ -104,7 +104,7 @@ The table below is the human-facing token contract. The `Resolves to` cell of ev
 | `frameForeground` | Ink of frame icons and frame labels | `docs/governance/tokens.json` → `color.frameForeground` | The dark ink of frame icons and labels. The reference's icon strokes are 2–3px at sampling resolution, so the frozen value is the darkest window that satisfies the agreement gate — an ink/background blend flagged `visionEstimate` + `ownerConfirm` in `docs/governance/tokens.json` → `review`, adjudicated at the D-08 gate. |
 | `canvas` | Workspace field — the outer page background | `docs/governance/tokens.json` → `color.canvas` | The timeline-primary outer field; D-06 names the timeline primary as the canvas/surface exemplar. |
 | `surface` | Card fill | `docs/governance/tokens.json` → `color.surface` | Card fills, one step lighter and cooler than `canvas` per D-06; the reference separates cards from the field by shadow first. |
-| `surfaceMuted` | Inset panel fill | `docs/governance/tokens.json` → `color.surfaceMuted` | The half-step between `canvas` and `surface`, used for inset panels — the scrubber track and the quick-log note field. |
+| `surfaceMuted` | Inset panel fill | `docs/governance/tokens.json` → `color.surfaceMuted` | Inset panel fill — the quick-log note field (the D-27 re-sampled anchor) and the scrubber track. Re-opened and re-sampled from the binding references by D-27 on 2026-10-06; value and provenance in `docs/governance/tokens.json` → `color.surfaceMuted` and `provenance.tokens[4]`. |
 | `surfaceRaised` | Raised card and modal fill | `docs/governance/tokens.json` → `color.surfaceRaised` | The `surface` family plus `shadow.raised`, used for cards and modals (D-03). |
 | `textPrimary` | Primary text and primary ink | `docs/governance/tokens.json` → `color.textPrimary` | Near-black warm gray, **never pure black** (D-06). Frozen from the large flat dark neutral of the timeline scrubber viewport window and the MRI event-card overlay; the reference's primary ink is pure black and fails every window gate, which D-06 forbids freezing. |
 | `textSecondary` | Secondary text and axis labels | `docs/governance/tokens.json` → `color.textSecondary` | Muted gray for secondary text and axis labels. A thin-glyph blend flagged `visionEstimate` + `ownerConfirm` in `docs/governance/tokens.json` → `review`. |
@@ -270,16 +270,29 @@ is cited as a JSON path, because raw color values have exactly one home under
 
 ### 3.1 frame — sampling record
 
+D-27 re-open (2026-10-06): the frame primary windows moved to the provider-home
+structural chrome — the left icon rail and the top-bar band of the provider-home
+primary. The previous freeze's timeline top-bar band windows are retained as the
+flat-band comparison in `docs/governance/tokens.json` → `provenance.crossChecks`
+("frame flat-band comparison (D-27 re-open)"), so the two structures are compared
+rather than merged. Method: the Phase 001 documented fallback (a) —
+`System.Drawing region-average (crop WxH+X+Y, area-average, rgb24)` — because the
+workstation's ffmpeg 8.1.1 build misdecodes these assets' mjpeg light-neutral range
+through its filter chain; recorded in `docs/governance/tokens.json` →
+`provenance.tokens[0].method` with `visionEstimate: true`, owner adjudication at the
+D-27 re-freeze gate.
+
 | Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
 |---|---|---|---|---|---|---|---|
-| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 116 | 191 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[0].rgb` | 0 |
-| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1520 | 191 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[1].rgb` | 0 |
-| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 2198 | 191 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[2].rgb` | 0 |
-| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1940 | 193 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[3].rgb` | 0 |
-| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 1072 | 129 | 24 | 24 | `tokens.json → provenance.tokens[0].windows[4].rgb` | 0 |
+| 1 | `docs/reference/provider-home-primary.jpg` | 30 | 120 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[0].rgb` | 0 |
+| 2 | `docs/reference/provider-home-primary.jpg` | 24 | 460 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[1].rgb` | 1 |
+| 3 | `docs/reference/provider-home-primary.jpg` | 24 | 720 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[2].rgb` | 0 |
+| 4 | `docs/reference/provider-home-primary.jpg` | 100 | 1300 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[3].rgb` | 1 |
+| 5 | `docs/reference/provider-home-primary.jpg` | 400 | 18 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[4].rgb` | 1 |
+| 6 | `docs/reference/provider-home-primary.jpg` | 800 | 18 | 16 | 16 | `tokens.json → provenance.tokens[0].windows[5].rgb` | 0 |
 
 Frozen value: `tokens.json → provenance.tokens[0].median`; the normative value is
-`docs/governance/tokens.json` → `color.frame`. Flags: `visionEstimate: false`,
+`docs/governance/tokens.json` → `color.frame`. Flags: `visionEstimate: true`,
 `ownerConfirm: false`.
 
 ### 3.2 frameForeground — sampling record
@@ -331,16 +344,30 @@ Frozen value: `tokens.json → provenance.tokens[3].median`; the normative value
 
 ### 3.5 surfaceMuted — sampling record
 
+D-27 re-open (2026-10-06): the surfaceMuted primary windows moved to the quick-log
+note field of the patient-home primary — the region whose inset fill genuinely
+differs. The scrubber capsule track cross-check
+(`docs/governance/tokens.json` → `provenance.crossChecks`,
+"surfaceMuted scrubber-track cross-check (D-27 re-open)") measures the surface
+family on the timeline primary (its cross-check medians are the
+`provenance.crossChecks` entries cited below), so re-sampling the old shared
+band would have reproduced the collapse. The previous freeze's track windows are
+retained as the flat-band comparison in the same `provenance.crossChecks` block.
+Method: the Phase 001 documented fallback (a) — `System.Drawing region-average
+(crop WxH+X+Y, area-average, rgb24)` — recorded in `docs/governance/tokens.json` →
+`provenance.tokens[4].method` with `visionEstimate: true`, owner adjudication at
+the D-27 re-freeze gate.
+
 | Window | Source image | x | y | w | h | Sampled RGB | Max per-channel delta on ±4px re-sample |
 |---|---|---|---|---|---|---|---|
-| 1 | `docs/reference/patient-workspace-timeline-primary.jpg` | 320 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[0].rgb` | 1 |
-| 2 | `docs/reference/patient-workspace-timeline-primary.jpg` | 408 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[1].rgb` | 1 |
-| 3 | `docs/reference/patient-workspace-timeline-primary.jpg` | 564 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[2].rgb` | 1 |
-| 4 | `docs/reference/patient-workspace-timeline-primary.jpg` | 660 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[3].rgb` | 0 |
-| 5 | `docs/reference/patient-workspace-timeline-primary.jpg` | 798 | 1216 | 20 | 20 | `tokens.json → provenance.tokens[4].windows[4].rgb` | 0 |
+| 1 | `docs/reference/patient-home-primary.jpg` | 910 | 1252 | 16 | 16 | `tokens.json → provenance.tokens[4].windows[0].rgb` | 1 |
+| 2 | `docs/reference/patient-home-primary.jpg` | 1030 | 1276 | 16 | 16 | `tokens.json → provenance.tokens[4].windows[1].rgb` | 1 |
+| 3 | `docs/reference/patient-home-primary.jpg` | 1150 | 1252 | 16 | 16 | `tokens.json → provenance.tokens[4].windows[2].rgb` | 0 |
+| 4 | `docs/reference/patient-home-primary.jpg` | 1270 | 1276 | 16 | 16 | `tokens.json → provenance.tokens[4].windows[3].rgb` | 1 |
+| 5 | `docs/reference/patient-home-primary.jpg` | 1390 | 1252 | 16 | 16 | `tokens.json → provenance.tokens[4].windows[4].rgb` | 0 |
 
 Frozen value: `tokens.json → provenance.tokens[4].median`; the normative value is
-`docs/governance/tokens.json` → `color.surfaceMuted`. Flags: `visionEstimate: false`,
+`docs/governance/tokens.json` → `color.surfaceMuted`. Flags: `visionEstimate: true`,
 `ownerConfirm: false`.
 
 ### 3.6 surfaceRaised — sampling record
