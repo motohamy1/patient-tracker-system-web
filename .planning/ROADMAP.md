@@ -75,7 +75,7 @@ Plans:
   4. No fake clinical dashboard or sample patient data exists outside isolated development fixtures.
 
 **UI hint**: yes
-**Plans**: 9/11 plans executed
+**Plans**: 10/11 plans executed
 
 Plans:
 
@@ -88,7 +88,7 @@ Plans:
 - [x] 02-07-PLAN.md — `EmptyState`, hand-rolled `Overlay` (modal/sheet)
 - [x] 02-08-PLAN.md — provider route group, icon rail, 8 tab routes
 - [x] 02-09-PLAN.md — auth/patient route groups, `not-found.tsx`, dev fixtures
-- [ ] 02-10-PLAN.md — dev-only primitives gallery
+- [x] 02-10-PLAN.md — dev-only primitives gallery
 - [ ] 02-11-PLAN.md — Playwright harness, 48 committed baselines, phase gate
 
 Wave dependency notes — **Wave 2** *(blocked on Wave 1 completion)*: 02-03.
@@ -491,7 +491,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Project Constitution + Reference UI Specification | 6/6 | Complete    | 2026-10-05 |
-| 2. Foundation and App Shell | 9/11 | In Progress|  |
+| 2. Foundation and App Shell | 10/11 | In Progress|  |
 | 3. Authentication, Organizations, RBAC and RLS | 0/TBD | Not started | - |
 | 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |
 | 5. Patient Workspace / Overview | 0/TBD | Not started | - |

@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 2
 current_phase_name: Foundation and App Shell
 status: executing
-stopped_at: Completed 02-09-PLAN.md
-last_updated: "2026-10-06T22:52:04.182Z"
-last_activity: 2026-10-06
-last_activity_desc: Plan 02-09 completed (commits 2475ab5, 17551bd)
+stopped_at: Completed 02-10-PLAN.md
+last_updated: "2026-10-06T23:36:17.960Z"
+last_activity: 2026-10-07
+last_activity_desc: Plan 02-10 completed (commits 7f80ced, 0005d87, 19337de, a7018af, 25476a7)
 progress:
   total_phases: 22
   completed_phases: 1
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 16
   percent: 5
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 ## Current Position
 
 Phase: 2 — Foundation and App Shell
-Plan: 9 of 11 complete (02-01…02-09 done; next: 02-10)
-Status: Executing phase 02. Plan 02-09 complete — the locked route map is finished: the bare `(auth)` group with `/login`, the `(patient)` group with `/patient` and `/patient/home`, the root `not-found.tsx` that `/` resolves to, and the typed dev fixtures confined to `src/lib/dev/` by a failing scope test. `npm run build` lists every route, `npm run lint` is 0 violations, 118 unit tests pass. Next: plan 02-10 (the dev-only gallery).
-Last activity: 2026-10-06 — Plan 02-09 completed (commits 2475ab5, 17551bd)
+Plan: 10 of 11 complete (02-01…02-10 done; next: 02-11)
+Status: Ready to execute
+Last activity: 2026-10-07 — Plan 02-10 completed (commits 7f80ced, 0005d87, 19337de, a7018af, 25476a7)
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
-Progress: [█████████░] 9/11 plans (82%)
+Progress: [██████████░] 10/11 plans (91%)
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Progress: [█████████░] 9/11 plans (82%)
 | Phase 02 P02-07 | 14min | 3 tasks | 7 files |
 | Phase 02 P02-08 | 33 min | 2 tasks | 17 files |
 | Phase 02 P02-09 | 46min | 2 tasks | 10 files |
+| Phase 02 P02-10 | 30min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,9 @@ Recent decisions affecting current work:
 - [Phase 2]: 02-09: / is deliberately undefined and resolves to the root src/app/not-found.tsx; no src/app/page.tsx is created, so the locked D-01 route map is not silently widened by a convenience redirect (02-RESEARCH.md Open Questions 2)
 - [Phase 2]: 02-09: dev fixtures carry the shape and never a value — the placeholder's seven clinical collections are empty by construction, and tests/unit/dev-fixtures.test.ts confines the repository's only Patient-shaped literal to src/lib/dev/ and fails if any src/app or src/components file imports it (D-18, ASVS V8)
 - [Phase 2]: 02-09: vitest.config.ts widened the node project to collect tests/unit/*.test.ts — the plan's fixture-scope test sits outside every project include, so the plan's own acceptance command could not collect it (Rule-3 blocking deviation; likely intended for a plan whose files_modified omitted vitest.config.ts)
+- [Phase 02]: 02-10: the dev-only gallery route is forced dynamic so the D-26 gate runs per request — a statically prerendered route froze the gate result (a flagged build would have shipped the gallery into the deployment; an unflagged build served a permanent 404), so export const dynamic = 'force-dynamic' is load-bearing
+- [Phase 02]: 02-10: GallerySections.tsx is a Client Component (overlay state + useShellMotion); Gallery.tsx stays a Server Component and renders the node:fs-dependent TabBar/CompactControl itself, passing them into the client sections as slots, because Turbopack rejects a browser chunk that references node:fs
+- [Phase 02]: 02-10: the dev-route flag is named in exactly one src/ file (src/lib/dev/dev-route-gate.ts); the truth-table test derives the key from its parts so plan 02-11's repo-wide occurrence count sees only the gate module plus playwright.config.ts
 
 ### Pending Todos
 
@@ -144,6 +148,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-06T22:51:01.301Z
-Stopped at: Completed 02-09-PLAN.md
+Last session: 2026-10-06T23:34:46.595Z
+Stopped at: Completed 02-10-PLAN.md
 Resume file: None
