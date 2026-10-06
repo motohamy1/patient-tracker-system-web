@@ -10,9 +10,12 @@
 //     to declare a `Patient`-shaped literal. A `Patient`-shaped literal is a
 //     type/interface/class declaration of the patient type, or a declaration of
 //     the placeholder identifiers (02-RESEARCH.md §Honest automatability).
-//  2. REACHABILITY — no file under `src/app/**` or `src/components/**` imports
-//     from the `src/lib/dev/` path, so no fixture can enter the shipped client
-//     bundle today (ASVS V8, T-02-60).
+//  2. REACHABILITY — the dev-only gallery page `src/app/dev/gallery/page.tsx`
+//     (behind the D-26 gate, plan 02-10) is the SINGLE allowed importer of the
+//     `src/lib/dev/` path. No other file under `src/app/**` or
+//     `src/components/**` may import it, so no fixture can enter the shipped
+//     client bundle (ASVS V8, T-02-60). The assertion keeps the fixture out of
+//     every product route rather than forbidding it outright (D-18).
 //
 // Plus the value assertions: the placeholder carries every clinical collection
 // empty by construction, no exported key is named after a clinical entity, and
@@ -50,6 +53,9 @@ const CLINICAL_VOCABULARY =
 /** A `Patient`-shaped literal: the patient type or a placeholder identifier. */
 const PATIENT_SHAPED_RE =
   /\b(?:type|interface|class|enum)\s+Patient\b|\b(?:const|let|var|function)\s+Patient\b|\b(?:const|let|var)\s+(?:EMPTY_PATIENT_LIST|PLACEHOLDER_PATIENT)\b/;
+
+/** The one file outside src/lib/dev allowed to import the fixtures (D-18, 02-10). */
+const ALLOWED_FIXTURE_IMPORTER = path.join(SRC_DIR, 'app', 'dev', 'gallery', 'page.tsx');
 
 /** An import (ESM or CJS) from the dev fixture directory. */
 const FIXTURE_IMPORT_RE = /(?:from|import|require)\s*\(?\s*['"`][^'"`]*lib\/dev/;
@@ -135,11 +141,16 @@ describe('dev fixtures — scope: src/lib/dev is the only directory allowed a Pa
   });
 });
 
-describe('dev fixtures — reachability: no product file imports the fixture module', () => {
-  it('is imported by no file under src/app or src/components', () => {
+describe('dev fixtures — reachability: the dev-only gallery page is the single allowed importer', () => {
+  it('is imported by no file under src/app or src/components except the gallery page', () => {
     const offenders = PRODUCT_FILES.filter((file) =>
       FIXTURE_IMPORT_RE.test(readFileSync(file, 'utf8')),
-    );
+    ).filter((file) => path.resolve(file) !== path.resolve(ALLOWED_FIXTURE_IMPORTER));
     expect(offenders).toEqual([]);
+  });
+
+  it('is in fact imported by the gallery page, its single legitimate consumer', () => {
+    expect(existsSync(ALLOWED_FIXTURE_IMPORTER)).toBe(true);
+    expect(FIXTURE_IMPORT_RE.test(readFileSync(ALLOWED_FIXTURE_IMPORTER, 'utf8'))).toBe(true);
   });
 });
