@@ -21,19 +21,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-05)
+See: .planning/PROJECT.md (updated 2026-10-06)
 
 **Core value:** Understand the patient → act on what matters → track what happens next.
-**Current focus:** Phase 01 — Project Constitution + Reference UI Specification
+**Current focus:** Phase 2 — Foundation and App Shell
 
 ## Current Position
 
 Phase: 2 — Foundation and App Shell
 Plan: Not started
-Status: Phase 01 complete — the D-08 owner gate is closed (`tokens.json` → `review.gateStatus: approved-with-changes`); Phase 002 is unblocked
+Status: Ready to plan — Phase 01 complete on every gate: UAT 25/25, verification `passed`, code review `clean`, nyquist validation 16/16 green, security `verified` (`threats_open: 0`); the D-08 owner gate is closed (`tokens.json` → `review.gateStatus: approved-with-changes`) and Phase 002 is unblocked
 Last activity: 2026-10-06 — Phase 01 complete, transitioned to Phase 2
 
-Progress: [██████████] 100%
+Progress: [████████████████████] 6/6 plans (100%)
 
 ## Performance Metrics
 
@@ -100,8 +100,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Init] GLM model IDs in `model_overrides` (`opencode-go/glm-5.3` / `glm-5.3-flash`) are unverified against the account's `/models` output — verify before first agent spawn; on model-not-found, drop the offending overrides and rely on `model_profile: inherit`.
-- [Init] GSD `gsd-*` subagents are not installed for this runtime (`agents_installed: false`), so project research and the roadmap were authored inline; installing agents (`npx @opengsd/gsd-core@latest --global`) is a separate future decision.
+- [Init] GLM model IDs in `model_overrides` (`opencode-go/glm-5.3` / `glm-5.3-flash`) remain unverified against the account's `/models` output. Phase 01 sidestepped this by inheriting the orchestrator model (`model_profile: inherit`, `resolve_model_ids: omit`); verify before relying on the overrides for a spawn.
+- [Init→01] GSD agent definitions ARE installed (`agents_dir: C:\Users\mtoha\.agents\agents`, `agents_installed: true`), but this runtime does not register `gsd-*` as spawnable agent types — Phase 01 therefore ran every executor/verifier/auditor as the generic `task`/`reviewer`/`security-reviewer` agent with the matching `gsd-*.md` contract injected into the prompt. Keep that adaptation until the runtime registers the types; `gsd-executor`, `gsd-verifier`, `gsd-nyquist-auditor`, `gsd-security-auditor`, `gsd-planner` and `gsd-plan-checker` all need it.
+- [01] `security-reviewer` (and `scout`) expose read-only tools and cannot write artifacts the workflow expects them to own (`SECURITY.md`); extract the returned body out-of-band (JSON field → file) instead of routing long artifact bodies through the orchestrator context.
+- [01] `sd` is not installed on this workstation, and chaining a fallback with `||` masked that failure once — use the `edit` tool with `replace_all` for bulk text replacement, and never let a `||` fallback hide a missing binary.
 
 ## Deferred Items
 
@@ -113,6 +115,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-05T23:50:36.000Z
-Stopped at: Completed 01-06-PLAN.md
+Last session: 2026-10-06T01:10:00Z
+Stopped at: Phase 01 complete on every gate (UAT 25/25 passed, verification `passed`, review `clean`, nyquist validation 16/16 green, security `verified`) — ready to plan Phase 02
 Resume file: None
