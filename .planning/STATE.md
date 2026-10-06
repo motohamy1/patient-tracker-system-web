@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 2
 current_phase_name: Foundation and App Shell
-status: in_progress
-stopped_at: Plan 02-01 complete
-last_updated: "2026-10-06T19:04:00.000Z"
+status: executing
+stopped_at: Plan 02-05 complete
+last_updated: "2026-10-06T20:25:00.000Z"
 last_activity: 2026-10-06
-last_activity_desc: Plan 02-01 complete (D-27 re-sample + owner re-freeze gate closed)
+last_activity_desc: Plan 02-05 complete (Surface/Icon/Button primitives; interrupted run recovered at the safe-resume gate)
 progress:
   total_phases: 22
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 17
+  completed_plans: 11
   percent: 5
 ---
 
@@ -29,32 +29,32 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 ## Current Position
 
 Phase: 2 — Foundation and App Shell
-Plan: 3 of 11 complete (02-01 done, 02-02 done; next: 02-03)
-Status: Executing phase 02 wave 1. Plan 02-01 complete (D-27 re-sampled color.frame #F1F4F8 and color.surfaceMuted #E8E8ED with four-gate provenance; owner re-freeze gate closed approved-with-changes on 2026-10-06, ownerConfirm true on both records, resume signal resume:02-03). Plan 02-02 complete (repository scaffold, 13 pinned packages with committed lockfile, Chromium installed, D-05/D-13 hook contract in package.json, D-06 gitignore). Next: plan 02-03 (app shell + routes).
-Last activity: 2026-10-06 — Plan 02-01 completed (re-sample committed b3997e2, gate + summary committed 07398f4, 004d98c)
+Plan: 5 of 11 complete (02-01…02-05 done; next: 02-06)
+Status: Executing phase 02. Plan 02-05 complete — the primitive set (`Surface`, `Icon`, `Button`, `index.ts` barrel) is built and its three tasks verified (24/24 unit tests, `npm run lint` 0 violations, `npm run build` exit 0). The run stalled after writing task-3's tests; the safe-resume gate caught it and the orchestrator closed it out (tests committed `221ee6a`, SUMMARY authored by the orchestrator). Next: plan 02-06 (motion module + `Pill`/`TabBar`/`CompactControl`).
+Last activity: 2026-10-06 — Plan 02-05 completed (commits 1ffdc2e, 7559754, 221ee6a)
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
-Progress: [██░░░░░░░░░░░░░░] 2/11 plans (18%)
+Progress: [█████░░░░░░] 5/11 plans (45%)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8
-- Average duration: 39m
-- Total execution time: 5h 12m
+- Total plans completed: 11
+- Average duration: 22m
+- Total execution time: 3h 36m (ten timed plans; 01-01 duration not recorded)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 6 | - | - |
-| 02 | 2 | 1h45min | 52min |
+| 02 | 5 | 2h19min | 28min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-04 (14min), 01-05 (12min), 01-06 (22min), 02-02 (19min), 02-01 (1h26min)
+- Last 5 plans: 02-01 (1h26min), 02-02 (19min), 02-03 (11min), 02-04 (12min), 02-05 (11min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -63,6 +63,9 @@ Progress: [██░░░░░░░░░░░░░░] 2/11 plans (18%)
 |------|----------|-------|-------|
 | Phase 02 P02-01 | 1h26min | 3 tasks | 2 files |
 | Phase 02 P02-02 | 19min | 2 tasks | 7 files |
+| Phase 02 P02-03 | 11min | 2 tasks | 8 files |
+| Phase 02 P02-04 | 12min | 2 tasks | 3 files |
+| Phase 02 P02-05 | 11min | 3 tasks | 7 files |
 | Phase 01 P01-06 | 22min | 4 tasks | 6 files |
 | Phase 01 P01-05 | 12min | 3 tasks | 2 files |
 | Phase 01 P01-04 | 14min | 3 tasks | 1 file |
@@ -101,6 +104,7 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-02: scaffold locked — 13 audited packages pinned exactly (next 16.3.8, react/react-dom 19.3.0, tailwindcss + @tailwindcss/postcss 4.3.3, motion 14.0.0, gsap 3.15.0, lucide-react 1.52.0; typescript ~5.9 → 5.9.3, @playwright/test 1.63.0, vitest 5.0.3, @vitejs/plugin-react 6.1.2, jsdom 30.1.2, @types/* 26.6.4/19.3.0/19.3.0); package-lock.json (199 packages) committed at `a69156a`; Chromium chromium-1243 installed
 - [Phase 02]: 02-02: the D-05/D-13 hook contract is load-bearing in package.json — prebuild = generate-tokens && check-design-tokens, lint = check-design-tokens only; the `_comment` field tells future readers the check must be appended to, never replaced by, an ESLint/Biome/Prettier pass (02-RESEARCH Pitfall 4)
 - [Phase 02]: 02-02: generated token artifacts made structurally uncommittable (.gitignore lists src/styles/tokens.generated.css and .ts; D-06); expected loud failure recorded live — `npm run tokens:generate` → exit 1, Cannot find module scripts/generate-tokens.mjs, intended until plan 02-03 (02-RESEARCH Pitfall 5)
+- [Phase 02]: 02-05: the primitive set is built — `Surface` (four variants over the frozen fills, no `border`/`ring` utility, `surfaceMuted` shadow-free), `Icon`/`makeIcon` (`strokeWidth` omitted from the public props and fixed at 1.5 after the rest spread) and `Button` (four variants, `accentSoft` primary never `accent`, `textPrimary` ink only, `iconOnly` `ariaLabel` required at the type level, 44px in both axes below 768px, `useReducedMotion` branch opacity-only at the fastest tokenized duration). 24 unit tests render with `react-dom/server` and a parsed DOM — no `@testing-library/react` added; `npm run lint` 0 violations, `npm run build` exit 0. The run stalled after writing task-3's tests; the safe-resume gate caught it and the orchestrator closed it out (tests committed `221ee6a`)
 
 ### Pending Todos
 
@@ -123,6 +127,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-06T19:04:00.000Z
-Stopped at: Plan 02-01 complete
+Last session: 2026-10-06T20:25:00.000Z
+Stopped at: Plan 02-05 complete
 Resume file: .planning/phases/02-foundation-and-app-shell/02-CONTEXT.md
