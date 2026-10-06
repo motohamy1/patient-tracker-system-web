@@ -162,7 +162,7 @@ Derived from PRODUCT-MASTER-SPEC.md (authoritative control pack). Auto mode: all
 - [ ] **UX-03**: As a user on an unstable connection, I see the offline/sync state of my workspace rather than silent failures. (§24, §18; owned by Phase 3 baseline)
 - [ ] **UX-04**: As a clinician, the timeline meets its performance budget (smooth pan/zoom with large event counts, no unnecessary re-renders). (§25; owned by Phase 6)
 - [ ] **UX-05**: As a touch user, the timeline and scrubber are reachable and usable on mobile. (§8.3, §26; owned by Phase 6)
-- [ ] **UX-06**: As a mobile user, the app adapts (touch targets, compact navigation, reduced density, safe interactions) rather than being a shrunken desktop. (§26; owned by Phase 22 verification)
+- [x] **UX-06**: As a mobile user, the app adapts (touch targets, compact navigation, reduced density, safe interactions) rather than being a shrunken desktop. (§26; owned by Phase 22 verification)
 - [ ] **UX-07**: As a clinician with a large patient collection, folder retrieval stays performant (pagination/virtualization where appropriate). (§25; owned by Phase 4)
 - [ ] **UX-08**: As a doctor uploading prescriptions, image/document loading and OCR turnaround remain responsive. (§25; owned by Phase 12)
 
@@ -281,7 +281,7 @@ Deferred without a phase in v1:
 | OFF-01 | 19 | Pending |
 | OFF-02 | 19 | Pending |
 | OFF-03 | 19 | Pending |
-| UX-06 | 2 | Pending |
+| UX-06 | 2 | Complete |
 | SEC-01 | 20 | Pending |
 | SEC-02 | 20 | Pending |
 | SEC-03 | 20 | Pending |

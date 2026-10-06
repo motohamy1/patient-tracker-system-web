@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 2
 current_phase_name: Foundation and App Shell
 status: executing
-stopped_at: Completed 02-06-PLAN.md
-last_updated: "2026-10-06T20:45:58.569Z"
+stopped_at: Completed 02-07-PLAN.md
+last_updated: "2026-10-06T21:20:46.479Z"
 last_activity: 2026-10-06
-last_activity_desc: Plan 02-06 completed (commits 6f44677, 848cb4e, 2651f4e)
+last_activity_desc: Plan 02-07 completed (commits 52ffa48, 94701ab, 8e3c146)
 progress:
   total_phases: 22
   completed_phases: 1
   total_plans: 17
-  completed_plans: 12
+  completed_plans: 13
   percent: 5
 ---
 
@@ -29,32 +29,32 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 ## Current Position
 
 Phase: 2 — Foundation and App Shell
-Plan: 6 of 11 complete (02-01…02-06 done; next: 02-07)
-Status: Executing phase 02. Plan 02-06 complete — the motion foundation (`src/lib/motion.ts`, `useShellMotion`) and the three interactive primitives (`Pill`, `TabBar`/`SegmentedControl`, `CompactControl`) are built and verified (91 unit tests, `npm run lint` 0 violations, `npm run build` type-check exit 0). Next: plan 02-07 (`Overlay`, which consumes `useShellMotion`).
-Last activity: 2026-10-06 — Plan 02-06 completed (commits 6f44677, 848cb4e, 2651f4e)
+Plan: 7 of 11 complete (02-01…02-07 done; next: 02-08)
+Status: Executing phase 02. Plan 02-07 complete — the shared `EmptyState` primitive and the hand-rolled `Overlay` (modal ≥1024px / bottom sheet below, `useFocusTrap`, `useScrollLock`) are built and verified (109 unit tests, `npm run lint` 0 violations, `npm run build` type-check exit 0). Next: plan 02-08 (the five empty shells, each rendering `EmptyState`).
+Last activity: 2026-10-06 — Plan 02-07 completed (commits 52ffa48, 94701ab, 8e3c146)
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
-Progress: [██████░░░░░] 6/11 plans (55%)
+Progress: [███████░░░] 7/11 plans (64%)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 12
-- Average duration: 21m
-- Total execution time: 3h 47m (eleven timed plans; 01-01 duration not recorded)
+- Total plans completed: 13
+- Average duration: 20m
+- Total execution time: 4h 01m (twelve timed plans; 01-01 duration not recorded)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 6 | - | - |
-| 02 | 6 | 2h30min | 25min |
+| 02 | 7 | 2h44min | 23min |
 
 **Recent Trend:**
 
-- Last 5 plans: 02-02 (19min), 02-03 (11min), 02-04 (12min), 02-05 (11min), 02-06 (11min)
+- Last 5 plans: 02-03 (11min), 02-04 (12min), 02-05 (11min), 02-06 (11min), 02-07 (14min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -72,6 +72,7 @@ Progress: [██████░░░░░] 6/11 plans (55%)
 | Phase 01 P01-03 | 25min | 3 tasks | 1 file |
 | Phase 01 P01-02 | 4min | 2 tasks | 4 files |
 | Phase 2 P02-06 | 11min | 3 tasks | 8 files |
+| Phase 02 P02-07 | 14min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [Phase 2]: 02-06: useShellMotion resolves reduced motion truthily so a falsy first server render cannot flash full motion on hydration
 - [Phase 2]: 02-06: TabBar imports INSET_FILL from CompactControl rather than inlining a fill class, so the search wrapper and the tab container share one gate-selected value and a D-27 re-open needs no per-call-site edit
 - [Phase 2]: 02-06: the CompactControl test derives its expected inset fill from review.gateStatus and asserts the exported INSET_FILL against it, so re-opening the gate cannot leave a stale expectation
+- [Phase 02]: 02-07: EmptyState wrapper/body max-widths are explicit rem values (max-w-[32rem]/max-w-[24rem]) because max-w-lg/max-w-sm collide with the --spacing-lg/--spacing-sm tokens and resolve to 16px/8px in this theme
+- [Phase 02]: 02-07: the Overlay gates its focus-trap/scroll-lock active flag on open && mounted, because the portal and its container ref only exist after the client mount effect
+- [Phase 02]: 02-07: the useShellMotion().ease() cubic-bezier tuple assertion lives at the Overlay call site; src/lib/motion.ts is outside this plan's files_modified set and was left untouched
 
 ### Pending Todos
 
@@ -131,6 +135,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-06T20:43:41.546Z
-Stopped at: Completed 02-06-PLAN.md
+Last session: 2026-10-06T21:19:53.996Z
+Stopped at: Completed 02-07-PLAN.md
 Resume file: None
