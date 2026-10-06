@@ -75,11 +75,34 @@ Plans:
   4. No fake clinical dashboard or sample patient data exists outside isolated development fixtures.
 
 **UI hint**: yes
-**Plans**: TBD
+**Plans**: 0/11 plans complete
 
 Plans:
 
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — D-27 re-sample of `frame` and `surfaceMuted`, owner visual-review gate
+- [ ] 02-02-PLAN.md — repository scaffold, pinned dependency install, build hooks
+- [ ] 02-03-PLAN.md — token codegen (`@theme inline` + `:root`), globals.css, root layout, vitest config
+- [ ] 02-04-PLAN.md — `scripts/check-design-tokens.mjs` (the three machine checks)
+- [ ] 02-05-PLAN.md — `Surface`, `Icon`, `Button`
+- [ ] 02-06-PLAN.md — motion vocabulary, `Pill`, `TabBar`/`SegmentedControl`, `CompactControl`
+- [ ] 02-07-PLAN.md — `EmptyState`, hand-rolled `Overlay` (modal/sheet)
+- [ ] 02-08-PLAN.md — provider route group, icon rail, 8 tab routes
+- [ ] 02-09-PLAN.md — auth/patient route groups, `not-found.tsx`, dev fixtures
+- [ ] 02-10-PLAN.md — dev-only primitives gallery
+- [ ] 02-11-PLAN.md — Playwright harness, 48 committed baselines, phase gate
+
+Wave dependency notes — **Wave 2** *(blocked on Wave 1 completion)*: 02-03.
+**Wave 3** *(blocked on Wave 2)*: 02-04. **Wave 4** *(blocked on Wave 3)*: 02-05.
+**Wave 5** *(blocked on Wave 4)*: 02-06. **Wave 6** *(blocked on Wave 5)*: 02-07.
+**Wave 7** *(blocked on Wave 6)*: 02-08. **Wave 8** *(blocked on Wave 7)*: 02-09.
+**Wave 9** *(blocked on Wave 8)*: 02-10. **Wave 10** *(blocked on Wave 9)*: 02-11.
+
+Wave 1 runs 02-01 and 02-02 in parallel — they share no file. 02-01 closes the D-27 owner
+gate before 02-03 reads `tokens.json`, so the re-sampled values are settled before any
+primitive consumes them. 02-09 is serialized after 02-08 because its `read_first` targets
+02-08's provider layout.
+
+Cross-cutting constraints: none shared by two or more plans.
 
 ### Phase 3: Authentication, Organizations, RBAC and RLS
 
