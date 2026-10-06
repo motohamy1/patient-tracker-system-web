@@ -21,13 +21,14 @@ If everything else fails, the clinician must be able to understand a patient's l
 
 ### Validated
 
-(None yet — greenfield rebuild, ship to validate)
+- **Phase 001 requirements GOV-01, GOV-02, GOV-03, GOV-04, GOV-05, GOV-06** — Validated in Phase 1: Project Constitution + Reference UI Specification (completed 2026-10-06). Evidence: the eight governance artifacts under `docs/governance/` plus `.planning/phases/01-project-constitution-reference-ui-specification/01-VERIFICATION.md` (status passed, 28/28 must-haves).
+- The remaining 21 roadmap phases stay unvalidated — greenfield rebuild, ship to validate.
 
 ### Active
 
 Committed scope = the 22-phase roadmap derived from PRODUCT-MASTER-SPEC.md §19 (Phase 001–022):
 
-- [ ] Phase 001 — Project Constitution + Reference UI Specification (constitution, UI design contract, invariants, semantic tokens, visual QA/responsive/motion rules, anti-generic constraints)
+- [x] Phase 001 — Project Constitution + Reference UI Specification (constitution, UI design contract, invariants, semantic tokens, visual QA/responsive/motion rules, anti-generic constraints) — validated 2026-10-06
 - [ ] Phase 002 — Foundation and App Shell (Next.js shell, routes, layout primitives, tokens, typography, surfaces, buttons, pills, compact controls, modal/sheet primitives, accessibility baseline, motion foundation)
 - [ ] Phase 003 — Authentication, Organizations, RBAC and RLS (auth, role resolution, org membership, provider/patient authorization, server-protected routes, DB policies, RLS, sensitive-mutation protection, audit foundation)
 - [ ] Phase 004 — Provider Home + Patient Folder Workspace (visual folder collection, compact search, Recent/Today/Needs Attention/Critical, new-patient entry, contextual quick actions)
@@ -92,7 +93,7 @@ Also out of scope for v1: FHIR-shaped UI screens (mapping may come later in Phas
 ## Constraints
 
 - **Tech stack**: Next.js application shell (§19 Ph002); Supabase/PostgreSQL relational clinical data model (§13); D3.js mandatory for the timeline (§8.1) with React responsible for app UI/state composition.
-- **Design tokens**: semantic tokens only, no scattered raw hex; exact values frozen after visual review against the reference (§2.2). Token categories include frame, frameForeground, canvas, surface, surfaceMuted, surfaceRaised, textPrimary, textSecondary, borderSubtle, accent, success, warning, critical, info.
+- **Design tokens**: semantic tokens only, no scattered raw hex; exact values frozen after visual review against the reference (§2.2). Token categories include frame, frameForeground, canvas, surface, surfaceMuted, surfaceRaised, textPrimary, textSecondary, borderSubtle, accent, accentSoft, success, warning, critical, info (15 frozen tokens in `docs/governance/tokens.json`; `accentSoft` admitted at the D-08 owner design gate on 2026-10-06).
 - **Motion**: two-layer architecture — Framer Motion for component/layout/panel transitions, GSAP for complex SVG drawing and timeline choreography; all motion fast, smooth, subtle, interruptible, reduced-motion compatible (§9).
 - **Security**: authorization determined server-side and enforced by database/API layer (RLS where applicable); frontend route guards supplementary only; never trust role info from localStorage, browser state, or URL parameters (§3.1, §12).
 - **Navigation**: patient workspace primary nav is exactly the 8 tabs in §6; no Vital Signs primary tab (vitals belong inside Overview); Communication is a provider/profile communication surface, not a primary clinical tab (§3.4, §15).
@@ -136,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 5. Update Context with current state (users, feedback, metrics)
 
 ---
-*Last updated: 2026-10-05 after initialization*
+*Last updated: 2026-10-06 after Phase 1 completion (Project Constitution + Reference UI Specification)*
