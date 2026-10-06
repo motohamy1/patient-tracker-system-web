@@ -31,7 +31,7 @@ phase**.
 | 9 | Node/branch behavior | Filled nodes use `accent`; branches are thin, smooth and collision-free, with no crossings between sibling sub-event arcs. |
 | 10 | Bottom scrubber | The capsule track renders in `surfaceMuted`, tick marks are present, year labels are present, and the dark viewport window renders at the overlay shadow level. |
 | 11 | Visual density | Provider and workspace surfaces read as dense; patient home reads as sparse using the upper range of the same spacing scale; both read as the same design language. |
-| 12 | Accent restraint | Accent appears only on the reserved list (timeline event nodes and count badges, milestone markers, primary CTA, active/selected emphasis markers, key state indicator dots); status color is limited to `success`, `info` and `warning` per D-04. |
+| 12 | Accent restraint | Accent appears only on the reserved list (timeline event nodes and their count badges, timeline milestone markers, active/selected emphasis markers, key state indicator dots, important-interaction highlights); the provider-home primary CTA and key interaction buttons use `accentSoft`, never `accent`; status color is limited to `success`, `info` and `warning` per D-04. |
 
 **Procedure.** Evaluate every row; any row failing blocks the phase. Record the per-row result in
 the phase's verification artifact. The three invariant groups in

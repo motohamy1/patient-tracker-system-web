@@ -125,18 +125,27 @@ token, ever.
 
 #### Accent reserved for
 
-`accent` is reserved for exactly this list:
+`accent` (the timeline chartreuse) is reserved for exactly this list:
 
 - timeline event nodes and their count badges;
 - timeline milestone markers;
-- the primary CTA;
 - active/selected emphasis markers (an active chart-range toggle; a selected scrubber range
   is **not** accent — it is the dark overlay viewport window);
 - key state indicator dots;
 - important-interaction highlights.
 
-`accent` is **not** for: folder cards (status uses `success` / `info` / `warning` only),
-body text, borders, backgrounds, decorative fills, or **every icon**.
+`accentSoft` (the CTA gold) is reserved for exactly this list:
+
+- the provider-home primary CTA (**not** `accent`);
+- key interaction buttons.
+
+The two reserved lists are exhaustive and mutually exclusive: every accent-family use belongs
+either to `accent` or to `accentSoft`, never to both. `docs/governance/ui-invariants.md` →
+`INV-05` and `docs/governance/visual-qa-rules.md` → QA row 12 enumerate the same two lists.
+
+`accent` is **not** for: the provider-home primary CTA (that is `accentSoft`), folder cards
+(status uses `success` / `info` / `warning` only), body text, borders, backgrounds,
+decorative fills, or **every icon**.
 
 #### Multi-hue restriction
 
