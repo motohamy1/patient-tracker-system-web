@@ -1,0 +1,60 @@
+/* Base stylesheet — declares the shared accessibility and motion baseline once.
+   Every value resolves through the generated token layer; this file contains no
+   color value of its own. The generated file does not exist until `predev` or
+   `prebuild` runs scripts/generate-tokens.mjs, so a missing generator is a loud
+   stylesheet-resolution failure rather than a silently unstyled shell
+   (02-RESEARCH.md Pitfall 5). */
+
+@import "tailwindcss";
+@import "../styles/tokens.generated.css";
+
+@layer base {
+  html {
+    font-family: var(--font-inter), system-ui, sans-serif;
+    /* The overlay's scroll lock must never shift layout by the scrollbar width. */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-text-primary);
+  }
+
+  /* Focus baseline, declared once (FOUND-04, 02-UI-SPEC.md, Focus and Keyboard):
+     ring color is textPrimary — the only frozen token with usable contrast
+     against every light fill. Ring radius is inherited from the focused element.
+     :focus-visible only, so a pointer user never sees a ring; the outline is
+     never removed anywhere. */
+  :focus-visible {
+    outline: 2px solid var(--color-text-primary);
+    outline-offset: 2px;
+  }
+
+  /* The accentSoft primary CTA is the one element whose fill sits close enough
+     to the ink that a zero offset would merge the ring into the label; pin the
+     offset explicitly at low specificity. */
+  :where(.bg-accent-soft):focus-visible {
+    outline-offset: 2px;
+  }
+
+  /* CSS safety net beneath the useReducedMotion branch every animation site
+     carries (FOUND-05, docs/governance/motion-rules.md §3): every animation and
+     transition is forced to the shortest tokenized step and smooth scrolling is
+     disabled. This is not a substitute for the per-site JS branch. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: var(--duration-fast) !important;
+      transition-duration: var(--duration-fast) !important;
+    }
+    html {
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Tabular figures are applied PER VALUE, via the `tabular-nums` utility on
+     each clinical and statistical value — never on body. A global tabular
+     setting changes every glyph's advance width and would shift every visual
+     baseline (02-UI-SPEC.md, Typography). */
+}
