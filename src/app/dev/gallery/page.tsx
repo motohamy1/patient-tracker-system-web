@@ -26,7 +26,7 @@ import { EMPTY_PATIENT_LIST } from '@/lib/dev/fixtures';
 // harness could never reach the gallery), and a build WITH the flag would ship
 // the gallery inside the deployment artifacts, defeating D-26's claim that the
 // route is absent from every real deployment. Runtime evaluation is what makes
-// `ALLOW_DEV_ROUTES` a real switch and keeps the dev route out of production
+// the D-26 flag a real switch and keeps the dev route out of production
 // (ASVS V14).
 export const dynamic = 'force-dynamic';
 

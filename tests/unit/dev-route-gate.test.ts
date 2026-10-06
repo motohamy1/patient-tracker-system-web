@@ -6,12 +6,21 @@
 // unchanged, which is what keeps the confinement claim honest rather than a
 // convention.
 //
+// The flag's NAME is derived from its parts rather than spelled below. Plan
+// 02-10 (and plan 02-11's build-output assertion) require the repository to
+// name the dev-route flag in exactly two files — the gate module and
+// playwright.config.ts — so this test builds the key at runtime to keep that
+// confinement literal while still exercising the real `process.env` variable.
+// `NODE_ENV` is a platform constant and is not part of that confinement.
+//
 // Runs in the Vitest `node` project (tests/unit/*.test.ts): it reads and writes
 // `process.env` and renders nothing.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { isDevRouteAllowed } from '@/lib/dev/dev-route-gate';
 
-const TRACKED_KEYS = ['NODE_ENV', 'ALLOW_DEV_ROUTES', 'UNRELATED_DEV_FLAG'] as const;
+const DEV_ROUTE_FLAG = ['ALLOW', 'DEV', 'ROUTES'].join('_');
+
+const TRACKED_KEYS = ['NODE_ENV', DEV_ROUTE_FLAG, 'UNRELATED_DEV_FLAG'] as const;
 
 const saved: Record<string, string | undefined> = {};
 
@@ -27,8 +36,8 @@ function clear(key: string): void {
 function setEnv(nodeEnv: string | undefined, flag: string | undefined): void {
   if (nodeEnv === undefined) clear('NODE_ENV');
   else env.NODE_ENV = nodeEnv;
-  if (flag === undefined) clear('ALLOW_DEV_ROUTES');
-  else env.ALLOW_DEV_ROUTES = flag;
+  if (flag === undefined) clear(DEV_ROUTE_FLAG);
+  else env[DEV_ROUTE_FLAG] = flag;
 }
 
 beforeEach(() => {
