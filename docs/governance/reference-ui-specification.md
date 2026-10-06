@@ -696,7 +696,9 @@ by the product:
 - **"Daily Stats" numbers.**
 
 Layout, geometry, density and interaction patterns are the binding grammar; sample content is
-not. `docs/governance/reference-manifest.json` carries the same list under `doNotReuse`, and
-the two lists must agree.
+not. `docs/governance/reference-manifest.json` carries the same list under `doNotReuse`:
+`names`, `labels`, `medications`, `vitalsValues` and `labNames` enumerate every concrete value
+above, and the category-level `ids`, `appointmentRows` and `dailyStatsNumbers` entries carry
+the categories that name no single value. The two lists must agree.
 
 

@@ -56,7 +56,8 @@
       "Sarah Miller",
       "Robert Garcia",
       "Tiffany Woodward",
-      "Dr. Eleanor Vance"
+      "Dr. Eleanor Vance",
+      "Dr. Smith"
     ],
     "labels": [
       "Cardiology",
@@ -67,6 +68,29 @@
       "Lisinopril 10mg",
       "Metformin 500mg"
     ],
+    "vitalsValues": [
+      "72 bpm",
+      "118/75",
+      "98%",
+      "36.8°C"
+    ],
+    "labNames": [
+      "CBC Panel",
+      "Lipid Profile",
+      "Glucose"
+    ],
+    "ids": {
+      "category": "numeric patient IDs and MRNs",
+      "note": "value-level category: any concrete identifier printed in the reference is sample content and never a product value"
+    },
+    "appointmentRows": {
+      "category": "appointment and sample rows",
+      "note": "value-level category: the reference rows are sample content, never seeded product data"
+    },
+    "dailyStatsNumbers": {
+      "category": "Daily Stats numbers",
+      "note": "value-level category: no reference statistic is a product value"
+    },
     "rule": "sample content is not binding grammar - see reference-ui-specification.md#sample-content-do-not-reuse"
   }
 }
