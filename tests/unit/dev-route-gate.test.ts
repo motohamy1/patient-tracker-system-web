@@ -15,15 +15,20 @@ const TRACKED_KEYS = ['NODE_ENV', 'ALLOW_DEV_ROUTES', 'UNRELATED_DEV_FLAG'] as c
 
 const saved: Record<string, string | undefined> = {};
 
+// `process.env` types `NODE_ENV` as read-only; a mutable view of the same object
+// lets the test set and delete the two values the gate reads without a cast at
+// every call site. The object is the real `process.env`.
+const env = process.env as Record<string, string | undefined>;
+
 function clear(key: string): void {
-  delete process.env[key];
+  delete env[key];
 }
 
 function setEnv(nodeEnv: string | undefined, flag: string | undefined): void {
   if (nodeEnv === undefined) clear('NODE_ENV');
-  else process.env.NODE_ENV = nodeEnv;
+  else env.NODE_ENV = nodeEnv;
   if (flag === undefined) clear('ALLOW_DEV_ROUTES');
-  else process.env.ALLOW_DEV_ROUTES = flag;
+  else env.ALLOW_DEV_ROUTES = flag;
 }
 
 beforeEach(() => {
@@ -33,7 +38,7 @@ beforeEach(() => {
 afterEach(() => {
   for (const key of TRACKED_KEYS) {
     if (saved[key] === undefined) clear(key);
-    else process.env[key] = saved[key];
+    else env[key] = saved[key];
   }
 });
 
@@ -63,17 +68,17 @@ describe('isDevRouteAllowed — reads no other environment variable', () => {
   it('is unchanged by an unrelated variable in every row of the truth table', () => {
     setEnv('production', undefined);
     expect(isDevRouteAllowed()).toBe(false);
-    process.env.UNRELATED_DEV_FLAG = '1';
+    env.UNRELATED_DEV_FLAG = '1';
     expect(isDevRouteAllowed()).toBe(false);
 
     setEnv('production', '1');
     expect(isDevRouteAllowed()).toBe(true);
-    process.env.UNRELATED_DEV_FLAG = '0';
+    env.UNRELATED_DEV_FLAG = '0';
     expect(isDevRouteAllowed()).toBe(true);
 
     setEnv('development', undefined);
     expect(isDevRouteAllowed()).toBe(true);
-    process.env.UNRELATED_DEV_FLAG = '1';
+    env.UNRELATED_DEV_FLAG = '1';
     expect(isDevRouteAllowed()).toBe(true);
   });
 });
