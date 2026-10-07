@@ -20,6 +20,8 @@
   },
   "_comment": "D-05/D-13: 'lint' and 'prebuild' invoke scripts/check-design-tokens.mjs directly — this token check is LOAD-BEARING, not scaffolding. It must be APPENDED TO, never replaced by, any future ESLint, Biome or Prettier pass (02-RESEARCH.md Pitfall 4).",
   "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.2",
     "@tailwindcss/postcss": "4.3.3",
     "gsap": "3.15.0",
     "lucide-react": "1.52.0",
@@ -27,7 +29,8 @@
     "next": "16.3.8",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "tailwindcss": "4.3.3"
+    "tailwindcss": "4.3.3",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
