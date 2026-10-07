@@ -13,17 +13,40 @@
 -- DEV PASSWORD (all six accounts): Phase3Dev!pass
 -- Re-runnable on a fresh database (`supabase db reset`).
 
+-- GOTRUE v2.197.0 ROW-SHAPE CONTRACT (why this insert looks pedantic):
+-- rows written behind GoTrue's back must look exactly like rows GoTrue itself
+-- writes, or the password grant dies before reaching the password check:
+--   * instance_id must be the zero UUID (GoTrue's single-tenant lookup filters
+--     `instance_id = '00000000-...'`; NULL rows are never found and every
+--     login returns invalid_credentials).
+--   * every token/text column GoTrue scans into a Go `string` must be '' not
+--     NULL (NULL makes FindUserByEmailAndAudience fail with
+--     "converting NULL to string is unsupported").
+--   * raw_app_meta_data carries the provider bookkeeping GoTrue sets on signup.
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
-  email_confirmed_at, created_at, updated_at
-) values
-  (null, '0f000000-0000-0000-0000-0000000000a1', 'authenticated', 'authenticated', 'owner@clinic.test',       extensions.crypt('Phase3Dev!pass', extensions.gen_salt('bf')), now(), now(), now()),
-  (null, '0f000000-0000-0000-0000-0000000000a2', 'authenticated', 'authenticated', 'doctor@clinic.test',      extensions.crypt('Phase3Dev!pass', extensions.gen_salt('bf')), now(), now(), now()),
-  (null, '0f000000-0000-0000-0000-0000000000a3', 'authenticated', 'authenticated', 'nurse@clinic.test',       extensions.crypt('Phase3Dev!pass', extensions.gen_salt('bf')), now(), now(), now()),
-  (null, '0f000000-0000-0000-0000-0000000000a4', 'authenticated', 'authenticated', 'reception@clinic.test',   extensions.crypt('Phase3Dev!pass', extensions.gen_salt('bf')), now(), now(), now()),
-  (null, '0f000000-0000-0000-0000-0000000000a5', 'authenticated', 'authenticated', 'patient@clinic.test',     extensions.crypt('Phase3Dev!pass', extensions.gen_salt('bf')), now(), now(), now()),
-  (null, '0f000000-0000-0000-0000-0000000000b1', 'authenticated', 'authenticated', 'owner.b@clinic.test',     extensions.crypt('Phase3Dev!pass', extensions.gen_salt('bf')), now(), now(), now()),
-  (null, '0f000000-0000-0000-0000-0000000000c1', 'authenticated', 'authenticated', 'unaffiliated@clinic.test', extensions.crypt('Phase3Dev!pass', extensions.gen_salt('bf')), now(), now(), now());
+  email_confirmed_at, phone, confirmation_token, recovery_token,
+  email_change_token_new, email_change_token_current, email_change,
+  phone_change, phone_change_token, reauthentication_token,
+  raw_app_meta_data, raw_user_meta_data,
+  email_change_confirm_status, is_sso_user, is_anonymous, created_at, updated_at
+)
+select
+  '00000000-0000-0000-0000-000000000000', v.id, 'authenticated', 'authenticated', v.email,
+  extensions.crypt('Phase3Dev!pass', extensions.gen_salt('bf')),
+  now(), NULL, '', '', '', '', '', '', '', '',
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  jsonb_build_object('sub', v.id::text, 'email', v.email, 'email_verified', true, 'phone_verified', false),
+  0, false, false, now(), now()
+from (values
+  ('0f000000-0000-0000-0000-0000000000a1'::uuid, 'owner@clinic.test'),
+  ('0f000000-0000-0000-0000-0000000000a2'::uuid, 'doctor@clinic.test'),
+  ('0f000000-0000-0000-0000-0000000000a3'::uuid, 'nurse@clinic.test'),
+  ('0f000000-0000-0000-0000-0000000000a4'::uuid, 'reception@clinic.test'),
+  ('0f000000-0000-0000-0000-0000000000a5'::uuid, 'patient@clinic.test'),
+  ('0f000000-0000-0000-0000-0000000000b1'::uuid, 'owner.b@clinic.test'),
+  ('0f000000-0000-0000-0000-0000000000c1'::uuid, 'unaffiliated@clinic.test')
+) as v(id, email);
 
 insert into auth.identities (
   id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
