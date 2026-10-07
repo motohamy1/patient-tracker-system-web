@@ -111,6 +111,21 @@ begin
 end;
 $$;
 
+create or replace function private.bootstrap_org_membership() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.memberships (org_id, user_id, role)
+  values (new.id, new.created_by, 'admin_owner');
+  return new;
+end;
+$$;
+
+create trigger bootstrap_org_membership after insert on public.organizations
+for each row execute function private.bootstrap_org_membership();
+
 create or replace function public.preview_invite(p_raw_token text)
 returns json
 language plpgsql
