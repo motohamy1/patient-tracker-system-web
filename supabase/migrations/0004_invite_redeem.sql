@@ -145,9 +145,47 @@ begin
 end;
 $$;
 
+create or replace function public.list_org_members(p_org_id uuid)
+returns json
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor_role text;
+  v_rows json;
+begin
+  select role into v_actor_role
+  from public.memberships
+  where org_id = p_org_id and user_id = (select auth.uid());
+
+  if not found or v_actor_role not in ('admin_owner', 'provider_doctor') then
+    raise exception 'membership_operation_failed';
+  end if;
+
+  select json_agg(
+    json_build_object(
+      'id', m.id,
+      'user_id', m.user_id,
+      'role', m.role,
+      'email', u.email,
+      'created_at', m.created_at
+    ) order by m.created_at
+  )
+  into v_rows
+  from public.memberships m
+  join auth.users u on u.id = m.user_id
+  where m.org_id = p_org_id;
+
+  return coalesce(v_rows, '[]'::json);
+end;
+$$;
+
 revoke execute on function public.redeem_invite(text) from public, anon;
 revoke execute on function public.remove_membership(uuid) from public, anon;
 revoke execute on function public.preview_invite(text) from public;
+revoke execute on function public.list_org_members(uuid) from public, anon;
 grant execute on function public.redeem_invite(text) to authenticated;
 grant execute on function public.remove_membership(uuid) to authenticated;
 grant execute on function public.preview_invite(text) to anon, authenticated;
+grant execute on function public.list_org_members(uuid) to authenticated;
