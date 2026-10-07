@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 2
-current_phase_name: Foundation and App Shell
-status: completed
-stopped_at: 02-11 complete and committed; Phase 2 closed — human-verify gate approved 2026-10-07
-last_updated: "2026-10-07T00:22:00.000Z"
+current_phase: 03
+current_phase_name: Authentication, Organizations, RBAC and RLS
+status: executing
+stopped_at: Phase 3 UI-SPEC approved
+last_updated: "2026-10-07T04:20:16.275Z"
 last_activity: 2026-10-07
-last_activity_desc: 02-11 complete (Playwright harness, 48 committed baselines, verification + security artifacts); the blocking task-3 human-verify gate was APPROVED by motohamy1 on 2026-10-07 — Phase 2 is complete (11/11 plans)
+last_activity_desc: Phase 03 execution started
 progress:
   total_phases: 22
   completed_phases: 2
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 23
+  completed_plans: 18
   percent: 9
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-06)
 
 **Core value:** Understand the patient → act on what matters → track what happens next.
-**Current focus:** Phase 2 — Foundation and App Shell
+**Current focus:** Phase 03 — Authentication, Organizations, RBAC and RLS
 
 ## Current Position
 
-Phase: 2 — Foundation and App Shell
-Plan: 11 of 11 complete (02-01…02-11 done)
-Status: Phase execution complete — the blocking task-3 human-verify gate was approved 2026-10-07
-Last activity: 2026-10-07 — Plan 02-11 completed (be3e665, e37f8d5, plus the close-out commit)
+Phase: 03 (Authentication, Organizations, RBAC and RLS) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-10-07 — Phase 03 execution started
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
@@ -79,6 +79,7 @@ Progress: [███████████] 11/11 plans (100%)
 | Phase 02 P02-09 | 46min | 2 tasks | 10 files |
 | Phase 02 P02-10 | 30min | 2 tasks | 6 files |
 | Phase 02 P02-11 | 42min | 3 tasks | 4 files |
+| Phase 03 P01 | 63min | 4 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -131,6 +132,7 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-10: the dev-route flag is named in exactly one src/ file (src/lib/dev/dev-route-gate.ts); the truth-table test derives the key from its parts so plan 02-11's repo-wide occurrence count sees only the gate module plus playwright.config.ts
 - [Phase 02]: 02-11: the visual harness captures both motion states as two Playwright projects via real `reducedMotion` emulation (never a test-side flag); the 48 committed baselines span six surfaces (the five D-01 shells plus the dev-only gallery) × four viewports × two states, there is no `patient-records` surface because D-01 locks no records route, and the baselines are workstation-local (regenerate, never copy, on a runner change; no CI provider exists)
 - [Phase 02]: 02-11: the phase closed against the 12-row `visual-qa-rules.md` §1 gate and the `INV-xx` registry, not a green suite (§27) — QA rows 8-10 recorded N/A → Phase 006, the D-27 `surfaceMuted`-boundary outcome accepted, and the blocking task-3 gate approved by `motohamy1` on 2026-10-07
+- [Phase 03]: 03-01: Supabase provisioning target = LOCAL (Docker) stack at 127.0.0.1:54321 with Mailpit email capture; enable_confirmations=true per D-05; PKCE token_hash confirmation/recovery templates and the 5-path redirect allowlist fixed in supabase/config.toml — Owner chose local provisioning via chained auto mode; Mailpit satisfies Phase-3 email gates with zero SMTP config
 
 ### Pending Todos
 
@@ -153,6 +155,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-07T00:22:00.000Z
-Stopped at: 02-11 complete; Phase 2 closed — human-verify gate approved 2026-10-07 (reviewer motohamy1)
-Resume file: None
+Last session: 2026-10-07T04:17:55.677Z
+Stopped at: Phase 3 UI-SPEC approved
+Resume file: .planning/phases/03-authentication-organizations-rbac-and-rls/03-UI-SPEC.md

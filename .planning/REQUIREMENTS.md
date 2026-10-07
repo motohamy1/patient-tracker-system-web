@@ -23,9 +23,9 @@ Derived from PRODUCT-MASTER-SPEC.md (authoritative control pack). Auto mode: all
 
 ### AUTH — Authentication, Org Membership, RBAC, RLS, Audit (Phase 3)
 
-- [ ] **AUTH-01**: As a user, I can authenticate, and my permitted workspace is derived from server-side identity plus organization membership — never from client state. (§3.1, §12)
+- [x] **AUTH-01**: As a user, I can authenticate, and my permitted workspace is derived from server-side identity plus organization membership — never from client state. (§3.1, §12)
 - [ ] **AUTH-02**: As an organization owner, users gain access only through explicit organization membership records, so an authenticated stranger cannot see the organization's data. (§12)
-- [ ] **AUTH-03**: As a user, my role (Provider/Doctor, Nurse, Receptionist, Patient, Admin/Organization Owner) is resolved server-side from trusted membership data; a client-side toggle, route, local state value, query parameter, or hidden form must not grant access to another workspace. (§3.1, §12; Phase 003 acceptance condition: "A frontend toggle must NOT grant access to another workspace")
+- [x] **AUTH-03**: As a user, my role (Provider/Doctor, Nurse, Receptionist, Patient, Admin/Organization Owner) is resolved server-side from trusted membership data; a client-side toggle, route, local state value, query parameter, or hidden form must not grant access to another workspace. (§3.1, §12; Phase 003 acceptance condition: "A frontend toggle must NOT grant access to another workspace")
 - [ ] **AUTH-04**: As a database, every clinical table enforces Row Level Security so a direct query or service call without membership context cannot read or write another organization's rows. (§12)
 - [ ] **AUTH-05**: As a doctor, I can create and update clinical records per my permissions; as a nurse I can enter only permitted vitals/demographics/operational data; as a receptionist only permitted administrative registration/scheduling; as a patient only explicitly allowed patient-generated observations — all enforced at the backend/data layer, not merely hidden in the UI. (§3.2)
 - [ ] **AUTH-06**: As a security reviewer, sensitive mutations (clinical record changes, document access, membership changes) produce audit log entries, so tampering is traceable. (§12, §19 Ph003)
@@ -209,9 +209,9 @@ Deferred without a phase in v1:
 | FOUND-03 | 2 | Complete |
 | FOUND-04 | 2 | Complete |
 | FOUND-05 | 2 | Complete |
-| AUTH-01 | 3 | Pending |
+| AUTH-01 | 3 | Complete |
 | AUTH-02 | 3 | Pending |
-| AUTH-03 | 3 | Pending |
+| AUTH-03 | 3 | Complete |
 | AUTH-04 | 3 | Pending |
 | AUTH-05 | 3 | Pending |
 | AUTH-06 | 3 | Pending |
