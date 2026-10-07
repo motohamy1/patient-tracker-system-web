@@ -76,6 +76,8 @@ type SearchProps = {
   inputId: string;
   placeholder?: string;
   className?: string;
+  /** Optional filter hook — the audit surface's only client piece wires this. */
+  onValueChange?: (value: string) => void;
 };
 
 type IconToggleProps = {
@@ -96,7 +98,7 @@ type RangeToggleProps = {
 
 export type CompactControlProps = SearchProps | IconToggleProps | RangeToggleProps;
 
-function SearchControl({ label, inputId, placeholder, className }: SearchProps) {
+function SearchControl({ label, inputId, placeholder, className, onValueChange }: SearchProps) {
   const wrapperClasses = [SEARCH_WRAPPER, className].filter(Boolean).join(' ');
   return (
     <>
@@ -109,6 +111,7 @@ function SearchControl({ label, inputId, placeholder, className }: SearchProps) 
           id={inputId}
           type="search"
           placeholder={placeholder}
+          onChange={onValueChange ? (event) => onValueChange(event.target.value) : undefined}
           className="min-w-0 flex-1 bg-transparent text-body leading-body text-text-primary placeholder:text-text-primary"
         />
       </div>
