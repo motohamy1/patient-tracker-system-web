@@ -29,3 +29,8 @@ src/styles/tokens.generated.ts
 # OS / editor noise
 .DS_Store
 Thumbs.db
+
+.planning
+.planning/
+docs
+.kilo
