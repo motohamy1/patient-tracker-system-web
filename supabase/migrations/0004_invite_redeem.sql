@@ -111,7 +111,43 @@ begin
 end;
 $$;
 
+create or replace function public.preview_invite(p_raw_token text)
+returns json
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_digest text;
+  v_invitation public.invitations%rowtype;
+  v_org_name text;
+begin
+  v_digest := encode(extensions.digest(p_raw_token, 'sha256'), 'hex');
+
+  select * into v_invitation
+  from public.invitations
+  where token_digest = v_digest
+    and redeemed_at is null
+    and (expires_at is null or expires_at > now());
+
+  if not found then
+    return null;
+  end if;
+
+  select name into v_org_name
+  from public.organizations
+  where id = v_invitation.org_id;
+
+  return json_build_object(
+    'organization', v_org_name,
+    'role', v_invitation.role
+  );
+end;
+$$;
+
 revoke execute on function public.redeem_invite(text) from public, anon;
 revoke execute on function public.remove_membership(uuid) from public, anon;
+revoke execute on function public.preview_invite(text) from public;
 grant execute on function public.redeem_invite(text) to authenticated;
 grant execute on function public.remove_membership(uuid) to authenticated;
+grant execute on function public.preview_invite(text) to anon, authenticated;

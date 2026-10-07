@@ -97,7 +97,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "redeem_invite":
+            "preview_invite":
+{ Args: { "p_raw_token": string }; Returns: Json
+                           },
+"redeem_invite":
 { Args: { "p_raw_token": string }; Returns: Json
                            },
 "remove_membership":
