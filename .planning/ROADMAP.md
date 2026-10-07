@@ -118,11 +118,16 @@ Cross-cutting constraints: none shared by two or more plans.
   4. Direct database/API access without membership context cannot read or write another organization's rows (RLS verified).
 
 **UI hint**: no
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
 
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — Supabase infrastructure (packages, client factories, proxy session refresh, provisioning gate)
+- [ ] 03-02-PLAN.md — Schema migrations + RLS + audit triggers + [BLOCKING] db push + pgTAP deny tests
+- [ ] 03-03-PLAN.md — RBAC vocabulary, server-side role resolution, layout slot wiring, denial surface
+- [ ] 03-04-PLAN.md — Auth server actions + PKCE confirm route + credential surfaces + email-flow gate
+- [ ] 03-05-PLAN.md — Invite engine, signup-then-join redeem, org creation, members surface
+- [ ] 03-06-PLAN.md — UX baseline + offline strip + admin audit surface + seeds + AUTH-08 acceptance gate
 
 ### Phase 4: Provider Home + Patient Folder Workspace
 
