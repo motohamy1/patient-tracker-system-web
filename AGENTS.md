@@ -174,7 +174,15 @@ If everything else fails, the clinician must be able to understand a patient's l
 
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+### Execution cadence (performance)
+
+Phases 1–2 ran at ~52 min/plan because every plan executed serially (no worktree isolation on this runtime) and each plan re-ran a full production build and suite. Keep later phases practical:
+
+- **Plan fat, not many.** Prefer 4–6 substantial plans per phase over 10+ thin ones — the per-plan fixed cost (subagent spin-up + full context reload) dominates.
+- **Build once per phase.** Per-task verification is the focused `vitest` file(s) + `npm run lint` + `tsc --noEmit`. Run `npm run build` and `npm run test:visual` at the phase gate only, not inside every plan's `<verify>`.
+- **Verify twice, not five times.** Executor self-check plus the one phase verifier. `code_review`, `nyquist_validation`, `security_enforcement` and `ui_review` are disabled in `.planning/config.json`.
+- **No per-plan Playwright.** The full visual matrix (48 baselines) is a phase-close artifact.
+- **Batch owner gates.** A blocking owner visual-review gate freezes its whole plan; schedule these at phase close where possible.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
