@@ -18,7 +18,6 @@
 import { useRef, useState, useTransition, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/primitives/Button';
-import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { signUpAction } from '@/lib/auth/actions';
 import {
   type FieldErrors,
@@ -35,10 +34,16 @@ const FIELD_IDS = { email: 'signup-email', password: 'signup-password' } as cons
 
 export type Attempt = { email: string; password: string };
 
-const FIELD_WRAPPER = [
-  'flex w-full items-center gap-xs rounded-md px-lg min-h-11 md:min-h-8 text-text-primary',
-  INSET_FILL,
-].join(' ');
+// The inset fill arrives as a PROP, not an import — a client chunk may not
+// reference node:fs, and CompactControl's gate read lives there (the gallery
+// slot precedent, plan 02-10): the server page owns the gate read and passes
+// the value down.
+function fieldWrapperOf(insetFill: string): string {
+  return [
+    'flex w-full items-center gap-xs rounded-md px-lg min-h-11 md:min-h-8 text-text-primary',
+    insetFill,
+  ].join(' ');
+}
 
 type FieldBlockProps = {
   id: string;
@@ -49,15 +54,16 @@ type FieldBlockProps = {
   type: string;
   autoComplete: string;
   placeholder: string;
+  insetFill: string;
 };
 
-function FieldBlock({ id, label, error, pending, name, type, autoComplete, placeholder }: FieldBlockProps) {
+function FieldBlock({ id, label, error, pending, name, type, autoComplete, placeholder, insetFill }: FieldBlockProps) {
   return (
     <div className="flex flex-col gap-xs">
       <label htmlFor={id} className="text-label leading-label text-text-primary">
         {label}
       </label>
-      <div className={FIELD_WRAPPER}>
+      <div className={fieldWrapperOf(insetFill)}>
         <input
           id={id}
           name={name}
@@ -83,11 +89,19 @@ export type SignUpFormPresentation = {
   errors: FieldErrors;
   pageError: string | null;
   pending: boolean;
+  insetFill: string;
   onSubmit: (attempt: Attempt) => void;
   onRetry: () => void;
 };
 
-export function SignUpFormPresentation({ errors, pageError, pending, onSubmit, onRetry }: SignUpFormPresentation) {
+export function SignUpFormPresentation({
+  errors,
+  pageError,
+  pending,
+  insetFill,
+  onSubmit,
+  onRetry,
+}: SignUpFormPresentation) {
   return (
     <form
       noValidate
@@ -117,6 +131,7 @@ export function SignUpFormPresentation({ errors, pageError, pending, onSubmit, o
         placeholder="name@example.com"
         pending={pending}
         error={errors.email}
+        insetFill={insetFill}
       />
       <FieldBlock
         id={FIELD_IDS.password}
@@ -127,6 +142,7 @@ export function SignUpFormPresentation({ errors, pageError, pending, onSubmit, o
         placeholder="At least 8 characters"
         pending={pending}
         error={errors.password}
+        insetFill={insetFill}
       />
       <Button variant="primary" type="submit" disabled={pending}>
         Sign up
@@ -140,7 +156,7 @@ export function SignUpFormPresentation({ errors, pageError, pending, onSubmit, o
   );
 }
 
-export function SignUpForm() {
+export function SignUpForm({ insetFill }: { insetFill: string }) {
   const router = useRouter();
   const lastAttemptRef = useRef<Attempt | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -183,6 +199,7 @@ export function SignUpForm() {
       errors={errors}
       pageError={pageError}
       pending={pending}
+      insetFill={insetFill}
       onSubmit={handleSubmit}
       onRetry={handleRetry}
     />

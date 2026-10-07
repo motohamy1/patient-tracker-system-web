@@ -76,6 +76,7 @@ beforeAll(async () => {
 const NO_ERRORS: FieldErrors = { email: undefined, password: undefined, next: undefined, passwordConfirm: undefined };
 const noopSubmit = () => undefined;
 const noopRetry = () => undefined;
+const SANCTIONED_INSET_FILL = 'bg-surface-muted';
 
 describe('/login — the rewritten credential surface', () => {
   it('keeps the heading exact and the reset ghost link wired', async () => {
@@ -117,7 +118,7 @@ describe('LoginFormPresentation — §8.1 form grammar and no-leak states', () =
 
   it('renders programmatic labels tied to their fields, inset fills and the height rhythm', () => {
     const doc = parse(
-      createElement(forms.LoginFormPresentation, { errors: NO_ERRORS, pageError: null, ...base }),
+      createElement(forms.LoginFormPresentation, { errors: NO_ERRORS, pageError: null, ...base, insetFill: SANCTIONED_INSET_FILL }),
     );
     const emailLabel = doc.querySelector('label');
     expect(emailLabel?.getAttribute('for')).toBe('signin-email');
@@ -132,7 +133,7 @@ describe('LoginFormPresentation — §8.1 form grammar and no-leak states', () =
 
   it('renders the exact primary action label', () => {
     const doc = parse(
-      createElement(forms.LoginFormPresentation, { errors: NO_ERRORS, pageError: null, ...base }),
+      createElement(forms.LoginFormPresentation, { errors: NO_ERRORS, pageError: null, ...base, insetFill: SANCTIONED_INSET_FILL }),
     );
     const button = doc.querySelector('button');
     expect(button?.textContent).toBe('Sign in');
@@ -144,6 +145,7 @@ describe('LoginFormPresentation — §8.1 form grammar and no-leak states', () =
         errors: { ...NO_ERRORS, email: 'Enter a valid email address.' },
         pageError: null,
         ...base,
+        insetFill: SANCTIONED_INSET_FILL,
       }),
     );
     const input = doc.querySelector('#signin-email');
@@ -163,7 +165,7 @@ describe('LoginFormPresentation — §8.1 form grammar and no-leak states', () =
 
   it('renders pending as aria-busy + disabled with the fill unchanged, no spinner', () => {
     const doc = parse(
-      createElement(forms.LoginFormPresentation, { errors: NO_ERRORS, pageError: null, ...base, pending: true }),
+      createElement(forms.LoginFormPresentation, { errors: NO_ERRORS, pageError: null, ...base, pending: true, insetFill: SANCTIONED_INSET_FILL }),
     );
     const form = doc.querySelector('form');
     expect(form?.getAttribute('aria-busy')).toBe('true');
@@ -175,6 +177,7 @@ describe('LoginFormPresentation — §8.1 form grammar and no-leak states', () =
         pageError: null,
         ...base,
         pending: true,
+        insetFill: SANCTIONED_INSET_FILL,
       }),
     );
     expect(markupForSweeps).not.toMatch(/animate-spin|spinner|skeleton|loading|progress/);
@@ -188,6 +191,7 @@ describe('LoginFormPresentation — §8.1 form grammar and no-leak states', () =
         errors: NO_ERRORS,
         pageError: forms.SIGN_IN_CREDENTIALS_ERROR,
         ...base,
+        insetFill: SANCTIONED_INSET_FILL,
       }),
     );
     const errorLine = doc.querySelector('form > p');
@@ -205,6 +209,7 @@ describe('LoginFormPresentation — §8.1 form grammar and no-leak states', () =
         errors: NO_ERRORS,
         pageError: forms.SIGN_IN_NETWORK_ERROR,
         ...base,
+        insetFill: SANCTIONED_INSET_FILL,
       }),
     );
     const buttons = Array.from(failing.querySelectorAll('button'));
@@ -273,6 +278,7 @@ describe('/reset-password/request + /reset-password/update — reset surfaces', 
         sent: true,
         pageError: null,
         pending: false,
+        insetFill: SANCTIONED_INSET_FILL,
         onSubmit: noopSubmit,
         onRetry: noopRetry,
       }),
@@ -302,6 +308,7 @@ describe('/reset-password/request + /reset-password/update — reset surfaces', 
         errors: { ...NO_ERRORS, passwordConfirm: updateForms.CONFIRM_PASSWORD_MISMATCH_ERROR },
         pageError: null,
         pending: false,
+        insetFill: SANCTIONED_INSET_FILL,
         onSubmit: noopSubmit,
         onRetry: noopRetry,
       }),

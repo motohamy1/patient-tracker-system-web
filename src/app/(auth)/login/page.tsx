@@ -14,6 +14,7 @@
 // animation, the heading always present. A failed email-verification link
 // arrives as ?error=auth-verification and renders the same page-level
 // label-plus-dot line, calm and fixed.
+import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { Surface } from '@/components/primitives';
 import { LoginForm } from './login-form';
 
@@ -38,7 +39,7 @@ export default async function LoginPage({
     >
       <div className="flex w-full max-w-[24rem] flex-col gap-md">
         <h1 className="text-heading font-semibold leading-heading text-text-primary">Sign in</h1>
-        <LoginForm initialPageError={initialPageError} />
+        <LoginForm initialPageError={initialPageError} insetFill={INSET_FILL} />
         <a href="/reset-password/request" className={GHOST_LINK_CLASSES}>
           Reset password
         </a>

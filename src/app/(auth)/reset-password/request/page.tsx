@@ -7,6 +7,7 @@
 // swaps to the SAME fixed confirmation regardless of account existence
 // (Pitfall 4 no-leak — the confirmation copy never names an account state).
 // "Back to sign in" ghost link per §8.1 secondary actions.
+import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { Surface } from '@/components/primitives';
 import { RequestForm } from './request-form';
 
@@ -26,7 +27,7 @@ export default function ResetPasswordRequestPage() {
         <p className="text-body leading-body text-text-primary">
           We will email you a link to set a new password.
         </p>
-        <RequestForm />
+        <RequestForm insetFill={INSET_FILL} />
         <a href="/login" className={GHOST_LINK_CLASSES}>
           Back to sign in
         </a>

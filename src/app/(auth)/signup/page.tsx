@@ -10,6 +10,7 @@
 // strings but names no signup heading/CTA — this surface uses the calm
 // "Create your account" heading and "Sign up" action in the same voice
 // (sentence case, no welcome, no celebration), recorded in 03-04-SUMMARY.
+import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { Surface } from '@/components/primitives';
 import { SignUpForm } from './signup-form';
 
@@ -26,7 +27,7 @@ export default function SignUpPage() {
         <h1 className="text-heading font-semibold leading-heading text-text-primary">
           Create your account
         </h1>
-        <SignUpForm />
+        <SignUpForm insetFill={INSET_FILL} />
         <a href="/login" className={GHOST_LINK_CLASSES}>
           Back to sign in
         </a>

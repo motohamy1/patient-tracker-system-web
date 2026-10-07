@@ -6,6 +6,7 @@
 // success routes to /login. Bare (auth) column grammar, heading "Set a new
 // password", a "Confirm password" field, action "Set new password",
 // "Back to sign in" ghost link — all §Copywriting strings.
+import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { Surface } from '@/components/primitives';
 import { UpdateForm } from './update-form';
 
@@ -22,7 +23,7 @@ export default function ResetPasswordUpdatePage() {
         <h1 className="text-heading font-semibold leading-heading text-text-primary">
           Set a new password
         </h1>
-        <UpdateForm />
+        <UpdateForm insetFill={INSET_FILL} />
         <a href="/login" className={GHOST_LINK_CLASSES}>
           Back to sign in
         </a>

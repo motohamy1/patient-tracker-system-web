@@ -19,7 +19,6 @@
 import { useRef, useState, useTransition, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/primitives/Button';
-import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { LOGIN_PATH } from '@/lib/auth/redirect';
 import { updatePasswordAction } from '@/lib/auth/actions';
 import {
@@ -37,10 +36,16 @@ const FIELD_IDS = { password: 'update-new-password', passwordConfirm: 'update-co
 
 export type Attempt = { password: string; passwordConfirm: string };
 
-const FIELD_WRAPPER = [
-  'flex w-full items-center gap-xs rounded-md px-lg min-h-11 md:min-h-8 text-text-primary',
-  INSET_FILL,
-].join(' ');
+// The inset fill arrives as a PROP, not an import — a client chunk may not
+// reference node:fs, and CompactControl's gate read lives there (the gallery
+// slot precedent, plan 02-10): the server page owns the gate read and passes
+// the value down.
+function fieldWrapperOf(insetFill: string): string {
+  return [
+    'flex w-full items-center gap-xs rounded-md px-lg min-h-11 md:min-h-8 text-text-primary',
+    insetFill,
+  ].join(' ');
+}
 
 function FieldBlock({
   id,
@@ -48,19 +53,21 @@ function FieldBlock({
   error,
   pending,
   autoComplete,
+  insetFill,
 }: {
   id: string;
   label: string;
   error?: string;
   pending: boolean;
   autoComplete: string;
+  insetFill: string;
 }) {
   return (
     <div className="flex flex-col gap-xs">
       <label htmlFor={id} className="text-label leading-label text-text-primary">
         {label}
       </label>
-      <div className={FIELD_WRAPPER}>
+      <div className={fieldWrapperOf(insetFill)}>
         <input
           id={id}
           name={id}
@@ -86,6 +93,7 @@ export type UpdateFormPresentationProps = {
   errors: FieldErrors;
   pageError: string | null;
   pending: boolean;
+  insetFill: string;
   onSubmit: (attempt: Attempt) => void;
   onRetry: () => void;
 };
@@ -94,6 +102,7 @@ export function UpdateFormPresentation({
   errors,
   pageError,
   pending,
+  insetFill,
   onSubmit,
   onRetry,
 }: UpdateFormPresentationProps) {
@@ -123,6 +132,7 @@ export function UpdateFormPresentation({
         autoComplete="new-password"
         pending={pending}
         error={errors.password}
+        insetFill={insetFill}
       />
       <FieldBlock
         id={FIELD_IDS.passwordConfirm}
@@ -130,6 +140,7 @@ export function UpdateFormPresentation({
         autoComplete="new-password"
         pending={pending}
         error={errors.passwordConfirm}
+        insetFill={insetFill}
       />
       <Button variant="primary" type="submit" disabled={pending}>
         Set new password
@@ -143,7 +154,7 @@ export function UpdateFormPresentation({
   );
 }
 
-export function UpdateForm() {
+export function UpdateForm({ insetFill }: { insetFill: string }) {
   const router = useRouter();
   const lastAttemptRef = useRef<Attempt | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -212,6 +223,7 @@ export function UpdateForm() {
       errors={errors}
       pageError={pageError}
       pending={pending}
+      insetFill={insetFill}
       onSubmit={handleSubmit}
       onRetry={handleRetry}
     />

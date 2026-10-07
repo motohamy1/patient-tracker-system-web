@@ -18,7 +18,6 @@
 
 import { useRef, useState, useTransition, type FormEvent } from 'react';
 import { Button } from '@/components/primitives/Button';
-import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { requestResetAction } from '@/lib/auth/actions';
 import {
   type FieldErrors,
@@ -35,18 +34,32 @@ export const RETRY_ACTION_LABEL = 'Try again';
 
 const EMAIL_FIELD_ID = 'reset-request-email';
 
-function EmailField({ error, pending }: { error?: string; pending: boolean }) {
+// The inset fill arrives as a PROP, not an import — a client chunk may not
+// reference node:fs, and CompactControl's gate read lives there (the gallery
+// slot precedent, plan 02-10): the server page owns the gate read and passes
+// the value down.
+function fieldWrapperOf(insetFill: string): string {
+  return [
+    'flex w-full items-center gap-xs rounded-md px-lg min-h-11 md:min-h-8 text-text-primary',
+    insetFill,
+  ].join(' ');
+}
+
+function EmailField({
+  error,
+  pending,
+  insetFill,
+}: {
+  error?: string;
+  pending: boolean;
+  insetFill: string;
+}) {
   return (
     <div className="flex flex-col gap-xs">
       <label htmlFor={EMAIL_FIELD_ID} className="text-label leading-label text-text-primary">
         Email
       </label>
-      <div
-        className={[
-          'flex w-full items-center gap-xs rounded-md px-lg min-h-11 md:min-h-8 text-text-primary',
-          INSET_FILL,
-        ].join(' ')}
-      >
+      <div className={fieldWrapperOf(insetFill)}>
         <input
           id={EMAIL_FIELD_ID}
           name="email"
@@ -73,6 +86,7 @@ export type RequestFormPresentationProps = {
   sent: boolean;
   pageError: string | null;
   pending: boolean;
+  insetFill: string;
   onSubmit: (email: string) => void;
   onRetry: () => void;
 };
@@ -82,6 +96,7 @@ export function RequestFormPresentation({
   sent,
   pageError,
   pending,
+  insetFill,
   onSubmit,
   onRetry,
 }: RequestFormPresentationProps) {
@@ -108,7 +123,7 @@ export function RequestFormPresentation({
         </p>
       ) : (
         <>
-          <EmailField pending={pending} error={errors.email} />
+          <EmailField pending={pending} error={errors.email} insetFill={insetFill} />
           <Button variant="primary" type="submit" disabled={pending}>
             Send reset link
           </Button>
@@ -123,7 +138,7 @@ export function RequestFormPresentation({
   );
 }
 
-export function RequestForm() {
+export function RequestForm({ insetFill }: { insetFill: string }) {
   const lastEmailRef = useRef<string>('');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [sent, setSent] = useState(false);
@@ -170,6 +185,7 @@ export function RequestForm() {
       sent={sent}
       pageError={pageError}
       pending={pending}
+      insetFill={insetFill}
       onSubmit={handleSubmit}
       onRetry={handleRetry}
     />
