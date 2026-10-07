@@ -97,7 +97,12 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "redeem_invite":
+{ Args: { "p_raw_token": string }; Returns: Json
+                           },
+"remove_membership":
+{ Args: { "p_membership_id": string }; Returns: undefined
+                           }
           }
           Enums: {
             [_ in never]: never
