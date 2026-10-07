@@ -1,3 +1,147 @@
+---
+phase: 02-foundation-and-app-shell
+verified: 2026-10-07T00:36:43Z
+status: passed
+score: 15/15 must-haves verified
+behavior_unverified: 0
+---
+
+# Phase 2: Foundation and App Shell — Verification Report
+
+**Phase Goal:** Build only the Next.js application shell: route structure, layout primitives, semantic design tokens, typography, surfaces, buttons, pills, compact controls, modal/sheet primitives, accessibility baseline, and motion foundation. No fake clinical dashboard; no fake patient data beyond isolated development fixtures.
+**Verified:** 2026-10-07T00:36:43Z
+**Status:** passed
+**Re-verification:** No — initial goal-backward verification (the phase's blocking human visual-QA gate already ran and was APPROVED on 2026-10-07; that record is preserved verbatim below and is not re-raised).
+
+This report is the goal-backward verification of Phase 2 against ROADMAP.md success criteria 1–4 and requirement IDs FOUND-01…FOUND-05 and UX-06. It was produced read-only over the production code: no token, component, route or test was edited, and every machine result cited here was re-executed on 2026-10-07 at the commit below.
+
+**Method note.** The SUMMARY.md files claim far more than this report restates. Every claim below was independently checked against the codebase: file existence, substantive implementation (not stubs), wiring, and — where a runtime invariant is asserted — a behavioral test that exercises it.
+
+## Goal Achievement
+
+### Observable Truths
+
+| # | Truth | Status | Evidence |
+|---|-------|--------|----------|
+| 1 | Every route in the locked D-01 map renders as a typed empty shell with the correct layout frame and token styling — `/provider`, `/login`, `/patient`, `/patient/home`, the eight `/provider/patients/[patientId]/*` tabs, the bare workspace redirect, and `/` resolving to the root 404. | ✓ VERIFIED | `npm run build` route table names all routes (`○ /_not-found`, `○ /login`, `○ /patient`, `○ /patient/home`, `○ /provider`, `ƒ /provider/patients/[patientId]`, all eight tabs, `ƒ /dev/gallery`). Each `page.tsx` is substantive and renders `EmptyState`/`WorkspaceTopBar`. (FOUND-01, FOUND-03) |
+| 2 | Token-driven styling derives from one frozen semantic token layer generated at build time; no raw hex and no off-vocabulary utility exists under `src/`. | ✓ VERIFIED | `src/styles/tokens.generated.css` carries a literal `@theme inline` block **and** an unconditional `:root` block (including `--duration-fast`/`--duration-slow`); `npm run lint` → exit 0, `0 violations across 45 file(s)`; recursive hex grep over `src/` → 0 hits. (FOUND-03) |
+| 3 | The shared primitive set exists and is substantive — `Surface` (4 variants), `Button` (4 variants), `Icon`, `Pill`, `TabBar`/`SegmentedControl`, `CompactControl`, `EmptyState`, `Overlay`. | ✓ VERIFIED | All eight files present with real implementations (variant maps, motion branches, type-level constraints); 124 unit tests pass over them. (FOUND-02) |
+| 4 | Every shell screen is composed from the shared primitives rather than bespoke per-screen components. | ✓ VERIFIED | `(provider)/layout.tsx`, `(patient)/layout.tsx`, `(auth)/layout.tsx` and every route page import `Surface`, `EmptyState`, `ProviderRail`/`ProviderTopBar`/`WorkspaceTopBar`/`PatientTopBar`/`MobileNav`, `CompactControl`. (FOUND-02) |
+| 5 | The `primary` CTA fills with `accentSoft`, never `accent`; no status tint is used as ink; an `iconOnly` control cannot ship without an accessible name. | ✓ VERIFIED | `Button.tsx` → `BUTTON_VARIANTS.primary: 'bg-accent-soft text-text-primary rounded-pill'` (no `bg-accent`); `ButtonProps` is a discriminated union requiring `ariaLabel` for `iconOnly`; `Button.test.tsx` asserts "never `bg-accent`" and mandatory icon-only names. (FOUND-04) |
+| 6 | The keyboard/assistive baseline is declared once (a single `:focus-visible` ring) and applied through the shell and primitives, with dialog semantics for the overlay. | ✓ VERIFIED | `globals.css` → one `:focus-visible` rule (`2px solid var(--color-text-primary)`, `outline-offset: 2px`); icon-only controls carry `aria-label`; active nav carries `aria-current="page"`; `Overlay.tsx` carries `role="dialog"`, `aria-modal`, `aria-labelledby`; `focus-trap.test.tsx` exercises focus-in, forward/backward wrap, Escape, restore and `inert`. (FOUND-04) |
+| 7 | The reduced-motion preference disables or reduces all shell-level motion through one motion module. | ✓ VERIFIED | `src/lib/motion.ts` `useShellMotion()` resolves `reduce` truthily and returns opacity-only at `fastSec` under reduction; `reduced-motion.test.tsx` passes; `Button` uses `useReducedMotion` + `fastSec`; the Playwright `reduced-motion` project captures 24 baselines. (FOUND-05) |
+| 8 | No fake clinical dashboard and no sample patient data exists beyond isolated development fixtures; the fixtures are typed stubs with all seven clinical collections empty. | ✓ VERIFIED | `src/lib/dev/fixtures.ts` — all seven collections are literal `[]`; `dev-fixtures.test.ts` asserts empty collections, no clinical-vocabulary export, and no dosage/record-number/date literal; clinical-term grep over `src/` → 0 hits. (FOUND-01) |
+| 9 | The dev fixtures are confined to `src/lib/dev/` and reachable only from the gated gallery page — never a product route or the shipped client bundle. | ✓ VERIFIED | `dev-fixtures.test.ts` scope assertion (no `Patient`-shaped literal outside `src/lib/dev/`) and reachability assertion (only `src/app/dev/gallery/page.tsx`); `security.spec.ts` asserts `dev-placeholder` is absent from `.next/static`. (FOUND-01) |
+| 10 | The dev-only gallery is gated: it 404s without the flag and renders with it; the flag is named in exactly two files and no `.env*` exists. | ✓ VERIFIED | `dev-route-gate.ts` predicate; phase page is `force-dynamic`; `grep ALLOW_DEV_ROUTES` → exactly `src/lib/dev/dev-route-gate.ts` + `playwright.config.ts`; `ls .env*` → none; `security.spec.ts` 404 test. (FOUND-01) |
+| 11 | The locked route map is exact: the eight workspace tabs are exactly Overview / AI Analytics / Visits / Medications / Labs / Imaging / Allergies / Genetics — no `Vital Signs`, no `Communication`, no ninth tab or route. | ✓ VERIFIED | `tabs.ts` `WORKSPACE_TAB_ROUTES` enumerates exactly the eight; `TabBar.tsx` `WORKSPACE_TABS` matches; the eight route folders exist and match by name. (FOUND-01) |
+| 12 | No access control exists and none is faked: no `middleware.ts`, no client-side gate; the Phase-003 server-side resolution slot is marked in both role layouts and `/login`. | ✓ VERIFIED | `find src -name middleware.ts` → 0; D-03 server-side-slot comments present in `(provider)/layout.tsx`, `(patient)/layout.tsx`, `(auth)/login/page.tsx`; `/login` renders no form/input/submit. (FOUND-01) |
+| 13 | Mobile adaptation: ≥44px touch targets, a horizontally scrolling pill strip below 768px, a collapsed native-`<details>` search, and the `Overlay` flips modal→sheet below the 1024px band edge. | ✓ VERIFIED | `min-h-11`/`min-w-11` sizing in primitives and shell; `MobileNav.tsx` uses a native `<details>` disclosure; `Overlay.tsx` uses the stock `max-lg:items-end` flip. (UX-06) |
+| 14 | One `Overlay` primitive serves both presentations with a complete hand-rolled accessibility contract and no headless-UI dependency. | ✓ VERIFIED | `Overlay.tsx` is a single component (no `variant` prop); `useFocusTrap.ts` + `useScrollLock.ts` implement the contract; headless-lib grep over `src/`/`tests/` returns only comments stating none is used. (FOUND-02, FOUND-04) |
+| 15 | The visual-regression harness exists with 48 committed baselines (6 surfaces × 4 viewports × 2 motion projects) and automated security assertions. | ✓ VERIFIED | `find tests/visual/baselines -name '*.png'` → 48; `playwright.config.ts` declares the `default`/`reduced-motion` projects; `surfaces.spec.ts` builds the `{surface}/{viewport}/{state}.png` path as segments; `git check-ignore <baseline>` exits 1 (not ignored). (FOUND-05, UX-06) |
+
+**Score:** 15/15 truths verified (0 present, behavior-unverified).
+
+### Deferred Items
+
+Items explicitly owned by a later milestone phase and not actionable gaps here.
+
+| # | Item | Addressed In | Evidence |
+|---|------|-------------|----------|
+| 1 | Visual-QA rows 8 (timeline proportions), 9 (node/branch behaviour), 10 (bottom scrubber) | Phase 6 | ROADMAP Phase 6 goal: "Implement the actual timeline engine … bottom scrubber …". Recorded as NOT APPLICABLE in Phase 002 in the preserved record below, never as a pass. |
+| 2 | Loading / error / retry / permission-denied / offline-sync states | Phase 3 | REQUIREMENTS.md UX-01/UX-02/UX-03 map to Phase 3; `EmptyState` deliberately ships the empty variant only. |
+
+### Required Artifacts
+
+| Artifact | Expected | Status | Details |
+|----------|----------|--------|---------|
+| `package.json` / `package-lock.json` | pinned scaffold, exact script set | ✓ VERIFIED | 13 packages pinned exactly; `predev`/`prebuild`/`lint` wire the token scripts; lockfile committed. |
+| `scripts/token-namespaces.mjs`, `scripts/generate-tokens.mjs` | zero-dep token codegen | ✓ VERIFIED | Dual-emission CSS + Motion TS generated from `tokens.json`; generated files gitignored. |
+| `scripts/check-design-tokens.mjs` | the three machine checks | ✓ VERIFIED | `no-raw-hex` / `no-generic-healthcare-blue` / `token-reference-required`; wired to `lint` + `prebuild`. |
+| `src/styles/tokens.generated.{css,ts}` | generated token layer | ✓ VERIFIED | Literal `@theme inline` + `:root` (42 declarations) + `MOTION` constants; gitignored. |
+| `src/app/globals.css` | token-only base + a11y/motion baseline | ✓ VERIFIED | Zero raw values; single `:focus-visible`; reduced-motion safety net. |
+| `src/app/layout.tsx` | the single root layout | ✓ VERIFIED | Owns `<html>`/`<body>`, self-hosted Inter (400/600), no role chrome. |
+| `src/components/primitives/{Surface,Icon,Button,Pill,TabBar,CompactControl,EmptyState}.tsx`, `index.ts` | shared primitives | ✓ VERIFIED | All present, substantive, composed from tokens. |
+| `src/components/overlays/{Overlay.tsx,useFocusTrap.ts,useScrollLock.ts}` | modal/sheet primitive + a11y hooks | ✓ VERIFIED | One overlay form; full hand-rolled contract. |
+| `src/lib/motion.ts` | motion vocabulary | ✓ VERIFIED | `useShellMotion()`; generated constants only. |
+| `src/components/shell/{ProviderRail,ProviderTopBar,MobileNav,WorkspaceTopBar,PatientTopBar}.tsx` | role chrome | ✓ VERIFIED | Token-pure; accessible names; no accent marker; disabled CTA. |
+| `src/app/(provider)/**`, `src/app/(auth)/**`, `src/app/(patient)/**`, `src/app/not-found.tsx` | locked route map | ✓ VERIFIED | 14 `page.tsx` + 4 layouts + `not-found.tsx`; each renders a typed `EmptyState`. |
+| `src/app/(provider)/provider/patients/[patientId]/tabs.ts` | single tab enumeration | ✓ VERIFIED | The eight slugs/labels/icons, `DEFAULT_TAB_SLUG`, `tabHref`. |
+| `src/lib/dev/{dev-route-gate.ts,fixtures.ts}`, `src/app/dev/gallery/page.tsx`, `src/components/dev/{Gallery,GallerySections}.tsx` | dev-only gate, fixtures, gallery | ✓ VERIFIED | Gate in the render path; fixtures empty-by-construction; ten-section gallery. |
+| `playwright.config.ts`, `tests/visual/{surfaces,security}.spec.ts`, `tests/visual/baselines/**` (48) | visual harness + baselines | ✓ VERIFIED | Two motion projects, four viewports, pinned capture; 48 committed PNGs; three security assertions. |
+| `tests/unit/**` (15 files) | unit coverage | ✓ VERIFIED | 124 tests; include the reduced-motion contract, the focus trap, the fixture scope/reachability, the gate truth table and the token checks. |
+| `.planning/phases/02-foundation-and-app-shell/02-SECURITY.md` | security assessment | ✓ VERIFIED | Four live threats with dispositions and proving tests; ASVS V2–V6 non-applicability recorded. |
+
+### Key Link Verification
+
+| From | To | Via | Status | Details |
+|------|----|-----|--------|---------|
+| `src/app/globals.css` | `src/styles/tokens.generated.css` | `@import` | ✓ WIRED | The imported path does not exist until `predev`/`prebuild` runs the generator — an intentional loud failure. |
+| `src/app/layout.tsx` | `(provider)`, `(patient)`, `(auth)` layouts | React tree nesting | ✓ WIRED | One root layout; role chrome lives in the nested groups, so a role switch is client navigation. |
+| `tabs.ts` | `WorkspaceTopBar` | `WORKSPACE_TAB_ROUTES` import | ✓ WIRED | The eight labels exist in exactly one place; the route folders match by name. |
+| `src/app/dev/gallery/page.tsx` | `dev-route-gate.ts` + `fixtures.ts` | `isDevRouteAllowed()` / `EMPTY_PATIENT_LIST` | ✓ WIRED | Gate evaluated in the render path; fixtures consumed only here. |
+| `playwright.config.ts` | `dev-route-gate.ts` | `webServer.env.ALLOW_DEV_ROUTES` | ✓ WIRED | The single setter of the flag; `security.spec.ts` asserts the 404 without it. |
+| `package.json` | `check-design-tokens.mjs` → `token-namespaces.mjs` | `lint` / `prebuild` scripts | ✓ WIRED | A token violation fails both `lint` and `build`. |
+| `Button.tsx` | `motion/react` + `tokens.generated.ts` | `useReducedMotion` + `MOTION` constants | ✓ WIRED | No duration literal; reduced branch is opacity-only at `fastSec`. |
+| `Overlay.tsx` | `useShellMotion` + `Button` + `Surface` + `useFocusTrap` + `useScrollLock` | imports | ✓ WIRED | Motion, elevation and the a11y contract are inherited, not re-implemented. |
+
+### Data-Flow Trace (Level 4)
+
+This is a foundation phase with no clinical data source yet; the only "data" is fixture-derived and deliberately empty. The trace confirms the visible values are intentional, not hollow stubs.
+
+| Artifact | Data Variable | Source | Produces Real Data | Status |
+|----------|---------------|--------|--------------------|--------|
+| `EmptyState.tsx` | `title` / `body` props | static literals passed by each route | N/A — static copy is the specified content (a fact about the build) | ✓ INTENTIONAL-STATIC (not a hollow stub) |
+| `Gallery.tsx` | `emptyCount` | `EMPTY_PATIENT_LIST.length` (fixtures) | Yes — a real fixture-derived `0` | ✓ FLOWING |
+| `WorkspaceTopBar.tsx` | `patientId` | route param → `tabHref()` → `encodeURIComponent` → href | Yes — the param is consumed only to build relative hrefs (never rendered/queried/logged) | ✓ FLOWING |
+
+### Behavioral Spot-Checks
+
+| Behavior | Command | Result | Status |
+|----------|---------|--------|--------|
+| Design-token gate passes over the tree | `npm run lint` | exit 0 — `0 violations across 45 file(s)` | ✓ PASS |
+| Unit suite green | `npx vitest run tests/unit` | exit 0 — 15 files / 124 tests passed | ✓ PASS |
+| Production build renders all routes | `npm run build` | exit 0 — route table lists `/login`, `/patient`, `/patient/home`, `/provider`, the redirect, the eight tabs and `ƒ /dev/gallery` | ✓ PASS |
+| Primitives are exported from the barrel | `node -e "…read index.ts…"` | `Surface: true`, `Button: true`, `makeIcon: true` | ✓ PASS |
+| Dev-route flag is confined | `grep -rl ALLOW_DEV_ROUTES src tests scripts *.ts` | exactly `src/lib/dev/dev-route-gate.ts` + `playwright.config.ts` | ✓ PASS |
+| No fake clinical content | `grep -rniE "cardiology\|lisinopril\|metformin\|MRN\|mmHg\|…" src/` | 0 hits | ✓ PASS |
+| 48 baselines committed, not ignored | `find tests/visual/baselines -name '*.png' \| wc -l`; `git check-ignore …` | `48`; check-ignore exits 1 | ✓ PASS |
+
+### Probe Execution
+
+No probe scripts apply to this phase. `find scripts -path '*/tests/probe-*.sh'` returns nothing; the PLANs declare no probe, and Phase 2 is a foundation/build phase, not a migration or tooling-probe phase. **SKIPPED (n/a).**
+
+### Requirements Coverage
+
+| Requirement | Source Plan | Description | Status | Evidence |
+|-------------|-------------|-------------|--------|----------|
+| FOUND-01 | 02-02, 02-08, 02-09, 02-10, 02-11 | Next.js shell with route structure + layout primitives, no fake clinical dashboard and no sample patient data beyond isolated dev fixtures. | ✓ SATISFIED | Truths 1, 8, 9, 10, 11, 12; `npm run build` route table; `dev-fixtures.test.ts`; clinical-term grep → 0. |
+| FOUND-02 | 02-03, 02-04, 02-05, 02-06, 02-07, 02-08, 02-09, 02-10, 02-11 | Any screen composes from the shared primitive set rather than hand-rolled per-screen components. | ✓ SATISFIED | Truths 3, 4, 14; primitive files + barrel; layouts/routes import from the primitive set. |
+| FOUND-03 | 02-01, 02-03, 02-04, 02-08, 02-09, 02-10, 02-11 | Typography and surface styling follow one hierarchy from the reference, not per-screen improvisation. | ✓ SATISFIED | Truths 1, 2; frozen `tokens.json`; generated dual-emission layer; four font sizes / two weights in the generated vocabulary. |
+| FOUND-04 | 02-03, 02-05, 02-06, 02-07, 02-08, 02-09, 02-10, 02-11 | Keyboard/assistive baseline across shell and primitives (focus order, labels, contrast against frozen tokens). | ✓ SATISFIED | Truths 5, 6, 14; single `:focus-visible`; icon-only accessible names; `focus-trap.test.tsx`. |
+| FOUND-05 | 02-06, 02-07, 02-10, 02-11 | All shell-level motion is fast/smooth/subtle/interruptible and fully disabled or reduced under reduced-motion. | ✓ SATISFIED | Truths 7, 15; `useShellMotion`; reduced-motion unit test; reduced-motion Playwright project. |
+| UX-06 | 02-05, 02-07, 02-08, 02-09, 02-10, 02-11 | Mobile adapts (touch targets, compact navigation, reduced density, safe interactions) rather than shrinking the desktop. | ✓ SATISFIED | Truth 13; 44px sizing; `MobileNav` scrolling pill strip + `<details>` search; `Overlay` sheet flip. |
+
+**Orphaned requirements:** none. All six Phase-2 IDs (FOUND-01…FOUND-05, UX-06) are claimed by at least one plan and are reachable in `REQUIREMENTS.md` Traceability (all marked Complete). REQUIREMENTS.md maps no additional ID to Phase 2.
+
+### Anti-Patterns Found
+
+| File | Line | Pattern | Severity | Impact |
+|------|------|---------|----------|--------|
+| — | — | No `TBD`/`FIXME`/`XXX` debt markers in `src/`, `scripts/` or `tests/` | — | Debt-marker gate passes. |
+| — | — | No `TODO`/`HACK`/`PLACEHOLDER` markers; no "coming soon" / "not yet implemented" prose | — | Clean. |
+| `src/components/overlays/Overlay.tsx` | 70 | `if (!mounted) return null` | ℹ️ Info | An SSR/portal guard, not a stub — it prevents the server render touching `document`. |
+| — | — | No `gsap` import under `src/`; no headless-UI/testing-library dependency (matches are comments stating integration is absent) | — | Confirms the deferred-layer and D-22 constraints. |
+
+### Gaps Summary
+
+None. Every must-have truth is VERIFIED, every required artifact exists and is substantive, every key link is wired, and no blocker anti-pattern was found. The phase goal is achieved in the codebase: the shell, the primitives, the token layer, the a11y/motion foundation and the dev-only gallery all exist, are wired, and are exercised by the unit suite and the visual harness.
+
+No new human-verification items are raised: the blocking `checkpoint:human-verify` gate for this phase already ran and was **APPROVED on 2026-10-07** (reviewer `motohamy1`), and that record — the 12 visual-QA rows, the INV evaluations, the D-27 outcome, the focus-ring/44px/reduced-motion checks — is preserved verbatim immediately below. Rows 8, 9 and 10 remain NOT APPLICABLE in Phase 002 and are owned by Phase 006; they are not re-raised.
+
+---
+
+## Visual QA, Invariant & Human-Verification Record (plan 02-11)
+
 # Phase 2 — Verification Artifact (02-VERIFICATION.md)
 
 **Phase:** 2 — Foundation and App Shell
