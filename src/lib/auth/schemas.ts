@@ -71,6 +71,29 @@ export type AuthActionResult = AuthOk | AuthFailure;
 export type FieldErrors = Partial<Record<'email' | 'password' | 'next' | 'passwordConfirm', string>>;
 
 /**
+ * The client surfaces' inline field errors, one message per field, read off a
+ * failed object parse. The message settings live on the schemas themselves, so
+ * the forms never re-derive copy from Zod internals.
+ */
+export function inlineErrorMessages(error: z.ZodError): FieldErrors {
+  // `treeifyError` for a failed object parse nests each field's messages as
+  // `{ properties: { field: { errors: [...] } } }`; `flattenError`'s shape in
+  // the installed 4.6.5 build is `{ formErrors, fieldErrors }` — the messages
+  // live on the schemas themselves either way, so the forms never re-derive
+  // copy from Zod internals.
+  const tree = z.treeifyError(error) as unknown as {
+    properties: Record<string, { errors?: string[] }>;
+  };
+  const firstOf = (key: string): string | undefined => tree.properties[key]?.errors?.[0];
+  return {
+    email: firstOf('email'),
+    password: firstOf('password'),
+    next: firstOf('next'),
+    passwordConfirm: undefined,
+  };
+}
+
+/**
  * First field name carrying an inline error — the §Focus rule's target: on a
  * failed submit, focus moves to the first field with an inline error.
  */
