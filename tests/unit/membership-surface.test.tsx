@@ -162,6 +162,7 @@ describe('members surface', () => {
           pending: false,
           result: { link: '/invite/abc', shortCode: 'ABC123', expiresAt: null },
           copied: false,
+          insetFill: 'bg-surface-muted',
           onCreate: () => undefined,
           onCopy: () => undefined,
         }),

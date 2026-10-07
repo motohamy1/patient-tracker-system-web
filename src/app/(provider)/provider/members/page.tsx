@@ -7,6 +7,7 @@
 // to the client beyond the membership row's display strings.
 import { redirect } from 'next/navigation';
 import { Surface } from '@/components/primitives';
+import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import { runsCapability, CAN_MANAGE_MEMBERSHIP } from '@/lib/auth/capabilities';
 import { PROVIDER_WORKSPACE_PATH, redirectForRole } from '@/lib/auth/redirect';
@@ -77,7 +78,7 @@ export default async function MembersPage() {
       </div>
 
       <section id="invite-creator" className="flex flex-col gap-md">
-        <InviteCreator orgId={resolution.orgId} orgName={orgName} />
+        <InviteCreator orgId={resolution.orgId} orgName={orgName} insetFill={INSET_FILL} />
       </section>
     </div>
   );

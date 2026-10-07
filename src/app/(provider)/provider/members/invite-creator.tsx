@@ -4,11 +4,16 @@
 // line, the SegmentedControl role strip with the five exact canonical role
 // strings, and the 44px iconOnly copy control (aria-label "Copy invite link")
 // whose dot pip swaps to success + aria-live polite announce on copy.
+//
+// The gate-selected inset fill arrives as a PROP (the login-form precedent):
+// a client chunk may not reference node:fs, and the gate read lives in
+// CompactControl. The role strip is composed here in the §5.4 range-toggle
+// grammar rather than importing the server-only primitive, and it is wired —
+// selecting a role calls onRoleChange (never a dead control).
 'use client';
 
 import { useState } from 'react';
 import { Button } from '@/components/primitives/Button';
-import { CompactControl } from '@/components/primitives/CompactControl';
 import { Surface } from '@/components/primitives/Surface';
 import { Copy } from 'lucide-react';
 import { ROLES, type Role } from '@/lib/auth/roles';
@@ -27,6 +32,7 @@ export function InviteCreatorPresentation({
   pending,
   result,
   copied,
+  insetFill,
   onCreate,
   onCopy,
 }: {
@@ -36,6 +42,7 @@ export function InviteCreatorPresentation({
   pending: boolean;
   result: InviteResult | null;
   copied: boolean;
+  insetFill: string;
   onCreate: () => void;
   onCopy: () => void;
 }) {
@@ -44,13 +51,19 @@ export function InviteCreatorPresentation({
       <h2 className="text-heading font-semibold leading-heading text-text-primary">Invite</h2>
       <div className="flex flex-wrap items-center gap-xs" role="group" aria-label="Role">
         {ROLES.map((name) => (
-          <CompactControl
+          <button
             key={name}
-            variant="rangeToggle"
-            ariaLabel={`Role: ${name}`}
-            label={name}
-            active={role === name}
-          />
+            type="button"
+            aria-label={`Role: ${name}`}
+            aria-pressed={role === name}
+            onClick={() => onRoleChange(name)}
+            className={[
+              'inline-flex items-center justify-center rounded-pill px-md min-h-11 md:min-h-8 text-text-primary',
+              role === name ? 'bg-surface-raised shadow-raised' : 'bg-transparent',
+            ].join(' ')}
+          >
+            <span>{name}</span>
+          </button>
         ))}
       </div>
       <Button variant="primary" onClick={onCreate} disabled={pending}>
@@ -87,7 +100,7 @@ export function InviteCreatorPresentation({
   );
 }
 
-export function InviteCreator({ orgId, orgName }: { orgId: string; orgName: string }) {
+export function InviteCreator({ orgId, orgName, insetFill }: { orgId: string; orgName: string; insetFill: string }) {
   const [role, setRole] = useState<Role>('patient');
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<InviteResult | null>(null);
@@ -132,6 +145,7 @@ export function InviteCreator({ orgId, orgName }: { orgId: string; orgName: stri
         pending={pending}
         result={result}
         copied={copied}
+        insetFill={insetFill}
         onCreate={handleCreate}
         onCopy={handleCopy}
       />

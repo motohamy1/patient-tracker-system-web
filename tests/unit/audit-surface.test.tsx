@@ -67,7 +67,7 @@ describe('AuditTable — §8.7 markup', () => {
   });
 
   it('timestamps are tabular-nums at label size; rows use borderSubtle row lines only', () => {
-    const doc = parse(<AuditBrowser rows={ROWS} />);
+    const doc = parse(<AuditBrowser rows={ROWS} insetFill="bg-surface-muted" />);
     const timestamp = doc.querySelector('p');
     expect(classesOf(timestamp)).toContain('tabular-nums');
     expect(classesOf(timestamp)).toContain('text-label');
@@ -77,7 +77,7 @@ describe('AuditTable — §8.7 markup', () => {
   });
 
   it('no status-tint or badge classes leak into any audit row', () => {
-    const doc = parse(<AuditBrowser rows={ROWS} />);
+    const doc = parse(<AuditBrowser rows={ROWS} insetFill="bg-surface-muted" />);
     for (const node of Array.from(doc.querySelectorAll('*'))) {
       const classes = classesOf(node);
       expect(classes.some((name) => /^(text|bg)-(success|info|warning|critical)$/.test(name))).toBe(
@@ -88,7 +88,7 @@ describe('AuditTable — §8.7 markup', () => {
   });
 
   it('renders the only filter: a plain CompactControl search', () => {
-    const doc = parse(<AuditBrowser rows={ROWS} />);
+    const doc = parse(<AuditBrowser rows={ROWS} insetFill="bg-surface-muted" />);
     const input = doc.querySelector('input[type="search"]');
     expect(input).not.toBeNull();
     expect(input?.getAttribute('id')).toBe('audit-search');

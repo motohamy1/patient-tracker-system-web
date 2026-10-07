@@ -11,7 +11,10 @@
 //
 // Server Component for the frame; the interactive filter is a single client
 // component (AuditBrowser) so the rows and the heading stay server-rendered.
-import { CompactControl } from '@/components/primitives/CompactControl';
+// The gate-selected inset fill is read HERE (server) and passed down as a prop:
+// a client chunk may not reference node:fs, and the gate read lives in
+// CompactControl (the login-form / gallery-slot precedent, plan 02-10).
+import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import { AuditBrowser } from './audit-browser';
 
@@ -35,7 +38,7 @@ export function AuditTable({ rows }: { rows: AuditRow[] }) {
           body="Actions on memberships and invites are recorded here automatically."
         />
       ) : (
-        <AuditBrowser rows={rows} />
+        <AuditBrowser rows={rows} insetFill={INSET_FILL} />
       )}
     </div>
   );

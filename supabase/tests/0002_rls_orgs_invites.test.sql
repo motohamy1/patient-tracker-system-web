@@ -20,10 +20,10 @@ insert into public.organizations (id, name, created_by) values
   ('10000000-0000-0000-0000-000000000001', 'Org A', '00000000-0000-0000-0000-0000000000a1'),
   ('20000000-0000-0000-0000-000000000001', 'Org B', '00000000-0000-0000-0000-0000000000b1');
 
+-- admin_owner rows are created by the bootstrap_org_membership trigger
+-- (migration 0004); only the non-owner role is inserted explicitly.
 insert into public.memberships (org_id, user_id, role) values
-  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'admin_owner'),
-  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2', 'provider_doctor'),
-  ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000b1', 'admin_owner');
+  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2', 'provider_doctor');
 
 -- 1: membership-less authenticated principal sees zero organizations rows
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000000', true);
