@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 2
 current_phase_name: Foundation and App Shell
-status: executing
-stopped_at: 02-11 tasks 1-2 complete; paused at the task-3 blocking human-verify gate
-last_updated: "2026-10-07T00:09:10.000Z"
+status: completed
+stopped_at: 02-11 complete and committed; Phase 2 closed — human-verify gate approved 2026-10-07
+last_updated: "2026-10-07T00:22:00.000Z"
 last_activity: 2026-10-07
-last_activity_desc: 02-11 tasks 1-2 complete (Playwright harness, 48 committed baselines, verification + security artifacts); paused at the task-3 human-verify gate
+last_activity_desc: 02-11 complete (Playwright harness, 48 committed baselines, verification + security artifacts); the blocking task-3 human-verify gate was APPROVED by motohamy1 on 2026-10-07 — Phase 2 is complete (11/11 plans)
 progress:
   total_phases: 22
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 17
-  completed_plans: 16
-  percent: 5
+  completed_plans: 17
+  percent: 9
 ---
 
 # Project State
@@ -29,13 +29,15 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 ## Current Position
 
 Phase: 2 — Foundation and App Shell
-Plan: 10 of 11 complete (02-01…02-10 done; next: 02-11)
-Status: Ready to execute
-Last activity: 2026-10-07 — Plan 02-10 completed (commits 7f80ced, 0005d87, 19337de, a7018af, 25476a7)
+Plan: 11 of 11 complete (02-01…02-11 done)
+Status: Phase execution complete — the blocking task-3 human-verify gate was approved 2026-10-07
+Last activity: 2026-10-07 — Plan 02-11 completed (be3e665, e37f8d5, plus the close-out commit)
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
-Progress: [██████████░] 10/11 plans (91%)
+Phase close: plan 02-11's **blocking task-3 human-verify gate** was **APPROVED** by `motohamy1` on 2026-10-07. All applicable `visual-qa-rules.md` §1 rows and all applicable `INV-xx` rows PASS; QA rows 8, 9 and 10 are **not applicable** in Phase 002 (no timeline/scrubber — owned by Phase 006); the D-27 `surfaceMuted`-boundary outcome is **accepted**. Phase 2 is complete (11/11 plans) and the verdicts are recorded in `02-VERIFICATION.md` §7.
+
+Progress: [███████████] 11/11 plans (100%)
 
 ## Performance Metrics
 
@@ -50,7 +52,7 @@ Progress: [██████████░] 10/11 plans (91%)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 6 | - | - |
-| 02 | 7 | 2h44min | 23min |
+| 02 | 11 | 5h15min | 29min |
 
 **Recent Trend:**
 
@@ -76,6 +78,7 @@ Progress: [██████████░] 10/11 plans (91%)
 | Phase 02 P02-08 | 33 min | 2 tasks | 17 files |
 | Phase 02 P02-09 | 46min | 2 tasks | 10 files |
 | Phase 02 P02-10 | 30min | 2 tasks | 6 files |
+| Phase 02 P02-11 | 42min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -126,6 +129,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-10: the dev-only gallery route is forced dynamic so the D-26 gate runs per request — a statically prerendered route froze the gate result (a flagged build would have shipped the gallery into the deployment; an unflagged build served a permanent 404), so export const dynamic = 'force-dynamic' is load-bearing
 - [Phase 02]: 02-10: GallerySections.tsx is a Client Component (overlay state + useShellMotion); Gallery.tsx stays a Server Component and renders the node:fs-dependent TabBar/CompactControl itself, passing them into the client sections as slots, because Turbopack rejects a browser chunk that references node:fs
 - [Phase 02]: 02-10: the dev-route flag is named in exactly one src/ file (src/lib/dev/dev-route-gate.ts); the truth-table test derives the key from its parts so plan 02-11's repo-wide occurrence count sees only the gate module plus playwright.config.ts
+- [Phase 02]: 02-11: the visual harness captures both motion states as two Playwright projects via real `reducedMotion` emulation (never a test-side flag); the 48 committed baselines span six surfaces (the five D-01 shells plus the dev-only gallery) × four viewports × two states, there is no `patient-records` surface because D-01 locks no records route, and the baselines are workstation-local (regenerate, never copy, on a runner change; no CI provider exists)
+- [Phase 02]: 02-11: the phase closed against the 12-row `visual-qa-rules.md` §1 gate and the `INV-xx` registry, not a green suite (§27) — QA rows 8-10 recorded N/A → Phase 006, the D-27 `surfaceMuted`-boundary outcome accepted, and the blocking task-3 gate approved by `motohamy1` on 2026-10-07
 
 ### Pending Todos
 
@@ -148,6 +153,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-07T00:09:10.000Z
-Stopped at: 02-11 tasks 1-2 complete; task-3 blocking human-verify gate pending
-Resume file: .planning/phases/02-foundation-and-app-shell/02-11-PLAN.md (task 3)
+Last session: 2026-10-07T00:22:00.000Z
+Stopped at: 02-11 complete; Phase 2 closed — human-verify gate approved 2026-10-07 (reviewer motohamy1)
+Resume file: None

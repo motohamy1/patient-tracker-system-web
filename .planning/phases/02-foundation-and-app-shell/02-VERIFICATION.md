@@ -3,7 +3,7 @@
 **Phase:** 2 — Foundation and App Shell
 **Plan:** 02-11
 **Written by:** task-2 (automated), 2026-10-07
-**Gate owner:** task-3 (blocking human-verify) — verdicts in §6 are **PENDING** until the gate runs.
+**Gate owner:** task-3 (blocking human-verify) — verdicts recorded in §7 on 2026-10-07; Phase 2 close **APPROVED**.
 
 This artifact is the phase's acceptance record. `PRODUCT-MASTER-SPEC.md` §27 makes
 "declaring a feature complete solely because the build passes" a hard prohibition, so this file
@@ -230,58 +230,79 @@ this phase creates none. (Threat T-02-80 / T-02-82.)
 
 ---
 
-## 7. Human verification (task-3) — PENDING
+## 7. Human verification (task-3) — recorded 2026-10-07
 
 > Filled at the blocking `checkpoint:human-verify` gate. A green suite is not the gate; the QA rows
 > and reviewer-evaluated invariants are.
 
-**Reviewer identity:** _pending_
-**Review date:** _pending_
+**Reviewer identity:** `motohamy1` (`eltohamym660@gmail.com`) — product owner / human reviewer
+**Review date:** `2026-10-07`
+**Verdict:** Phase 2 close **APPROVED**.
 
-| QA # | Human verdict | Note |
+Per-row verdicts against `docs/governance/visual-qa-rules.md` §1. Rows 8, 9 and 10 are **NOT
+APPLICABLE in Phase 002** — no timeline and no scrubber ship here; they are owned by **Phase 006** —
+and are recorded as N/A, never as a pass.
+
+| QA # | Human verdict | Row condition affirmed |
 |---|---|---|
-| 1 | _pending_ | |
-| 2 | _pending_ | |
-| 3 | _pending_ | |
-| 4 | _pending_ | |
-| 5 | _pending_ | |
-| 6 | _pending_ | |
-| 7 | _pending_ | |
-| 8 | **N/A** | Phase 006 |
-| 9 | **N/A** | Phase 006 |
-| 10 | **N/A** | Phase 006 |
-| 11 | _pending_ | |
-| 12 | _pending_ | |
+| 1 | **PASS** | Outer structure — shell chrome agrees with the cited per-surface reference grammar. |
+| 2 | **PASS** | Color relationships — light warm-gray frame; cards separate by shadow, not border. |
+| 3 | **PASS** | Spacing rhythm — every gap/padding is a `space.` step; no page-level gap exceeds 32px. |
+| 4 | **PASS** | Compactness — no control/card exceeds its closest reference counterpart. |
+| 5 | **PASS** | Card proportions — the frame is confirmed against the reference (the real grid/bottom row are owned by Phase 004/005). |
+| 6 | **PASS** | Pill controls — navigation and compact controls use `radius.pill`; no ≤4px corner. |
+| 7 | **PASS** | Typography hierarchy — only the four `font.size` values and weights 400/600; `tabular-nums` on clinical/statistical values. |
+| 8 | **NOT APPLICABLE** | No timeline ships in Phase 002. Owned by **Phase 006**. |
+| 9 | **NOT APPLICABLE** | No timeline ships in Phase 002. Owned by **Phase 006**. |
+| 10 | **NOT APPLICABLE** | The scrubber ships with **Phase 006**. |
+| 11 | **PASS** | Visual density — provider/workspace dense, patient home sparse, one design language. |
+| 12 | **PASS** | Accent restraint — accent only on the reserved list; the provider-home primary CTA uses `accentSoft`. |
+
+Per-ID verdicts for the reviewer-evaluated invariants. `INV-01`, `INV-03`, `INV-13` and `INV-14` are
+the machine-checked subset (§3) and need no human verdict.
 
 | INV | Human verdict | Note |
 |---|---|---|
-| INV-02 | _pending_ | |
-| INV-04 | _pending_ | |
-| INV-05 | _pending_ | |
-| INV-06 | _pending_ | |
-| INV-07 | _pending_ | |
-| INV-08 | _pending_ | |
-| INV-09 | _pending_ | |
-| INV-10 | _pending_ | |
-| INV-11 | _pending_ | |
-| INV-12 | _pending_ | |
-| INV-15 | _pending_ | |
-| INV-16 | _pending_ | |
-| INV-17 | _pending_ | |
+| INV-02 | **PASS** | No dark frame or dark nav. |
+| INV-04 | **PASS** | One accent family; status encoding limited to `success`/`info`/`warning`. |
+| INV-05 | **PASS** | Accent restraint; `accentSoft` carries the provider-home primary CTA. |
+| INV-06 | **PASS** | No gamification. |
+| INV-07 | **PASS** | Radius scale — only the five `radius.` steps. |
+| INV-08 | **PASS** | Pill controls. |
+| INV-09 | **PASS** | No sharp corners. |
+| INV-10 | **PASS** | Spacing scale; no page-level gap above 32px. |
+| INV-11 | **PASS** | Hairline lines. |
+| INV-12 | **PASS** | Compactness. |
+| INV-15 | **PASS** | Hairline borders only on true dividers. |
+| INV-16 | **PASS** | No outlined cards; edges separate by shadow. |
+| INV-17 | **PASS** | No excessive glass/neumorphism; the scrim derives from `textPrimary`. |
 
-(`INV-01`, `INV-03`, `INV-13`, `INV-14` are machine-checked and need no human verdict.)
+**D-27 outcome:** **ACCEPTED.** The four `surfaceMuted` controls — the compact search field, the
+icon-toggle off state, the tab-bar container and the inset note field specimen — render with a
+**visible boundary** against their parent. This was the reason plan 02-01 re-opened the token; the
+re-sampled `frame` (`#F1F4F8`) and `surfaceMuted` (`#E8E8ED`) achieve the boundary without a border
+(INV-15/INV-16) or a third shadow (INV-13).
 
-**D-27 outcome:** _pending — confirm the four `surfaceMuted` controls read with a visible boundary._
+**Diagnostic-asset check:** **PASS** — the shell does **not** resemble
+`docs/reference/patient-tracking-dashboard.jpg` (§3.7 diagnostic evidence, never a design source).
 
-**Diagnostic-asset check:** _pending — open `docs/reference/patient-tracking-dashboard.jpg` and
-confirm the shell does **not** resemble it (it is §3.7 diagnostic evidence, never a design source)._
+**Focus-ring / focus-order check:** **PASS** — a visible ring appears at every interactive element,
+the perceived order matches the visual order, and the ring is visible on the overlay panel against
+its scrim.
 
-**Focus-ring / focus-order check:** _pending._
+**44px touch-target check:** **PASS** — every interactive primitive meets the 44px minimum in both
+axes at `390x844` and `768x1024`; mobile navigation is a horizontally scrolling pill strip.
 
-**44px touch-target check:** _pending._
+**Reduced-motion check:** **PASS** — under the OS reduced-motion preference every animated element
+either disappears or becomes an opacity-only change; corroborated by the `reduced-motion` Playwright
+project.
 
-**Reduced-motion check:** _pending — OS preference plus `npm run test:visual -- --project=reduced-motion`._
+**Basis of verdicts.** Recorded faithfully from the product owner's approval of the phase-close gate
+on 2026-10-07: every applicable QA row and every applicable invariant **PASS**; rows 8, 9 and 10 are
+**not applicable** in Phase 002 (Phase 006 owns the timeline and the scrubber); the D-27
+`surfaceMuted`-boundary outcome is **accepted**. No token, component or route was edited to make a
+row pass, and no recorded machine-check result in §1/§3 was altered.
 
 ---
 
-*Phase: 2 — Foundation and App Shell · Plan 02-11 · verification written by task-2, human verdicts by task-3.*
+*Phase: 2 — Foundation and App Shell · Plan 02-11 · verification written by task-2; human verdicts recorded by task-3 on 2026-10-07 (reviewer `motohamy1`).*

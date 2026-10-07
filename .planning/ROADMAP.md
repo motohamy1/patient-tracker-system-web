@@ -12,7 +12,7 @@ This roadmap operationalizes PRODUCT-MASTER-SPEC.md §19 (Phase 001–022) as a 
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Project Constitution + Reference UI Specification** - Constitution, reference UI design contract, UI invariants, semantic tokens, visual/responsive/motion QA rules (completed 2026-10-05)
-- [ ] **Phase 2: Foundation and App Shell** - Next.js shell, routes, layout primitives, tokens, typography, surfaces, controls, a11y + motion baseline
+- [x] **Phase 2: Foundation and App Shell** - Next.js shell, routes, layout primitives, tokens, typography, surfaces, controls, a11y + motion baseline (completed 2026-10-07)
 - [ ] **Phase 3: Authentication, Organizations, RBAC and RLS** - Server-side identity, org membership, role resolution, RLS policies, audit foundation
 - [ ] **Phase 4: Provider Home + Patient Folder Workspace** - Visual patient-folder collection with retrieval controls
 - [ ] **Phase 5: Patient Workspace / Overview** - Exact 8-tab shell and command-surface Overview
@@ -75,7 +75,7 @@ Plans:
   4. No fake clinical dashboard or sample patient data exists outside isolated development fixtures.
 
 **UI hint**: yes
-**Plans**: 10/11 plans executed
+**Plans**: 11/11 plans complete
 
 Plans:
 
@@ -89,7 +89,7 @@ Plans:
 - [x] 02-08-PLAN.md — provider route group, icon rail, 8 tab routes
 - [x] 02-09-PLAN.md — auth/patient route groups, `not-found.tsx`, dev fixtures
 - [x] 02-10-PLAN.md — dev-only primitives gallery
-- [ ] 02-11-PLAN.md — Playwright harness, 48 committed baselines, phase gate
+- [x] 02-11-PLAN.md — Playwright harness, 48 committed baselines, phase gate
 
 Wave dependency notes — **Wave 2** *(blocked on Wave 1 completion)*: 02-03.
 **Wave 3** *(blocked on Wave 2)*: 02-04. **Wave 4** *(blocked on Wave 3)*: 02-05.
@@ -491,7 +491,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Project Constitution + Reference UI Specification | 6/6 | Complete    | 2026-10-05 |
-| 2. Foundation and App Shell | 10/11 | In Progress|  |
+| 2. Foundation and App Shell | 11/11 | Complete   | 2026-10-07 |
 | 3. Authentication, Organizations, RBAC and RLS | 0/TBD | Not started | - |
 | 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |
 | 5. Patient Workspace / Overview | 0/TBD | Not started | - |
