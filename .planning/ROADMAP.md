@@ -118,7 +118,7 @@ Cross-cutting constraints: none shared by two or more plans.
   4. Direct database/API access without membership context cannot read or write another organization's rows (RLS verified).
 
 **UI hint**: no
-**Plans**: 1/6 plans executed
+**Plans**: 5/6 plans executed
 
 Plans:
 **Wave 1**
@@ -127,19 +127,19 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Schema migrations + RLS + audit triggers + [BLOCKING] db push + pgTAP deny tests
+- [x] 03-02-PLAN.md — Schema migrations + RLS + audit triggers + [BLOCKING] db push + pgTAP deny tests
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 03-03-PLAN.md — RBAC vocabulary, server-side role resolution, layout slot wiring, denial surface
+- [x] 03-03-PLAN.md — RBAC vocabulary, server-side role resolution, layout slot wiring, denial surface
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 03-04-PLAN.md — Auth server actions + PKCE confirm route + credential surfaces + email-flow gate
+- [x] 03-04-PLAN.md — Auth server actions + PKCE confirm route + credential surfaces + email-flow gate
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 03-05-PLAN.md — Invite engine, signup-then-join redeem, org creation, members surface
+- [x] 03-05-PLAN.md — Invite engine, signup-then-join redeem, org creation, members surface
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -513,7 +513,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 |-------|----------------|--------|-----------|
 | 1. Project Constitution + Reference UI Specification | 6/6 | Complete    | 2026-10-05 |
 | 2. Foundation and App Shell | 11/11 | Complete   | 2026-10-07 |
-| 3. Authentication, Organizations, RBAC and RLS | 1/6 | In Progress|  |
+| 3. Authentication, Organizations, RBAC and RLS | 5/6 | In Progress|  |
 | 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |
 | 5. Patient Workspace / Overview | 0/TBD | Not started | - |
 | 6. D3 Clinical Timeline | 0/TBD | Not started | - |

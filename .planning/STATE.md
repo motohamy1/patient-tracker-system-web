@@ -6,14 +6,14 @@ current_phase: 03
 current_phase_name: Authentication, Organizations, RBAC and RLS
 status: executing
 stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-10-07T04:20:16.275Z"
+last_updated: "2026-10-07T07:18:13.669Z"
 last_activity: 2026-10-07
 last_activity_desc: Phase 03 execution started
 progress:
   total_phases: 22
   completed_phases: 2
   total_plans: 23
-  completed_plans: 18
+  completed_plans: 22
   percent: 9
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 ## Current Position
 
 Phase: 03 (Authentication, Organizations, RBAC and RLS) — EXECUTING
-Plan: 2 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-10-07 — Phase 03 execution started
 
@@ -80,6 +80,9 @@ Progress: [███████████] 11/11 plans (100%)
 | Phase 02 P02-10 | 30min | 2 tasks | 6 files |
 | Phase 02 P02-11 | 42min | 3 tasks | 4 files |
 | Phase 03 P01 | 63min | 4 tasks | 9 files |
+| Phase 03 P03 | 17min | 3 tasks | 11 files |
+| Phase 03 P04 | 12min | 4 tasks | 10 files |
+| Phase 03 P05 | 29min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -133,6 +136,11 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-11: the visual harness captures both motion states as two Playwright projects via real `reducedMotion` emulation (never a test-side flag); the 48 committed baselines span six surfaces (the five D-01 shells plus the dev-only gallery) × four viewports × two states, there is no `patient-records` surface because D-01 locks no records route, and the baselines are workstation-local (regenerate, never copy, on a runner change; no CI provider exists)
 - [Phase 02]: 02-11: the phase closed against the 12-row `visual-qa-rules.md` §1 gate and the `INV-xx` registry, not a green suite (§27) — QA rows 8-10 recorded N/A → Phase 006, the D-27 `surfaceMuted`-boundary outcome accepted, and the blocking task-3 gate approved by `motohamy1` on 2026-10-07
 - [Phase 03]: 03-01: Supabase provisioning target = LOCAL (Docker) stack at 127.0.0.1:54321 with Mailpit email capture; enable_confirmations=true per D-05; PKCE token_hash confirmation/recovery templates and the 5-path redirect allowlist fixed in supabase/config.toml — Owner chose local provisioning via chained auto mode; Mailpit satisfies Phase-3 email gates with zero SMTP config
+- [Phase 03]: 03-03: resolution is a typed RESULT — resolveWorkspaceRole never redirects; D-12 redirect applies exactly once per layout (redirectForRole), fail-closed on unknown role strings, earliest-created_at multi-org determinism
+- [Phase 03]: 03-03: admin_owner routes with the provider group; redirectForRole('admin') exists for the 03-06 audit surface with non-owner own-workspace redirect (D-15)
+- [Phase 03]: invite tokens minted as 32-byte base64url raw strings with SHA-256 digests stored; redeemSignupWithInviteAction runs signup → sign-in → rpc in one action
+- [Phase 03]: preview_invite, list_org_members, and bootstrap_org_membership trigger auto-added to 0004 (Rule 2) — auth.users RLS-gated; owner bootstrap needed a definer path
+- [Phase 03]: server-only package unresolved in jsdom test project — vitest resolve.alias stubs it to tests/unit/stubs/server-only.ts
 
 ### Pending Todos
 
@@ -155,6 +163,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-07T04:17:55.677Z
+Last session: 2026-10-07T07:13:43.183Z
 Stopped at: Phase 3 UI-SPEC approved
 Resume file: .planning/phases/03-authentication-organizations-rbac-and-rls/03-UI-SPEC.md
