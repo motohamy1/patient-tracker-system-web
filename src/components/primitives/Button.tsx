@@ -105,6 +105,8 @@ type ButtonBaseProps = {
   className?: string;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   children?: ReactNode;
+  /** Surface the retry-in-flight state (UX-01 §8.5: aria-busy, never a blank swap). */
+  ariaBusy?: boolean;
 };
 
 // An icon-only control without an accessible name cannot compile: the
@@ -123,6 +125,7 @@ export function Button({
   ariaLabel,
   className,
   onClick,
+  ariaBusy,
   children,
 }: ButtonProps) {
   const prefersReducedMotion = useReducedMotion();
@@ -172,6 +175,7 @@ export function Button({
       className={classes}
       disabled={isDisabled}
       aria-label={ariaLabel}
+      aria-busy={ariaBusy || undefined}
       onClick={onClick}
       whileHover={hover}
       whileTap={tap}

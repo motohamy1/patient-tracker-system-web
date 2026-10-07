@@ -31,6 +31,8 @@ export type EmptyStateAction = {
   label: string;
   onClick?: () => void;
   href?: string;
+  /** Forwarded to the Button action so a retry reports aria-busy (UX-01 §8.5). */
+  ariaBusy?: boolean;
 };
 
 export type EmptyStateProps = {
@@ -75,7 +77,7 @@ export function EmptyState({ icon, title, body, action, className }: EmptyStateP
             {action.label}
           </a>
         ) : (
-          <Button variant="secondary" onClick={action.onClick}>
+          <Button variant="secondary" onClick={action.onClick} ariaBusy={action.ariaBusy}>
             {action.label}
           </Button>
         )

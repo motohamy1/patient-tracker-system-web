@@ -22,6 +22,7 @@ import { ProviderTopBar } from '@/components/shell/ProviderTopBar';
 import { MobileNav } from '@/components/shell/MobileNav';
 import { redirectForRole } from '@/lib/auth/redirect';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
+import { OfflineSyncStrip } from '@/components/shell/OfflineSyncStrip';
 
 const PROVIDER_MOBILE_ITEMS = [{ value: 'home', label: 'Home', href: '/provider' }];
 
@@ -39,6 +40,7 @@ export default async function ProviderLayout({ children }: { children: ReactNode
           activeValue="home"
           ariaLabel="Provider navigation"
         />
+        <OfflineSyncStrip />
         {children}
       </div>
     </Surface>
