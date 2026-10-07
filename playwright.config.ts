@@ -68,11 +68,25 @@ export default defineConfig({
     locale: 'en-US',
   },
   projects: [
+    // The setup project signs in the seeded principals once and writes their
+    // storageState (tests/visual/.auth/{owner,patient}.json) before any capture.
+    // Its testMatch deliberately matches ONLY auth.setup.ts — the default
+    // `*.spec.ts`/`*.test.ts` glob already excludes `.setup.ts`, so the sign-in
+    // never re-runs inside the motion projects.
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
     // Two motion states as two projects (D-15): the reduced branch is exercised
     // through the real media feature, not a test-side flag that could be
-    // forgotten.
-    { name: 'default', use: { browserName: 'chromium', reducedMotion: null } },
-    { name: 'reduced-motion', use: { browserName: 'chromium', reducedMotion: 'reduce' } },
+    // forgotten. Both depend on `setup`, so the auth state exists first.
+    {
+      name: 'default',
+      use: { browserName: 'chromium', reducedMotion: null },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'reduced-motion',
+      use: { browserName: 'chromium', reducedMotion: 'reduce' },
+      dependencies: ['setup'],
+    },
   ],
   webServer: {
     // The npm build-and-start chain, never a bare `next build` (02-RESEARCH.md

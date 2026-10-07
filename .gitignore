@@ -11,6 +11,11 @@ playwright-report/
 test-results/
 blob-report/
 
+# Playwright storageState — live session cookies from the auth setup project
+# (plan 03-07). Baselines are committed; auth state is a runtime artifact and
+# must never be.
+tests/visual/.auth/
+
 # Environment variables — never commit any variant (D-26)
 .env
 .env.local
