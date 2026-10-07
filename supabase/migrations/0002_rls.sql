@@ -36,13 +36,16 @@ security definer
 set search_path = ''
 stable
 as $$
-  select role from public.memberships m
+begin
+  return (select role from public.memberships m
   where m.user_id = (select auth.uid())
-    and m.org_id = p_org_id;
+    and m.org_id = p_org_id);
+end;
 $$;
 
 revoke execute on function private.user_org_role(uuid) from public;
 revoke execute on function private.user_org_role(uuid) from anon;
+grant execute on function private.user_org_role(uuid) to authenticated;
 revoke all on schema private from public;
 grant usage on schema private to authenticated;
 
