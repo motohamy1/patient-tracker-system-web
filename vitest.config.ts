@@ -35,6 +35,7 @@ export default defineConfig({
             'tests/unit/primitives/**',
             'tests/unit/overlays/**',
             'tests/unit/motion/**',
+            'tests/unit/*.test.tsx',
           ],
         },
       },
