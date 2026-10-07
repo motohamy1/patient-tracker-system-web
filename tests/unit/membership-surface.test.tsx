@@ -16,6 +16,10 @@ import path from 'node:path';
 
 const harness = vi.hoisted(() => ({
   rpc: undefined as ((fn: string, args: unknown) => Promise<{ data: unknown; error: unknown }>) | undefined,
+  claims: undefined as { claims: { sub: string } } | null | undefined,
+  memberships: undefined as Array<{ org_id: string; role: string; created_at: string }> | undefined,
+  org: undefined as { name: string } | null | undefined,
+  claimsError: null as { message: string } | null,
 }));
 
 vi.mock('server-only', () => ({}));
@@ -23,6 +27,18 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({
     rpc: async (fn: string, args: unknown) =>
       harness.rpc ? harness.rpc(fn, args) : { data: null, error: null },
+    auth: {
+      getClaims: async () => ({ data: harness.claims, error: harness.claimsError }),
+    },
+    from: () => ({
+      select: () => {
+        const b: Record<string, unknown> = {};
+        b.eq = () => b;
+        b.order = async () => ({ data: harness.memberships, error: null });
+        b.maybeSingle = async () => ({ data: harness.org ?? null, error: null });
+        return b;
+      },
+    }),
   }),
 }));
 
@@ -58,6 +74,123 @@ beforeAll(async () => {
 
 beforeEach(() => {
   harness.rpc = undefined;
+  harness.claims = undefined;
+  harness.memberships = undefined;
+  harness.org = undefined;
+  harness.claimsError = null;
+});
+
+describe('/provider/onboarding/create-org', () => {
+  it('renders the exact heading, label and action copy', async () => {
+    harness.claims = { claims: { sub: '11111111-1111-4111-8111-111111111111' } };
+    harness.memberships = [];
+    const pageModule = await import('@/app/(provider)/provider/onboarding/create-org/page');
+    const element = await pageModule.default({
+      searchParams: Promise.resolve({}),
+    });
+    const doc = parse(element as ReactElement);
+    expect(doc.querySelector('h1')?.textContent).toBe('Create your organization');
+    expect(doc.querySelector('label')?.textContent).toBe('Organization name');
+    expect(doc.querySelector('button[type="submit"]')?.textContent).toBe('Create organization');
+  });
+
+  it('redirects a signed-in member to their own workspace (renders null post-redirect)', async () => {
+    harness.claims = { claims: { sub: '11111111-1111-4111-8111-111111111111' } };
+    harness.memberships = [
+      { org_id: 'org-1', role: 'admin_owner', created_at: '2026-10-07T00:00:00Z' },
+    ];
+    const pageModule = await import('@/app/(provider)/provider/onboarding/create-org/page');
+    const element = await pageModule.default({
+      searchParams: Promise.resolve({}),
+    });
+    expect(element).toBeNull();
+  });
+
+  it('keeps the unaffiliated path rendering the form', async () => {
+    harness.claims = { claims: { sub: '11111111-1111-4111-8111-111111111111' } };
+    harness.memberships = [];
+    const pageModule = await import('@/app/(provider)/provider/onboarding/create-org/page');
+    const element = await pageModule.default({
+      searchParams: Promise.resolve({}),
+    });
+    expect(element).not.toBeNull();
+  });
+
+  it('is a Server Component and force-dynamic', () => {
+    const source = pageSource(['src/app/(provider)/provider/onboarding/create-org/page.tsx']);
+    expect(source.includes("'use client'")).toBe(false);
+    expect(source).toContain("dynamic = 'force-dynamic'");
+  });
+
+  it('guards the unaffiliated-only path in source', () => {
+    const source = pageSource(['src/app/(provider)/provider/onboarding/create-org/page.tsx']);
+    expect(source).toContain("resolution.kind === 'unauthenticated'");
+    expect(source).toContain("resolution.kind === 'signed-in'");
+  });
+});
+
+describe('members surface', () => {
+  it('renders rows of email + role Pill with a remove control and no avatar/initials costume', () => {
+    return import('@/app/(provider)/provider/members/members-list').then((mod) => {
+      const doc = parse(
+        createElement(mod.MembersList, {
+          rows: [
+            { id: 'm1', email: 'alex@example.com', role: 'admin_owner' },
+            { id: 'm2', email: 'bee@example.com', role: 'nurse' },
+            { id: 'm3', email: 'cee@example.com', role: 'patient' },
+          ],
+        }),
+      );
+      expect(doc.querySelectorAll('li').length).toBe(3);
+      expect(doc.body.textContent).toContain('alex@example.com');
+      expect(doc.body.textContent).toContain('nurse');
+      const classes = Array.from(doc.querySelectorAll('*')).flatMap((n) =>
+        (n.getAttribute('class') ?? '').split(/\s+/),
+      );
+      expect(classes.some((c) => /avatar|initials|gradient/.test(c))).toBe(false);
+      expect(doc.body.textContent).toContain('Remove');
+    });
+  });
+
+  it('invite panel renders the copy control with the exact aria-label and five role labels', () => {
+    return import('@/app/(provider)/provider/members/invite-creator').then((mod) => {
+      const doc = parse(
+        createElement(mod.InviteCreatorPresentation, {
+          orgName: 'Acme Practice',
+          role: 'patient',
+          onRoleChange: () => undefined,
+          pending: false,
+          result: { link: '/invite/abc', shortCode: 'ABC123', expiresAt: null },
+          copied: false,
+          onCreate: () => undefined,
+          onCopy: () => undefined,
+        }),
+      );
+      expect(doc.querySelector('button[aria-label="Copy invite link"]')).not.toBeNull();
+      for (const label of ['provider_doctor', 'nurse', 'receptionist', 'patient', 'admin_owner']) {
+        expect(doc.body.textContent).toContain(label);
+      }
+      expect(doc.body.textContent).toContain('/invite/abc');
+      expect(doc.body.textContent).toContain('Invite code: ABC123');
+      expect(doc.body.textContent).toContain('Create invite link');
+      expect(doc.body.textContent).toContain('Send this link to your team member or patient.');
+    });
+  });
+
+  it('overlay strings match the destructive contract verbatim (source assertion)', () => {
+    const source = pageSource(['src/app/(provider)/provider/members/remove-member-overlay.tsx']);
+    expect(source).toContain('They will lose access to this workspace immediately.');
+    expect(source).toContain('Remove ${displayName}');
+    expect(source).toContain('removeMemberAction');
+    expect(source).not.toContain('OK');
+    expect(source).not.toContain('Cancel');
+  });
+
+  it('members page source asserts capability gate and force-dynamic', () => {
+    const source = pageSource(['src/app/(provider)/provider/members/page.tsx']);
+    expect(source).toContain('CAN_MANAGE_MEMBERSHIP');
+    expect(source).toContain("dynamic = 'force-dynamic'");
+  });
 });
 
 describe('/invite/[token] — the denial branch', () => {
