@@ -1,0 +1,4 @@
+<!-- Supabase Auth confirmation email (local template).
+     PKCE SSR shape per 03-RESEARCH.md Pattern 5 / docs:guides/auth/passwords §PKCE Step 1:
+     TokenHash + app-owned /auth/confirm endpoint; type=email routes to verifyOtp. -->
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ .RedirectTo }}">Confirm email address</a>
