@@ -55,6 +55,7 @@ import {
   WORKSPACE_TAB_ROUTES,
 } from '@/app/(provider)/provider/patients/[patientId]/tabs';
 import type { PatientRecord } from '@/lib/patients/queries';
+import type { PatientStatus } from '@/lib/patients/status';
 
 const ORG = '10000000-0000-0000-0000-000000000001';
 // A realistic UUID: the route parameter must parse as one (patientIdSchema).
@@ -200,10 +201,12 @@ describe('WSP-02 — the identity area', () => {
 
   it('shows the portal state for a linked and an unlinked patient', async () => {
     const linked = await renderBody(PATIENT_ID);
-    expect(linked.body.textContent).toContain('Portal active');
+    expect(linked.body.textContent).toContain('Portal access');
+    expect(linked.body.textContent).toContain('Active');
 
     queries.getPatient.mockResolvedValue(record({ userId: null }));
     const unlinked = await renderBody(PATIENT_ID);
+    expect(unlinked.body.textContent).toContain('Portal access');
     expect(unlinked.body.textContent).toContain('Invite pending');
   });
 
@@ -260,6 +263,96 @@ describe('error state — deliberate, never blank (§24)', () => {
     workspace.resolveWorkspaceRole.mockResolvedValue({ kind: 'unauthenticated' });
     const element = await OverviewBody({ patientId: PATIENT_ID });
     expect(element).toBeNull();
+  });
+});
+
+describe('WSP-02 — the context stat row beside the identity area (T-02)', () => {
+  it('renders the three context cards with their exact labels', async () => {
+    const doc = await renderBody(PATIENT_ID);
+    for (const label of ['Current status', 'Last activity', 'Record opened']) {
+      const card = doc.querySelector(`section[aria-label="${label}"]`);
+      expect(card, `missing stat card: ${label}`).not.toBeNull();
+      expect(card?.textContent).toContain(label);
+    }
+  });
+
+  it('derives the attention indicator from the stored status vocabulary only (INV-04)', async () => {
+    const doc = await renderBody(PATIENT_ID);
+    const card = doc.querySelector('section[aria-label="Current status"]');
+    expect(card?.textContent).toContain('Follow-up');
+    // the follow_up status wears its D-10 token and no other status family
+    expect(card?.querySelector('[class*="bg-warning"]')).not.toBeNull();
+    expect(card?.querySelector('[class*="bg-success"]')).toBeNull();
+    expect(card?.querySelector('[class*="bg-info"]')).toBeNull();
+    expect(card?.querySelector('[class*="bg-critical"]')).toBeNull();
+
+    // every status in the vocabulary resolves to its sanctioned token
+    const cases: Array<[PatientStatus, string]> = [
+      ['stable', 'bg-success'],
+      ['follow_up', 'bg-warning'],
+      ['needs_review', 'bg-info'],
+      ['critical', 'bg-critical'],
+      ['new', 'bg-info'],
+    ];
+    for (const [status, tokenClass] of cases) {
+      queries.getPatient.mockResolvedValue(record({ status }));
+      const each = await renderBody(PATIENT_ID);
+      const statusCard = each.querySelector('section[aria-label="Current status"]');
+      expect(statusCard?.querySelector(`[class*="${tokenClass}"]`), status).not.toBeNull();
+    }
+    queries.getPatient.mockResolvedValue(record());
+  });
+
+  it('paints no accent on the context row (INV-05 reserved list)', async () => {
+    const markup = renderToStaticMarkup(
+      createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
+    );
+    expect(markup).not.toContain('bg-accent');
+    expect(markup).not.toContain('text-accent');
+  });
+
+  it('renders statistical values as tabular numerals in font steps 400/600 only (QA row 7)', async () => {
+    const markup = renderToStaticMarkup(
+      createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
+    );
+    // only the four frozen font.size utilities appear
+    expect(markup).not.toMatch(/text-(xs|sm|lg|xl|\dxl)/);
+    // only the two frozen font weights appear
+    expect(markup).not.toMatch(/font-(thin|light|normal|medium|bold|extrabold|black)/);
+
+    const doc = parse(markup);
+    const numerals = Array.from(doc.querySelectorAll('.text-display'));
+    expect(numerals.length).toBeGreaterThanOrEqual(2);
+    for (const el of numerals) {
+      expect(el.textContent).toMatch(/^\d+$/);
+      expect(el.className).toContain('tabular-nums');
+      expect(el.className).toMatch(/font-semibold|font-regular/);
+    }
+
+    // both recency cards carry the exact stored dates beneath the numeral
+    const activity = doc.querySelector('section[aria-label="Last activity"]');
+    expect(activity?.textContent).toContain('2026-10-06');
+    const opened = doc.querySelector('section[aria-label="Record opened"]');
+    expect(opened?.textContent).toContain('2025-05-12');
+  });
+
+  it('holds more than one line of content in every card (INV-12)', async () => {
+    const doc = await renderBody(PATIENT_ID);
+    for (const label of ['Patient identity', 'Current status', 'Last activity', 'Record opened']) {
+      const card = doc.querySelector(`section[aria-label="${label}"]`);
+      const text = (card?.textContent ?? '').trim();
+      expect(text.length, label).toBeGreaterThan(label.length);
+      // label + at least one further value (a date, a numeral or the pill)
+      expect(/\d{4}-\d{2}-\d{2}|\d/.test(text), label).toBe(true);
+    }
+  });
+
+  it('uses no gamified vocabulary anywhere on the surface (INV-06)', async () => {
+    const doc = await renderBody(PATIENT_ID);
+    const text = (doc.body.textContent ?? '').toLowerCase();
+    for (const word of ['point', 'level', 'streak', 'reward', 'celebrat', 'confetti', 'trophy']) {
+      expect(text).not.toContain(word);
+    }
   });
 });
 

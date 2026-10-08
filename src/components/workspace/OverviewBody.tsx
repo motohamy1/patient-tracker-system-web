@@ -20,6 +20,7 @@
 import { Lock } from 'lucide-react';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import { StateVariant } from '@/components/state/StateVariant';
+import { ContextStatRow } from '@/components/workspace/ContextStatRow';
 import { PatientIdentityCard } from '@/components/workspace/PatientIdentityCard';
 import { ownWorkspaceTarget } from '@/lib/auth/redirect';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
@@ -74,6 +75,7 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
       className="grid grid-cols-1 gap-lg lg:grid-cols-[19rem_minmax(0,1fr)]"
     >
       <PatientIdentityCard patient={patient} />
+      <ContextStatRow patient={patient} />
     </section>
   );
 }
