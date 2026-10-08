@@ -13,8 +13,8 @@ import { LoadingSkeleton } from '@/components/state/LoadingSkeleton';
 
 const BLOCK_CLASSES = 'skeleton-pulse rounded-lg bg-surface-muted';
 
-/** Three stat cards beside the identity card (the reference's upper row). */
-const STAT_BLOCKS = 3;
+/** Four stat cards beside the identity card (the reference's upper row). */
+const STAT_BLOCKS = 4;
 
 /** The bottom row: wide card + two side cards (QA row 5: 55 / 22.5 / 22.5). */
 const BOTTOM_ROW = `${BLOCK_CLASSES} h-40`;
@@ -27,7 +27,7 @@ export function OverviewSkeleton() {
 
       <div className="grid grid-cols-1 gap-lg lg:grid-cols-[19rem_minmax(0,1fr)]">
         <div aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />
-        <div className="grid grid-cols-2 gap-lg md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: STAT_BLOCKS }, (_, index) => (
             <div key={index} aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />
           ))}

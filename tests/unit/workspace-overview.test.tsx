@@ -24,7 +24,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
-const queries = vi.hoisted(() => ({ getPatient: vi.fn(), listPatients: vi.fn() }));
+const queries = vi.hoisted(() => ({
+  getPatient: vi.fn(),
+  listPatients: vi.fn(),
+  listPatientInvitations: vi.fn(),
+}));
 const workspace = vi.hoisted(() => ({ resolveWorkspaceRole: vi.fn() }));
 
 vi.mock('server-only', () => ({}));
@@ -122,6 +126,8 @@ async function renderPage(): Promise<{ markup: string; doc: Document }> {
 
 beforeEach(() => {
   queries.getPatient.mockReset();
+  queries.listPatientInvitations.mockReset();
+  queries.listPatientInvitations.mockResolvedValue([]);
   workspace.resolveWorkspaceRole.mockReset();
   workspace.resolveWorkspaceRole.mockResolvedValue({
     kind: 'signed-in',
@@ -193,10 +199,17 @@ describe('WSP-02 — the identity area', () => {
   it('consumes the D-10 status token for the stored status (INV-04)', async () => {
     const doc = await renderBody(PATIENT_ID);
     expect(doc.body.textContent).toContain('Follow-up');
-    expect(doc.querySelector('[class*="bg-warning"]')).not.toBeNull();
-    // no other status tint appears on the identity area
-    expect(doc.querySelector('[class*="bg-success"]')).toBeNull();
-    expect(doc.querySelector('[class*="bg-critical"]')).toBeNull();
+    // the status card wears the one sanctioned tint for follow_up…
+    const statusCard = doc.querySelector('section[aria-label="Current status"]');
+    expect(statusCard?.querySelector('[class*="bg-warning"]')).not.toBeNull();
+    expect(statusCard?.querySelector('[class*="bg-success"]')).toBeNull();
+    expect(statusCard?.querySelector('[class*="bg-critical"]')).toBeNull();
+    // …and the identity area itself paints no tint at all
+    const identity = doc.querySelector('section[aria-label="Patient identity"]');
+    expect(identity?.querySelector('[class*="bg-success"]')).toBeNull();
+    expect(identity?.querySelector('[class*="bg-warning"]')).toBeNull();
+    expect(identity?.querySelector('[class*="bg-info"]')).toBeNull();
+    expect(identity?.querySelector('[class*="bg-critical"]')).toBeNull();
   });
 
   it('shows the portal state for a linked and an unlinked patient', async () => {
@@ -353,6 +366,130 @@ describe('WSP-02 — the context stat row beside the identity area (T-02)', () =
     for (const word of ['point', 'level', 'streak', 'reward', 'celebrat', 'confetti', 'trophy']) {
       expect(text).not.toContain(word);
     }
+  });
+});
+
+describe('WSP-02 — the region frame (T-04)', () => {
+  it('renders every reference region at its slot: band, vitals history, labs, recent records', async () => {
+    queries.listPatientInvitations.mockResolvedValue([
+      { id: 'i1', createdAt: '2026-09-01T10:00:00Z', redeemedAt: null },
+    ]);
+    const doc = await renderBody(PATIENT_ID);
+
+    expect(doc.querySelector('section[aria-label="Timeline"]')).not.toBeNull();
+    expect(doc.querySelector('section[aria-label="Vital Signs History"]')).not.toBeNull();
+    expect(doc.querySelector('section[aria-label="Labs"]')).not.toBeNull();
+    expect(doc.querySelector('section[aria-label="Recent Records"]')).not.toBeNull();
+    // the vitals snapshot region (reference upper rows) names what will appear
+    expect(doc.querySelector('section[aria-label="Vital signs"]')).not.toBeNull();
+    expect(doc.body.textContent).toContain('No readings yet');
+  });
+
+  it('anchors the bottom row to the 55 / 22.5 / 22.5 grid (QA row 5)', () => {
+    const source = readFileSync(
+      path.resolve(__dirname, '..', '..', 'src/components/workspace/OverviewBody.tsx'),
+      'utf8',
+    );
+    expect(source).toContain('md:grid-cols-[55fr_22.5fr_22.5fr]');
+  });
+
+  it('draws no fake timeline: no SVG, no nodes, no axis marks (§3.5, §27)', async () => {
+    const markup = renderToStaticMarkup(
+      createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
+    );
+    expect(markup).not.toContain('<svg');
+    expect(markup).not.toContain('<circle');
+    expect(markup).not.toContain('<path');
+    // no scrubber chrome either (TL-06 is Phase 006)
+    expect(markup).not.toContain('scrubber');
+
+    const doc = parse(markup);
+    const band = doc.querySelector('section[aria-label="Timeline"]');
+    expect(band?.textContent).toContain('No timeline events yet');
+    expect(band?.textContent).toContain('Visits, medications and results will appear here as care progresses.');
+    expect(band?.textContent).toContain('Document a visit to place the first event.');
+  });
+
+  it('keeps the Month/Week range chips inert pill chrome — no dead buttons (INV-08)', async () => {
+    const markup = renderToStaticMarkup(
+      createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
+    );
+    // no interactive element anywhere in the body answers nothing (D-24)
+    expect(markup).not.toContain('<button');
+
+    const doc = parse(markup);
+    const vitals = doc.querySelector('section[aria-label="Vital Signs History"]');
+    const chips = Array.from(vitals?.querySelectorAll('span') ?? []).filter((span) =>
+      ['Month', 'Week'].includes(span.textContent?.trim() ?? ''),
+    );
+    expect(chips).toHaveLength(2);
+    const month = chips.find((c) => c.textContent?.trim() === 'Month');
+    const week = chips.find((c) => c.textContent?.trim() === 'Week');
+    // active emphasized by fill + raised shadow, never by a colour swap
+    expect(month?.className).toContain('rounded-pill');
+    expect(month?.className).toContain('bg-surface-raised');
+    expect(month?.className).toContain('shadow-raised');
+    expect(week?.className).toContain('rounded-pill');
+    expect(week?.className).not.toContain('shadow-raised');
+    // genuinely inert: not a button, and hidden from assistive tech as a group
+    expect(month?.tagName).toBe('SPAN');
+    expect(month?.parentElement?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('states vitals and labs deliberately — never a placeholder value (§27)', async () => {
+    const doc = await renderBody(PATIENT_ID);
+    const text = doc.body.textContent ?? '';
+
+    expect(text).toContain('No vital signs yet');
+    expect(text).toContain('Blood pressure, heart rate and other readings will appear here as care progresses.');
+    expect(text).toContain('No labs yet');
+    expect(text).toContain('Lab results will appear here as they are filed.');
+
+    // no fabricated clinical values anywhere on the surface
+    expect(text).not.toMatch(/\d+\s*bpm/i);
+    expect(text).not.toMatch(/mmHg/i);
+    expect(text).not.toMatch(/mg\/dL/i);
+    expect(text).not.toMatch(/\d+%/);
+  });
+
+  it('degrades ONLY the recent-activity slot when its query fails (§24)', async () => {
+    queries.listPatientInvitations.mockRejectedValue(new Error('connection reset'));
+    const doc = await renderBody(PATIENT_ID);
+
+    // the slot shows the §7 error copy with a wired retry…
+    expect(doc.body.textContent).toContain("Couldn't load recent records");
+    const retry = Array.from(doc.querySelectorAll('a')).find(
+      (a) => a.textContent?.trim() === 'Try again',
+    );
+    expect(retry?.getAttribute('href')).toBe(`/provider/patients/${PATIENT_ID}/overview`);
+    // …while identity, context, band and the other two cards stay alive
+    expect(doc.body.textContent).toContain('Tiffany Woodward');
+    expect(doc.querySelector('section[aria-label="Timeline"]')).not.toBeNull();
+    expect(doc.querySelector('section[aria-label="Labs"]')).not.toBeNull();
+    expect(doc.querySelector('section[aria-label="Recent Records"]')).toBeNull();
+  });
+
+  it('shows the no-leak permission copy when the activity read is denied', async () => {
+    queries.listPatientInvitations.mockRejectedValue(new Error('permission denied'));
+    const doc = await renderBody(PATIENT_ID);
+
+    expect(doc.body.textContent).toContain("You don't have access to recent records");
+    expect(doc.body.textContent).toContain('Ask your organization owner for access to record history.');
+    expect(doc.body.textContent?.toLowerCase()).not.toContain('exist');
+    const action = Array.from(doc.querySelectorAll('a')).find(
+      (a) => a.textContent?.trim() === 'Go to your workspace',
+    );
+    expect(action?.getAttribute('href')).toBe('/provider');
+  });
+
+  it('renders the composed trail in the recent-records slot', async () => {
+    queries.listPatientInvitations.mockResolvedValue([
+      { id: 'i1', createdAt: '2026-09-01T10:00:00Z', redeemedAt: null },
+    ]);
+    const doc = await renderBody(PATIENT_ID);
+    const card = doc.querySelector('section[aria-label="Recent Records"]');
+    expect(card?.textContent).toContain('Record created');
+    expect(card?.textContent).toContain('Invite sent');
   });
 });
 

@@ -4,8 +4,9 @@
 // indicators"; reference §5 upper rows: stat cards with large tabular
 // numerals at near-parity tone, separated by `shadow.raised`).
 //
-// Three cards, each anchored top-and-bottom so the row fills the identity
-// card's height without air sinking to the bottom:
+// Three context cards + the vitals snapshot region, each anchored
+// top-and-bottom so the row fills the identity card's height without air
+// sinking to the bottom:
 //   1. Current status — the attention indicator, drawn from the stored
 //      five-value vocabulary through PATIENT_STATUS_TOKEN (D-10) and nothing
 //      else: no new severity model, no accent paint (INV-04, INV-05).
@@ -13,6 +14,9 @@
 //      exact date beneath.
 //   3. Record opened — whole months since the patient was created, with the
 //      exact date beneath.
+//   4. Vital signs — the reference's vitals snapshot region, rendered as a
+//      deliberate §24 state that names what will appear: no placeholder
+//      number, sparkline or bar (§27, Phase-4 D-18; ticket 04).
 //
 // Every statistical value carries `tabular-nums`; type uses only `font.size`
 // steps and the weights 400/600 (QA row 7). No card holds one line of content
@@ -90,7 +94,10 @@ export function ContextStatRow({ patient }: { patient: PatientRecord }) {
   const monthsSinceOpened = wholeMonthsSince(patient.createdAt, now);
 
   return (
-    <div className="grid grid-cols-1 gap-lg sm:grid-cols-3" aria-label="Current context">
+    <div
+      className="grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-4"
+      aria-label="Current context"
+    >
       <StatCard
         label="Current status"
         supporting={`Updated ${patient.updatedAt.slice(0, 10)}`}
@@ -109,6 +116,11 @@ export function ContextStatRow({ patient }: { patient: PatientRecord }) {
         unit={monthsSinceOpened === 1 ? 'month' : 'months'}
         supporting={patient.createdAt.slice(0, 10)}
       />
+      <StatCard label="Vital signs" supporting="Recorded during visits.">
+        <span className="text-body font-semibold leading-body text-text-primary">
+          No readings yet
+        </span>
+      </StatCard>
     </div>
   );
 }

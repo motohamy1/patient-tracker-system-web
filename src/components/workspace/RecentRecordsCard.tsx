@@ -17,7 +17,7 @@
 // (OverviewSkeleton / StateVariant), never this card's.
 //
 // Server Component: no hook, no client directive.
-import { Surface } from '@/components/primitives';
+import { BottomCardShell } from '@/components/workspace/BottomCardShell';
 import type { ActivityEvent } from '@/lib/patients/activity';
 import { RECENT_ACTIVITY_LIMIT } from '@/lib/patients/activity';
 
@@ -48,44 +48,36 @@ export function RecentRecordsCard({ events }: { events: readonly ActivityEvent[]
   const shown = events.slice(0, RECENT_ACTIVITY_LIMIT);
 
   return (
-    <section aria-label="Recent Records" className="h-full">
-      <Surface variant="surface" className="h-full">
-        <div className="flex h-full flex-col gap-md">
-          <h2 className="text-heading font-semibold leading-heading text-text-primary">
-            Recent Records
-          </h2>
-
-          {shown.length === 0 ? (
-            <div className="mt-auto flex flex-col gap-xs">
-              <span className="text-body font-semibold leading-body text-text-primary">
-                No records yet
-              </span>
-              <span className="text-body leading-body text-text-secondary">
-                Records will appear here as care progresses.
-              </span>
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-md">
-              {shown.map((event) => {
-                const { day, month } = dateParts(event.at);
-                return (
-                  <li key={event.key} className="flex items-center gap-md">
-                    <span className="flex w-10 shrink-0 flex-col">
-                      <span className="text-heading font-semibold leading-heading text-text-primary tabular-nums">
-                        {day}
-                      </span>
-                      <span className="text-label leading-label text-text-secondary">{month}</span>
-                    </span>
-                    <span className="inline-flex min-w-0 items-center rounded-pill bg-critical px-md py-sm text-label leading-label text-text-primary">
-                      <span className="truncate">{event.label}</span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+    <BottomCardShell label="Recent Records" heading="Recent Records">
+      {shown.length === 0 ? (
+        <div className="mt-auto flex flex-col gap-xs">
+          <span className="text-body font-semibold leading-body text-text-primary">
+            No records yet
+          </span>
+          <span className="text-body leading-body text-text-secondary">
+            Records will appear here as care progresses.
+          </span>
         </div>
-      </Surface>
-    </section>
+      ) : (
+        <ul className="mt-auto flex flex-col gap-md">
+          {shown.map((event) => {
+            const { day, month } = dateParts(event.at);
+            return (
+              <li key={event.key} className="flex items-center gap-md">
+                <span className="flex w-10 shrink-0 flex-col">
+                  <span className="text-heading font-semibold leading-heading text-text-primary tabular-nums">
+                    {day}
+                  </span>
+                  <span className="text-label leading-label text-text-secondary">{month}</span>
+                </span>
+                <span className="inline-flex min-w-0 items-center rounded-pill bg-critical px-md py-sm text-label leading-label text-text-primary">
+                  <span className="truncate">{event.label}</span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </BottomCardShell>
   );
 }
