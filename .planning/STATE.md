@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 03
-current_phase_name: Authentication, Organizations, RBAC and RLS
+current_phase: 04
+current_phase_name: Provider Home + Patient Folder Workspace (Phase 4)
 status: ready_to_execute
 stopped_at: Phase 4 planned (5 plans, checker verdict applied)
 last_updated: "2026-10-07T22:24:15.955Z"

@@ -39,14 +39,14 @@ export type Database = {
                   ]
                 },"invitations": {
                   Row: {
-                    "created_at": string,"created_by": string,"expires_at": string | null,"id": string,"org_id": string,"redeemed_at": string | null,"redeemed_by": string | null,"role": string,"short_code": string | null,"token_digest": string
+                    "created_at": string,"created_by": string,"expires_at": string | null,"id": string,"org_id": string,"patient_id": string | null,"redeemed_at": string | null,"redeemed_by": string | null,"role": string,"short_code": string | null,"token_digest": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"created_by": string,"expires_at"?: string | null,"id"?: string,"org_id": string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"role": string,"short_code"?: string | null,"token_digest": string
+                    "created_at"?: string,"created_by": string,"expires_at"?: string | null,"id"?: string,"org_id": string,"patient_id"?: string | null,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"role": string,"short_code"?: string | null,"token_digest": string
                   }
                   Update: {
-                    "created_at"?: string,"created_by"?: string,"expires_at"?: string | null,"id"?: string,"org_id"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"role"?: string,"short_code"?: string | null,"token_digest"?: string
+                    "created_at"?: string,"created_by"?: string,"expires_at"?: string | null,"id"?: string,"org_id"?: string,"patient_id"?: string | null,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"role"?: string,"short_code"?: string | null,"token_digest"?: string
                   }
                   Relationships: [
                     {
@@ -54,6 +54,12 @@ export type Database = {
       columns: ["org_id"]
 isOneToOne: false
       referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "invitations_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
       referencedColumns: ["id"]
     }
                   ]
@@ -91,6 +97,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"patients": {
+                  Row: {
+                    "created_at": string,"dob": string,"first_name": string,"id": string,"last_activity_at": string,"last_name": string,"mrn": string,"mrn_seq": number,"org_id": string,"phone": string,"search_text": string | null,"sex": string,"status": string,"updated_at": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"dob": string,"first_name": string,"id"?: string,"last_activity_at"?: string,"last_name": string,"mrn"?: never,"mrn_seq"?: number,"org_id": string,"phone": string,"search_text"?: never,"sex": string,"status"?: string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"dob"?: string,"first_name"?: string,"id"?: string,"last_activity_at"?: string,"last_name"?: string,"mrn"?: never,"mrn_seq"?: number,"org_id"?: string,"phone"?: string,"search_text"?: never,"sex"?: string,"status"?: string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "patients_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -108,6 +134,12 @@ isOneToOne: false
                            },
 "remove_membership":
 { Args: { "p_membership_id": string }; Returns: undefined
+                           },
+"show_limit":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"show_trgm":
+{ Args: { "": string }; Returns: (string)[]
                            }
           }
           Enums: {

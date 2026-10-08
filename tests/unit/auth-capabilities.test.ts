@@ -17,6 +17,7 @@ import {
   CAN_AUTHOR_CLINICAL,
   CAN_ENTER_VITALS,
   CAN_MANAGE_MEMBERSHIP,
+  CAN_MANAGE_PATIENTS,
   CAN_RETRIEVE_AUDIT,
   CAN_SCHEDULE,
   CAN_SUBMIT_OBSERVATION,
@@ -32,11 +33,11 @@ const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
 const ALL_ROLES = ROLES as readonly Role[];
 const expected: Record<Role, readonly Capability[]> = {
-  provider_doctor: [CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP],
-  nurse: [CAN_ENTER_VITALS],
-  receptionist: [CAN_SCHEDULE],
+  provider_doctor: [CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS],
+  nurse: [CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS],
+  receptionist: [CAN_SCHEDULE, CAN_MANAGE_PATIENTS],
   patient: [CAN_SUBMIT_OBSERVATION],
-  admin_owner: [CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT],
+  admin_owner: [CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS],
 };
 
 describe('roles — byte-identical to migration 0001 (D-09)', () => {
@@ -85,6 +86,10 @@ describe('runsCapability — the only caller spelling', () => {
       ['patient', CAN_AUTHOR_CLINICAL, false],
       ['patient', CAN_ENTER_VITALS, false],
       ['patient', CAN_MANAGE_MEMBERSHIP, false],
+      ['patient', CAN_MANAGE_PATIENTS, false],
+      ['provider_doctor', CAN_MANAGE_PATIENTS, true],
+      ['nurse', CAN_MANAGE_PATIENTS, true],
+      ['receptionist', CAN_MANAGE_PATIENTS, true],
       ['admin_owner', CAN_RETRIEVE_AUDIT, true],
       ['admin_owner', CAN_MANAGE_MEMBERSHIP, true],
     ];

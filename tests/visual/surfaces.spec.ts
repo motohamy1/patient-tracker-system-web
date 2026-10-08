@@ -86,7 +86,14 @@ test.describe('authenticated provider shells', () => {
         await page.goto(path);
         await page.waitForLoadState('networkidle');
         const state = testInfo.project.name === 'reduced-motion' ? 'reduced-motion' : 'default';
-        await expect(page).toHaveScreenshot([surface, viewport, `${state}.png`]);
+        // Phase 4 (04-05): the folder card prints an AGE computed from dob at
+        // render time — it changes on every birthday, so the fragment is
+        // masked (03-08's created_at masking precedent). Everything else in
+        // frame comes from the fixed seed.sql fixture rows. The mask locator
+        // matches nothing on patient-workspace, so the shared loop is safe.
+        await expect(page).toHaveScreenshot([surface, viewport, `${state}.png`], {
+          mask: [page.getByTestId('folder-identity')],
+        });
       });
     }
   }

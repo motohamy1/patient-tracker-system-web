@@ -33,6 +33,7 @@ const CAN_CERTIFIED = [
   'CAN_SCHEDULE',
   'CAN_SUBMIT_OBSERVATION',
   'CAN_MANAGE_MEMBERSHIP',
+  'CAN_MANAGE_PATIENTS',
   'CAN_RETRIEVE_AUDIT',
 ] as const;
 
@@ -41,21 +42,31 @@ export const CAN_ENTER_VITALS: Capability = 'CAN_ENTER_VITALS';
 export const CAN_SCHEDULE: Capability = 'CAN_SCHEDULE';
 export const CAN_SUBMIT_OBSERVATION: Capability = 'CAN_SUBMIT_OBSERVATION';
 export const CAN_MANAGE_MEMBERSHIP: Capability = 'CAN_MANAGE_MEMBERSHIP';
+// Phase 4 (D-01/D-13, PROV-04): create a patient record + change folder
+// status. Held by the four staff roles; the patient role can never hold it —
+// AUTH-07's structural exclusion is preserved (see the header note).
+export const CAN_MANAGE_PATIENTS: Capability = 'CAN_MANAGE_PATIENTS';
 export const CAN_RETRIEVE_AUDIT: Capability = 'CAN_RETRIEVE_AUDIT';
 
 // The D- assignments, once and forever:
 //   provider_doctor  -> CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE,
-//                       CAN_MANAGE_MEMBERSHIP
-//   nurse            -> CAN_ENTER_VITALS
-//   receptionist     -> CAN_SCHEDULE
+//                       CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS
+//   nurse            -> CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS
+//   receptionist     -> CAN_SCHEDULE, CAN_MANAGE_PATIENTS
 //   patient          -> CAN_SUBMIT_OBSERVATION                        (D-11)
-//   admin_owner      -> CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT    (D-15)
+//   admin_owner      -> CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT,
+//                       CAN_MANAGE_PATIENTS
+//
+// CAN_MANAGE_PATIENTS (Phase 4): walk-in registration is front-desk work
+// (D-01) and every staff role manages the folder workspace; the patient set
+// above stays observation-only so AUTH-07's structural claim holds verbatim.
+// Migration 0005's patients policies mirror this role list byte-for-byte.
 export const ROLE_CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {
-  provider_doctor: new Set([CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP]),
-  nurse: new Set([CAN_ENTER_VITALS]),
-  receptionist: new Set([CAN_SCHEDULE]),
+  provider_doctor: new Set([CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS]),
+  nurse: new Set([CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS]),
+  receptionist: new Set([CAN_SCHEDULE, CAN_MANAGE_PATIENTS]),
   patient: new Set([CAN_SUBMIT_OBSERVATION]),
-  admin_owner: new Set([CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT]),
+  admin_owner: new Set([CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS]),
 };
 
 // The ONLY spelling valid in product code (plans 03-04/05): a capability check
