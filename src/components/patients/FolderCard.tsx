@@ -119,7 +119,7 @@ export function FolderCard({ patient, canInvite = false }: FolderCardProps) {
               <span className="text-label leading-label text-text-secondary">
                 Last activity
               </span>
-              <span data-testid="folder-identity" className="text-label leading-label text-text-primary tabular-nums">
+              <span className="text-label leading-label text-text-primary tabular-nums">
                 {lastActivity}
               </span>
               {unlinked ? (

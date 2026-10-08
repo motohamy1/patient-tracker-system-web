@@ -1,23 +1,139 @@
-// /provider — the provider home empty shell (D-01, D-04).
+// /provider — the provider home folder workspace (PROV-01/02/03/04, UX-01,
+// UX-07; D-11/D-12/D-14/D-16/D-17/D-18/D-19/D-20; 04-UI-SPEC §4.1).
 //
-// A Server Component with no client boundary and no client state. It renders a
-// `canvas` field holding the shared `EmptyState` (which is itself a
-// `surfaceRaised` card). No action is rendered, because no destination is wired
-// in this phase (02-UI-SPEC.md §5.5).
+// Server Component, async: `searchParams` is awaited (Next 15/16 Promise
+// shape — login/page.tsx:27-31 precedent, 04-RESEARCH Pitfall 2) and every
+// `string | string[]` value is normalized to its first entry. The URL is the
+// ONLY state carrier: tabs, search and "Load more" all write `?params` and
+// this page re-derives the query from them — there is no client fetch, no
+// local filtering and no component state (D-11/D-18/D-20).
 //
-// No clinical content appears here: the copy is the fixed string from
-// 02-UI-SPEC.md §9.1 and names no patient, medication, measurement or specialty
-// (FOUND-01).
+// Authorization runs server-side first: `resolveWorkspaceRole('provider')`
+// gives the org scope for the RLS-scoped `listPatients` call plus the role the
+// capability flags derive from. The layout already redirects a non-member, so
+// an unresolvable resolution renders an EMPTY grid region rather than guessing
+// (a fake gate that looks real is worse than none). Nothing role-based crosses
+// the RSC → client boundary beyond the boolean `canInvite` the card needs.
+//
+// URL → listPatients mapping (listPatientsQuerySchema, Zod before trust):
+//   q     → q        search across name/MRN/phone/DOB (D-17), server-side
+//   filter→ filter   all | recent | today | attention | critical (D-11)
+//   d     → day      the client's LOCAL calendar day for "today" (D-14)
+//   shown → shown    cumulative window start: rows 0..shown+limit (D-20)
+//   limit → limit    page size (schema-capped at 30)
+// An unparsable value falls back to the schema defaults instead of rendering a
+// half-parseable surface.
+//
+// `dynamic = 'force-dynamic'` is declared explicitly: awaiting `searchParams`
+// and the cookie-backed Supabase client already force per-request rendering,
+// and the declaration keeps PHI off any future cache path by construction
+// (02-10's load-bearing precedent, repeated by every data-backed page).
 import { Surface } from '@/components/primitives';
-import { EmptyState } from '@/components/primitives/EmptyState';
+import { INSET_FILL } from '@/components/primitives/CompactControl';
+import { FolderGrid } from '@/components/patients/FolderGrid';
+import { NewPatientControl } from '@/components/patients/NewPatientControl';
+import { ProviderSearchControl } from '@/components/patients/ProviderSearchControl';
+import { RetrievalControls } from '@/components/patients/RetrievalControls';
+import { CAN_MANAGE_MEMBERSHIP, runsCapability } from '@/lib/auth/capabilities';
+import { resolveWorkspaceRole } from '@/lib/auth/workspace';
+import { listPatients } from '@/lib/patients/queries';
+import { listPatientsQuerySchema, type ListPatientsQueryInput } from '@/lib/patients/schemas';
 
-export default function ProviderHomePage() {
+export const dynamic = 'force-dynamic';
+
+/** The five retrieval filters, typed against the schema so they cannot drift. */
+const FILTER_VALUES = [
+  'all',
+  'recent',
+  'today',
+  'attention',
+  'critical',
+] as const satisfies readonly ListPatientsQueryInput['filter'][];
+
+type FilterValue = ListPatientsQueryInput['filter'];
+
+/** Narrow a searchParam to its first value (04-RESEARCH Pitfall 2). */
+function first(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+/** An unknown filter never widens the query — it falls back to the default. */
+function asFilter(value: string | undefined): FilterValue | undefined {
+  return FILTER_VALUES.includes(value as FilterValue) ? (value as FilterValue) : undefined;
+}
+
+export default async function ProviderHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const parsed = listPatientsQuerySchema.safeParse({
+    q: first(params.q),
+    filter: asFilter(first(params.filter)),
+    day: first(params.d),
+    shown: first(params.shown),
+    limit: first(params.limit),
+  });
+  const query = parsed.success ? parsed.data : listPatientsQuerySchema.parse({});
+
+  const resolution = await resolveWorkspaceRole('provider');
+  if (resolution.kind !== 'signed-in') return null;
+
+  const { rows, hasMore, total } = await listPatients({
+    orgId: resolution.orgId,
+    q: query.q,
+    filter: query.filter,
+    day: query.day,
+    shown: query.shown,
+    limit: query.limit,
+  });
+
+  // Server-known: the UI hides the invite row for roles that cannot send one
+  // (04-RESEARCH Open Question 4 — the capability is not widened), and the
+  // action re-checks it anyway.
+  const canInvite = runsCapability(resolution.role, CAN_MANAGE_MEMBERSHIP);
+
   return (
-    <Surface variant="canvas" className="flex flex-1 items-center justify-center bg-canvas p-lg">
-      <EmptyState
-        title="No patients yet"
-        body="Patient folders appear here once they are added to the practice."
-      />
+    <Surface variant="canvas" className="flex flex-1 flex-col bg-canvas p-lg">
+      <div className="mx-auto flex w-full max-w-[80rem] flex-col gap-xl">
+        {/* The retrieval control row sits ABOVE the grid (D-12). */}
+        <div className="flex flex-col gap-md">
+          <RetrievalControls
+            filter={query.filter}
+            q={query.q}
+            day={query.day}
+            count={rows.length}
+            total={total}
+            hasMore={hasMore}
+            insetFill={INSET_FILL}
+          />
+          {/* Mobile placements (04-UI-SPEC §4.4/§4.5): the Phase-2 top bar
+              keeps its own `max-md:hidden` controls, so the body row repeats
+              the search and the CTA below the 768px band edge. */}
+          <ProviderSearchControl
+            inputId="provider-search-body"
+            filter={query.filter}
+            day={query.day}
+            insetFill={INSET_FILL}
+            className="md:hidden"
+          />
+          <NewPatientControl insetFill={INSET_FILL} className="w-full md:hidden" />
+        </div>
+
+        <FolderGrid
+          rows={rows}
+          hasMore={hasMore}
+          filter={query.filter}
+          q={query.q}
+          day={query.day}
+          shown={query.shown}
+          limit={query.limit}
+          canInvite={canInvite}
+          emptyAction={<NewPatientControl insetFill={INSET_FILL} variant="secondary" />}
+        />
+      </div>
     </Surface>
   );
 }

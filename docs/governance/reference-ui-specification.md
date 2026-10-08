@@ -561,7 +561,9 @@ never a design source.
   floating on `canvas`, with `surface` lighter than `canvas`; concise identity (name,
   minimal age/sex or MRN, a compact status label, last activity, small contextual indicators).
 - **Status encoding.** Subtle semantic pills riding thin progress lines, using `success` for
-  normal, `info` for pending and `warning` for follow-up, and nothing else (D-04). Never one
+  normal, `info` for pending and `warning` for follow-up (D-04); the Phase-4 owner design gate
+  (R-1, option A, 2026-10-08) additionally admits the frozen `critical` family for the Critical
+  folder status — still a closed set, never a new tint. Never one
   saturated color per folder.
 - **Critical Alerts.** A soft salmon panel — the `critical` family at low intensity over
   `surface` — with 3 to 4 alert rows and warning icons.

@@ -5,21 +5,32 @@
 // the status is carried by the label text and never by hue alone. A tone class
 // is never used as the label ink, an icon ink or a boundary.
 //
-// The four tones are exhaustive: `success`, `info`, `warning` and `neutral`
-// (the no-tint form). No other tone may be added without a decision recorded in
-// `docs/governance/tokens.json` (Phase 001 D-04).
+// The five tones are exhaustive: `success`, `info`, `warning`, `critical` and
+// `neutral` (the no-tint form). No other tone may be added without a decision
+// recorded in `docs/governance/tokens.json` (Phase 001 D-04).
+//
+// `critical` is the fifth tone, added by Phase 004 for the `critical` patient
+// folder status. The record this comment demands is D-10 of 04-CONTEXT
+// (04-UI-SPEC §Color): `stable`→success, `follow_up`→warning,
+// `needs_review`→info, `critical`→critical, `new`→info — a critical patient
+// must not wear follow-up amber, and `critical` is a frozen 15-key token, not
+// a new tint family. Reviewer item R-1 flags the INV-04 letter at the owner
+// gate; D-10 is the decision being implemented here.
 //
 // Server Component: no hook, no client directive.
 import type { ReactNode } from 'react';
 
-export type PillTone = 'success' | 'info' | 'warning' | 'neutral';
+export type PillTone = 'success' | 'info' | 'warning' | 'critical' | 'neutral';
 
 // The dot is the only place a tone appears. It is 16px (the `sm` icon step in
-// Icon.tsx) and decorative — the label carries the meaning.
+// Icon.tsx) and decorative — the label carries the meaning. These five literal
+// spellings are also what Tailwind's scanner picks up, so a composed
+// `bg-${token}` at a call site resolves to a generated utility.
 const TONE_DOT: Record<Exclude<PillTone, 'neutral'>, string> = {
   success: 'bg-success',
   info: 'bg-info',
   warning: 'bg-warning',
+  critical: 'bg-critical',
 };
 
 export type PillProps = {

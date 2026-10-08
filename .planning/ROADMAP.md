@@ -14,7 +14,7 @@ This roadmap operationalizes PRODUCT-MASTER-SPEC.md §19 (Phase 001–022) as a 
 - [x] **Phase 1: Project Constitution + Reference UI Specification** - Constitution, reference UI design contract, UI invariants, semantic tokens, visual/responsive/motion QA rules (completed 2026-10-05)
 - [x] **Phase 2: Foundation and App Shell** - Next.js shell, routes, layout primitives, tokens, typography, surfaces, controls, a11y + motion baseline (completed 2026-10-07)
 - [x] **Phase 3: Authentication, Organizations, RBAC and RLS** - Server-side identity, org membership, role resolution, RLS policies, audit foundation (completed 2026-10-08)
-- [ ] **Phase 4: Provider Home + Patient Folder Workspace** - Visual patient-folder collection with retrieval controls
+- [x] **Phase 4: Provider Home + Patient Folder Workspace** - Visual patient-folder collection with retrieval controls (completed 2026-10-08)
 - [ ] **Phase 5: Patient Workspace / Overview** - Exact 8-tab shell and command-surface Overview
 - [ ] **Phase 6: D3 Clinical Timeline** - Interactive D3 timeline engine over unified clinical events
 - [ ] **Phase 7: Visits Workflow** - Pre-Visit → During Visit → After Visit
@@ -171,23 +171,23 @@ Plans:
 
 Plans:
 
-- [ ] 04-01 — patients data substrate (migration 0005: table + MRN/timestamp triggers + search_text + RLS + invitations.patient_id + redeem_invite auto-link + audit trigger; status vocabulary + CAN_MANAGE_PATIENTS; pgTAP suite 0005; types regen)
+- [x] 04-01 — patients data substrate (migration 0005: table + MRN/timestamp triggers + search_text + RLS + invitations.patient_id + redeem_invite auto-link + audit trigger; status vocabulary + CAN_MANAGE_PATIENTS; pgTAP suite 0005; types regen)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-02 — server data layer (Zod schemas, listPatients search/filter/pagination, createPatient/changeStatus/sendPatientInvite actions)
+- [x] 04-02 — server data layer (Zod schemas, listPatients search/filter/pagination, createPatient/changeStatus/sendPatientInvite actions)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-03 — folder grid surface (FolderCard/FolderGrid RSC, retrieval tabs, debounced search, Load more, state variants, Pill critical tone)
+- [x] 04-03 — folder grid surface (FolderCard/FolderGrid RSC, retrieval tabs, debounced search, Load more, state variants, Pill critical tone)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 04-04 — entry + quick actions (NewPatientControl modal, QuickActionsOverlay, top-bar CTA enablement)
+- [x] 04-04 — entry + quick actions (NewPatientControl modal, QuickActionsOverlay, top-bar CTA enablement)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 04-05 — phase close (deterministic patient seed, visual matrix regenerate + provider-home-new-patient baselines, QA/INV gate evaluation, owner design gate R-1/R-2, 04-VERIFICATION.md)
+- [x] 04-05 — phase close (deterministic patient seed, visual matrix regenerate + provider-home-new-patient baselines, QA/INV gate evaluation, owner design gate R-1/R-2, 04-VERIFICATION.md)
 
 ### Phase 5: Patient Workspace / Overview
 

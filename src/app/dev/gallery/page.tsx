@@ -12,12 +12,21 @@
 // never be indexed by a crawler even when the harness flag is set.
 //
 // This page is the SINGLE file outside `src/lib/dev/` permitted to import the
-// dev fixtures (D-18). It reads the empty patient list only to hand a neutral
-// count to the gallery's empty-state section; it never renders a fixture record
-// as visible content, and it passes the count down as a plain number.
+// dev fixtures and the dev mock data (D-18). Every value is passed down as a
+// prop to a child; the fixture/mock modules never enter a product route and
+// never ship as a client module (they ride the request-time render payload).
+//
+// TWO SURFACES, ONE GATE. The default render (no query parameter) is the
+// primitives gallery, unchanged — so its committed visual baseline is
+// preserved. When `?preview=doctor` is present the page renders the dev-only
+// doctor-dashboard preview populated with MOCK patients
+// (`src/lib/dev/mock-clinical.ts`). Both sit behind the same D-26 gate and are
+// therefore absent from every real deployment.
 import { notFound } from 'next/navigation';
 import { Gallery } from '@/components/dev/Gallery';
+import { MockDoctorDashboard } from '@/components/dev/MockDoctorDashboard';
 import { isDevRouteAllowed } from '@/lib/dev/dev-route-gate';
+import { MOCK_PATIENTS } from '@/lib/dev/mock-clinical';
 import { EMPTY_PATIENT_LIST } from '@/lib/dev/fixtures';
 
 // The gate MUST be evaluated per request, so the route is forced dynamic. A
@@ -30,8 +39,19 @@ import { EMPTY_PATIENT_LIST } from '@/lib/dev/fixtures';
 // (ASVS V14).
 export const dynamic = 'force-dynamic';
 
-export default function DevGalleryPage() {
+export default async function DevGalleryPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   if (!isDevRouteAllowed()) notFound();
+
+  const params = await searchParams;
+  const preview = typeof params.preview === 'string' ? params.preview : undefined;
+
+  if (preview === 'doctor') {
+    return <MockDoctorDashboard patients={MOCK_PATIENTS} />;
+  }
 
   return <Gallery emptyCount={EMPTY_PATIENT_LIST.length} />;
 }

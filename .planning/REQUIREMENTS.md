@@ -30,7 +30,7 @@ Derived from PRODUCT-MASTER-SPEC.md (authoritative control pack). Auto mode: all
 - [x] **AUTH-05**: As a doctor, I can create and update clinical records per my permissions; as a nurse I can enter only permitted vitals/demographics/operational data; as a receptionist only permitted administrative registration/scheduling; as a patient only explicitly allowed patient-generated observations — all enforced at the backend/data layer, not merely hidden in the UI. (§3.2)
 - [x] **AUTH-06**: As a security reviewer, sensitive mutations (clinical record changes, document access, membership changes) produce audit log entries, so tampering is traceable. (§12, §19 Ph003)
 - [x] **AUTH-07**: As a patient, I cannot gain provider-only clinical authoring privileges by manipulating the frontend, because authorization is checked server-side per role and context. (§3.2, §12)
-- [ ] **AUTH-08**: As a security reviewer, I can run the role-based acceptance gate across Doctor, Nurse, Receptionist, Patient, and unauthorized accounts verifying route, component, API, database, mutation, document, and visibility isolation — the same browser UI must not switch privilege levels. (§22)
+- [x] **AUTH-08**: As a security reviewer, I can run the role-based acceptance gate across Doctor, Nurse, Receptionist, Patient, and unauthorized accounts verifying route, component, API, database, mutation, document, and visibility isolation — the same browser UI must not switch privilege levels. (§22)
 
 ### PROV — Provider Home, Patient Folders, Retrieval Controls (Phase 4)
 
@@ -157,9 +157,9 @@ Derived from PRODUCT-MASTER-SPEC.md (authoritative control pack). Auto mode: all
 
 ### UX — Cross-cutting Experience States (assigned to owning phases)
 
-- [ ] **UX-01**: As a user, every major workspace has deliberate loading, empty, error, retry, permission-denied, and offline/sync states — no generic "Loading…" screens, no blank panels when data is unavailable. (§24; owned by Phase 3 baseline, enforced thereafter)
+- [x] **UX-01**: As a user, every major workspace has deliberate loading, empty, error, retry, permission-denied, and offline/sync states — no generic "Loading…" screens, no blank panels when data is unavailable. (§24; owned by Phase 3 baseline, enforced thereafter)
 - [x] **UX-02**: As a user, permission-denied states explain what I lack access to without leaking data existence. (§24, §12; owned by Phase 3)
-- [ ] **UX-03**: As a user on an unstable connection, I see the offline/sync state of my workspace rather than silent failures. (§24, §18; owned by Phase 3 baseline)
+- [x] **UX-03**: As a user on an unstable connection, I see the offline/sync state of my workspace rather than silent failures. (§24, §18; owned by Phase 3 baseline)
 - [ ] **UX-04**: As a clinician, the timeline meets its performance budget (smooth pan/zoom with large event counts, no unnecessary re-renders). (§25; owned by Phase 6)
 - [ ] **UX-05**: As a touch user, the timeline and scrubber are reachable and usable on mobile. (§8.3, §26; owned by Phase 6)
 - [x] **UX-06**: As a mobile user, the app adapts (touch targets, compact navigation, reduced density, safe interactions) rather than being a shrunken desktop. (§26; owned by Phase 22 verification)
@@ -216,10 +216,10 @@ Deferred without a phase in v1:
 | AUTH-05 | 3 | Complete |
 | AUTH-06 | 3 | Complete |
 | AUTH-07 | 3 | Complete |
-| AUTH-08 | 3 | Pending |
-| UX-01 | 3 | Pending |
+| AUTH-08 | 3 | Complete |
+| UX-01 | 3 | Complete |
 | UX-02 | 3 | Complete |
-| UX-03 | 3 | Pending |
+| UX-03 | 3 | Complete |
 | PROV-01 | 4 | Pending |
 | PROV-02 | 4 | Pending |
 | PROV-03 | 4 | Pending |

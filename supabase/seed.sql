@@ -89,3 +89,40 @@ insert into public.invitations (org_id, role, token_digest, short_code, created_
   ('1f000000-0000-0000-0000-000000000001', 'provider_doctor',
    encode(extensions.digest('phase3-fixture-invite', 'sha256'), 'hex'),
    'PHASE3', '0f000000-0000-0000-0000-0000000000a1');
+
+
+-- ============================================================================
+-- Phase 04 deterministic patient fixtures (plan 04-05 Task 1) — the visual
+-- matrix's folder-grid content. CONTRACT (04-01/04-05 cross-plan):
+--   * INSERTs run under `set session_replication_role = replica` so the FIXED
+--     mrn_seq (1..6 -> MRN-0001..MRN-0006) and FIXED absolute timestamps
+--     survive migration 0005's assign_patient_mrn / touch_patient_timestamps
+--     triggers — that bypass belongs to THIS SEED ONLY, never to app code.
+--   * every timestamp is a fixed past instant (never now()) so "Recent"
+--     ordering and every rendered date are bit-identical on every reset.
+--   * names cover the D-17 search fields (name/MRN/phone/DOB); statuses cover
+--     all five D-09 values (stable x2, follow_up, needs_review, critical, new);
+--     exactly one row is linked (to the org's patient account) and the rest
+--     stay unlinked so the D-15 "Send invite" quick action is visible.
+--   * re-runnable on a fresh database (`supabase db reset`).
+set session_replication_role = replica;
+insert into public.patients (id, org_id, user_id, first_name, last_name, dob, sex, phone, status, created_at, updated_at, last_activity_at, mrn_seq) values
+  ('4f000000-0000-0000-0000-000000000001', '1f000000-0000-0000-0000-000000000001',
+   '0f000000-0000-0000-0000-0000000000a5', 'Amina', 'Farid', '1990-05-12', 'F', '+201000000011', 'stable',
+   '2026-09-01T09:00:00Z', '2026-09-28T10:30:00Z', '2026-09-28T10:30:00Z', 1),
+  ('4f000000-0000-0000-0000-000000000002', '1f000000-0000-0000-0000-000000000001',
+   null, 'Youssef', 'Saleh', '1985-03-02', 'M', '+201000000012', 'follow_up',
+   '2026-09-04T11:15:00Z', '2026-10-02T08:45:00Z', '2026-10-02T08:45:00Z', 2),
+  ('4f000000-0000-0000-0000-000000000003', '1f000000-0000-0000-0000-000000000001',
+   null, 'Mariam', 'Adel', '1978-12-24', 'F', '+201000000013', 'needs_review',
+   '2026-09-08T14:20:00Z', '2026-10-04T13:05:00Z', '2026-10-04T13:05:00Z', 3),
+  ('4f000000-0000-0000-0000-000000000004', '1f000000-0000-0000-0000-000000000001',
+   null, 'Omar', 'Hany', '1966-07-30', 'M', '+201000000014', 'critical',
+   '2026-09-10T08:00:00Z', '2026-10-05T16:40:00Z', '2026-10-05T16:40:00Z', 4),
+  ('4f000000-0000-0000-0000-000000000005', '1f000000-0000-0000-0000-000000000001',
+   null, 'Nour', 'El-Sayed', '2001-02-03', 'F', '+201000000015', 'new',
+   '2026-10-05T09:30:00Z', '2026-10-05T09:30:00Z', '2026-10-05T09:30:00Z', 5),
+  ('4f000000-0000-0000-0000-000000000006', '1f000000-0000-0000-0000-000000000001',
+   null, 'Kareem', 'Tarek', '1995-11-18', 'M', '+201000000016', 'stable',
+   '2026-09-20T12:00:00Z', '2026-09-30T15:10:00Z', '2026-09-30T15:10:00Z', 6);
+set session_replication_role = origin;
