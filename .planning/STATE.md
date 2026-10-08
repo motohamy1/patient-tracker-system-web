@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 03
 current_phase_name: Authentication, Organizations, RBAC and RLS
-status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-10-07T07:18:13.669Z"
-last_activity: 2026-10-07
-last_activity_desc: Phase 03 execution started
+status: ready_to_execute
+stopped_at: Phase 4 planned (5 plans, checker verdict applied)
+last_updated: "2026-10-07T22:24:15.955Z"
+last_activity: 2026-10-08
+last_activity_desc: Phase 4 planned — 5 plans (04-01..05) across 5 waves; plan-checker ISSUES FOUND (5 BLOCKER/5 WARNING) all patched; coverage 5/5 reqs + 23/23 decisions
 progress:
   total_phases: 22
-  completed_phases: 2
-  total_plans: 23
-  completed_plans: 22
-  percent: 9
+  completed_phases: 3
+  total_plans: 25
+  completed_plans: 25
+  percent: 14
 ---
 
 # Project State
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 
 ## Current Position
 
-Phase: 03 (Authentication, Organizations, RBAC and RLS) — EXECUTING
-Plan: 6 of 6
-Status: Ready to execute
-Last activity: 2026-10-07 — Phase 03 execution started
+Phase: 03 (Authentication, Organizations, RBAC and RLS) — COMPLETE
+Plan: 8 of 8
+Status: Phase 03 complete (8/8 plans)
+Last activity: 2026-10-08 — Completed 03-08-PLAN.md (Phase-3 baselines generated, matrix green 114/114)
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 
@@ -83,6 +83,8 @@ Progress: [███████████] 11/11 plans (100%)
 | Phase 03 P03 | 17min | 3 tasks | 11 files |
 | Phase 03 P04 | 12min | 4 tasks | 10 files |
 | Phase 03 P05 | 29min | 3 tasks | 15 files |
+| Phase 03 P07 | 7min | 3 tasks | 6 files |
+| Phase 03 P08 | ~60min | 2 tasks | 61 files |
 
 ## Accumulated Context
 
@@ -141,6 +143,11 @@ Recent decisions affecting current work:
 - [Phase 03]: invite tokens minted as 32-byte base64url raw strings with SHA-256 digests stored; redeemSignupWithInviteAction runs signup → sign-in → rpc in one action
 - [Phase 03]: preview_invite, list_org_members, and bootstrap_org_membership trigger auto-added to 0004 (Rule 2) — auth.users RLS-gated; owner bootstrap needed a definer path
 - [Phase 03]: server-only package unresolved in jsdom test project — vitest resolve.alias stubs it to tests/unit/stubs/server-only.ts
+- [Phase 03]: 03-07: the four Phase-2 workspace baselines are captured authenticated via a Playwright storageState fixture, never regenerated to the /login redirect — a login-page baseline asserts nothing about its named surface and would blind the matrix to an auth regression (Gap 2).
+- [Phase 03]: 03-07: storageState auth fixture (tests/visual/auth.ts AUTH_USERS/AUTH_STATE + auth.setup.ts real /login sign-in) drives the setup project; both motion projects declare dependencies:['setup']. Baseline determinism for the audit surface = filter-to-one-row + mask over the created_at timestamp.
+- [Phase 03]: 03-08: the setup-project sign-in timeout was a `supabase/seed.sql` GoTrue v2.197 row-shape defect, not a harness defect — seeded `auth.users` rows need zero-UUID `instance_id` (GoTrue filters on it; NULL rows are never found) and `''` in every varchar token column (NULL 500s the scan with "converting NULL to string is unsupported"); `phone`/`phone_change` stay NULL because they are scanned nullably and `UNIQUE(phone)` rejects a shared `''`. Fixed in the seed; seeded sign-in verified via the password grant.
+- [Phase 03]: 03-08: 56 new Phase-3 baselines generated (7 surfaces x 4 viewports x 2 motion states) and `login` + the four workspace baselines regenerated; the four workspace surfaces are pixel-identical to their committed baselines, proving the authenticated shells are unchanged. `npm run test:visual` green at 114 passed, committed `7d24fc3`; `tests/visual/.auth/` never committed.
+- [Phase 03]: 03-08: the D-26 flag-hygiene invariant is preserved by rewording an untracked dev scaffolding file's comments (`src/lib/dev/mock-clinical.ts`) — the security spec's permitted-file list is never widened to accommodate scaffolding. Phase 3 complete (8/8).
 
 ### Pending Todos
 
@@ -163,6 +170,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-07T07:13:43.183Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-authentication-organizations-rbac-and-rls/03-UI-SPEC.md
+Last session: 2026-10-07T22:24:15.941Z
+Stopped at: Phase 4 context gathered
+Resume file: .planning/phases/04-provider-home-patient-folder-workspace/04-CONTEXT.md

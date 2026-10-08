@@ -13,7 +13,7 @@ This roadmap operationalizes PRODUCT-MASTER-SPEC.md §19 (Phase 001–022) as a 
 
 - [x] **Phase 1: Project Constitution + Reference UI Specification** - Constitution, reference UI design contract, UI invariants, semantic tokens, visual/responsive/motion QA rules (completed 2026-10-05)
 - [x] **Phase 2: Foundation and App Shell** - Next.js shell, routes, layout primitives, tokens, typography, surfaces, controls, a11y + motion baseline (completed 2026-10-07)
-- [ ] **Phase 3: Authentication, Organizations, RBAC and RLS** - Server-side identity, org membership, role resolution, RLS policies, audit foundation
+- [x] **Phase 3: Authentication, Organizations, RBAC and RLS** - Server-side identity, org membership, role resolution, RLS policies, audit foundation (completed 2026-10-08)
 - [ ] **Phase 4: Provider Home + Patient Folder Workspace** - Visual patient-folder collection with retrieval controls
 - [ ] **Phase 5: Patient Workspace / Overview** - Exact 8-tab shell and command-surface Overview
 - [ ] **Phase 6: D3 Clinical Timeline** - Interactive D3 timeline engine over unified clinical events
@@ -118,7 +118,7 @@ Cross-cutting constraints: none shared by two or more plans.
   4. Direct database/API access without membership context cannot read or write another organization's rows (RLS verified).
 
 **UI hint**: no
-**Plans**: 5/6 plans executed
+**Plans**: 8/8 plans executed
 
 Plans:
 **Wave 1**
@@ -143,7 +143,15 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 03-06-PLAN.md — UX baseline + offline strip + admin audit surface + seeds + AUTH-08 acceptance gate
+- [x] 03-06-PLAN.md — UX baseline + offline strip + admin audit surface + seeds + AUTH-08 acceptance gate
+
+**Wave 7** *(gap closure — blocked on Wave 6 completion)*
+
+- [x] 03-07-PLAN.md — Auth storageState fixture + setup project + five-row phase3 spec + authenticated Phase-2 surfaces (Gap 1 spec half, Gap 2 root cause)
+
+**Wave 8** *(gap gate — blocked on Wave 7 completion)*
+
+- [x] 03-08-PLAN.md — Baseline generation + `npm run test:visual` green run (Gap 1 baseline half, Gap 2 evidence)
 
 ### Phase 4: Provider Home + Patient Folder Workspace
 
@@ -159,11 +167,27 @@ Plans:
   4. Retrieval stays responsive on a large patient collection.
 
 **UI hint**: yes
-**Plans**: TBD
+**Plans**: 5
 
 Plans:
 
-- [ ] 04-01: TBD
+- [ ] 04-01 — patients data substrate (migration 0005: table + MRN/timestamp triggers + search_text + RLS + invitations.patient_id + redeem_invite auto-link + audit trigger; status vocabulary + CAN_MANAGE_PATIENTS; pgTAP suite 0005; types regen)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02 — server data layer (Zod schemas, listPatients search/filter/pagination, createPatient/changeStatus/sendPatientInvite actions)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 04-03 — folder grid surface (FolderCard/FolderGrid RSC, retrieval tabs, debounced search, Load more, state variants, Pill critical tone)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 04-04 — entry + quick actions (NewPatientControl modal, QuickActionsOverlay, top-bar CTA enablement)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 04-05 — phase close (deterministic patient seed, visual matrix regenerate + provider-home-new-patient baselines, QA/INV gate evaluation, owner design gate R-1/R-2, 04-VERIFICATION.md)
 
 ### Phase 5: Patient Workspace / Overview
 
@@ -513,7 +537,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 |-------|----------------|--------|-----------|
 | 1. Project Constitution + Reference UI Specification | 6/6 | Complete    | 2026-10-05 |
 | 2. Foundation and App Shell | 11/11 | Complete   | 2026-10-07 |
-| 3. Authentication, Organizations, RBAC and RLS | 5/6 | In Progress|  |
+| 3. Authentication, Organizations, RBAC and RLS | 7/8 | In Progress|  |
 | 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |
 | 5. Patient Workspace / Overview | 0/TBD | Not started | - |
 | 6. D3 Clinical Timeline | 0/TBD | Not started | - |
