@@ -16,6 +16,7 @@
 // authorization boundary. Server Component call sites only — never import from
 // a client file.
 import { createClient } from '@/lib/supabase/server';
+import type { PatientInviteRow } from '@/lib/patients/activity';
 import type { PatientStatus } from '@/lib/patients/status';
 
 export type PatientFolderRow = {
@@ -127,6 +128,37 @@ export async function getPatient(orgId: string, patientId: string): Promise<Pati
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+/**
+ * This patient's invitations, newest first (Phase-5 T-03, WSP-02 "invite
+ * sent"). Readable only by invite-managing roles under 0002's RLS policy —
+ * any other role reads an empty list, never an error, and the composer simply
+ * shows fewer events. Org scope is pinned explicitly, defense in depth over
+ * RLS. Bound predicates only (ASVS V5, T-02-52).
+ */
+export async function listPatientInvitations(
+  orgId: string,
+  patientId: string,
+): Promise<PatientInviteRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('invitations')
+    .select('id, created_at, redeemed_at')
+    .eq('org_id', orgId)
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (error) throw new Error(`listPatientInvitations failed: ${error.message}`);
+
+  return ((data ?? []) as Array<{ id: string; created_at: string; redeemed_at: string | null }>).map(
+    (row) => ({
+      id: row.id,
+      createdAt: row.created_at,
+      redeemedAt: row.redeemed_at,
+    }),
+  );
 }
 
 export async function listPatients(
