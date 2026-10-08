@@ -53,7 +53,7 @@ export function VitalsHistoryCard() {
           Blood pressure, heart rate and other readings will appear here as care progresses.
         </span>
         <span className="text-label leading-label text-text-secondary">
-          Readings recorded during a visit fill this history.
+          Record vitals during a visit to build this history.
         </span>
       </div>
     </BottomCardShell>

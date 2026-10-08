@@ -21,7 +21,7 @@ export function LabsCard() {
           Lab results will appear here as they are filed.
         </span>
         <span className="text-label leading-label text-text-secondary">
-          Results arrive when an order is completed.
+          Complete a lab order to file a result here.
         </span>
       </div>
     </BottomCardShell>

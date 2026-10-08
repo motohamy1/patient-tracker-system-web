@@ -14,13 +14,7 @@
 // and every label is the calm sentence-case copy of the §7 contract. Clinical
 // event kinds (visit, medication, lab) join this trail in the phases that
 // create those tables; a Phase-5 card never fakes them.
-import type { PatientRecord } from '@/lib/patients/queries';
-
-export type PatientInviteRow = {
-  id: string;
-  createdAt: string;
-  redeemedAt: string | null;
-};
+import type { PatientInviteRow, PatientRecord } from '@/lib/patients/queries';
 
 export type ActivityKind = 'created' | 'updated' | 'invite' | 'redeemed';
 

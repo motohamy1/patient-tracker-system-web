@@ -10,6 +10,7 @@
 // CSS. No border, no third shadow, no status tint: a skeleton states nothing
 // about a patient.
 import { LoadingSkeleton } from '@/components/state/LoadingSkeleton';
+import { BOTTOM_ROW_GRID, STAT_ROW_GRID, UPPER_GRID } from '@/components/workspace/grids';
 
 const BLOCK_CLASSES = 'skeleton-pulse rounded-lg bg-surface-muted';
 
@@ -25,9 +26,9 @@ export function OverviewSkeleton() {
       {/* One status node + one pulse-CSS emission for the whole region. */}
       <LoadingSkeleton bars={[]} />
 
-      <div className="grid grid-cols-1 gap-lg lg:grid-cols-[19rem_minmax(0,1fr)]">
+      <div className={UPPER_GRID}>
         <div aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />
-        <div className="grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-4">
+        <div className={STAT_ROW_GRID}>
           {Array.from({ length: STAT_BLOCKS }, (_, index) => (
             <div key={index} aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />
           ))}
@@ -36,7 +37,7 @@ export function OverviewSkeleton() {
 
       <div aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />
 
-      <div className="grid grid-cols-1 gap-lg md:grid-cols-[55fr_22.5fr_22.5fr]">
+      <div className={BOTTOM_ROW_GRID}>
         <div aria-hidden="true" className={BOTTOM_ROW} />
         <div aria-hidden="true" className={BOTTOM_ROW} />
         <div aria-hidden="true" className={BOTTOM_ROW} />

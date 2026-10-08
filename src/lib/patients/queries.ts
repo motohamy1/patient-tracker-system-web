@@ -16,8 +16,31 @@
 // authorization boundary. Server Component call sites only — never import from
 // a client file.
 import { createClient } from '@/lib/supabase/server';
-import type { PatientInviteRow } from '@/lib/patients/activity';
 import type { PatientStatus } from '@/lib/patients/status';
+
+/**
+ * A PostgREST read that failed on PRIVILEGE, not on connectivity: SQLSTATE
+ * 42501 / `permission denied`. Callers branch on this type to render the
+ * no-leak denial copy instead of the §7 connection-error copy — message-text
+ * sniffing would tie security behaviour to English prose.
+ */
+export class SupabasePermissionError extends Error {}
+
+export type PatientInviteRow = {
+  id: string;
+  createdAt: string;
+  redeemedAt: string | null;
+};
+
+type PostgrestErrorLike = { message: string; code?: string };
+
+/** Wrap a PostgREST failure with its surface name, preserving privilege failures. */
+function asQueryError(surface: string, error: PostgrestErrorLike): Error {
+  const message = `${surface} failed: ${error.message}`;
+  return error.code === '42501' || error.message.includes('permission denied')
+    ? new SupabasePermissionError(message)
+    : new Error(message);
+}
 
 export type PatientFolderRow = {
   id: string;
@@ -119,7 +142,7 @@ export async function getPatient(orgId: string, patientId: string): Promise<Pati
     .eq('id', patientId)
     .maybeSingle();
 
-  if (error) throw new Error(`getPatient failed: ${error.message}`);
+  if (error) throw asQueryError('getPatient', error);
   if (!data) return null;
 
   const row = data as PatientRecordRow;
@@ -150,7 +173,7 @@ export async function listPatientInvitations(
     .order('created_at', { ascending: false })
     .limit(5);
 
-  if (error) throw new Error(`listPatientInvitations failed: ${error.message}`);
+  if (error) throw asQueryError('listPatientInvitations', error);
 
   return ((data ?? []) as Array<{ id: string; created_at: string; redeemed_at: string | null }>).map(
     (row) => ({

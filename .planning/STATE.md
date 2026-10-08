@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 04
-current_phase_name: Provider Home + Patient Folder Workspace (Phase 4)
-status: phase_complete
-stopped_at: Phase 4 COMPLETE (5/5 plans; owner gate APPROVED R-1:A R-2:A)
-last_updated: "2026-10-07T22:24:15.955Z"
-last_activity: 2026-10-08
-last_activity_desc: Phase 4 planned — 5 plans (04-01..05) across 5 waves; plan-checker ISSUES FOUND (5 BLOCKER/5 WARNING) all patched; coverage 5/5 reqs + 23/23 decisions
+current_phase: 05
+current_phase_name: Patient Workspace / Overview (Phase 5)
+status: in_progress
+stopped_at: Phase 5 agent work COMPLETE (tickets 01-04 resolved; 05 ready-for-human) — visual baselines, pgTAP-vs-cloud and the 05-VERIFICATION §5 owner verdicts deferred by the no-heavy-process session constraint
+last_updated: "2026-10-09T02:40:00.000Z"
+last_activity: 2026-10-09
+last_activity_desc: Phase 5 executed via Matt's implement + code-review skills (tickets, not plan waves) — Overview shipped (identity, context/vitals stat row, recent-activity trail, timeline band + 55/22.5/22.5 bottom row); 428/428 unit, tsc 0, lint 0, build exit 0; 05-VERIFICATION.md written
 progress:
   total_phases: 22
   completed_phases: 4
@@ -24,14 +24,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-06)
 
 **Core value:** Understand the patient → act on what matters → track what happens next.
-**Current focus:** Phase 03 — Authentication, Organizations, RBAC and RLS
+**Current focus:** Phase 05 — Patient Workspace / Overview
 
 ## Current Position
 
-Phase: 03 (Authentication, Organizations, RBAC and RLS) — COMPLETE
-Plan: 8 of 8
-Status: Phase 03 complete (8/8 plans)
-Last activity: 2026-10-08 — Completed 03-08-PLAN.md (Phase-3 baselines generated, matrix green 114/114)
+Phase: 05 (Patient Workspace / Overview) — AGENT WORK COMPLETE, ACCEPTANCE PENDING
+Tickets: 5 of 5 worked (01–04 `resolved`, 05 `ready-for-human`)
+Status: implementation GREEN (428/428 unit, `tsc --noEmit` 0, `npm run lint` 0 violations, `npm run build` exit 0)
+Last activity: 2026-10-09 — executed via Matt's `implement` + `code-review` skills (ticket files under `.planning/phases/05-patient-workspace-overview/issues/`, NOT GSD plan waves); `05-VERIFICATION.md` written with all 12 QA rows (8–10 N/A → Phase 006), INV-01…17 and the WSP-01..03 trace.
+
+Phase-5 execution note: the session constraint was **no Docker / no heavy process** (cloud Supabase comes later), so visual-baseline regeneration, the screenshot legs of QA rows 2/4/5, pgTAP-vs-cloud and the §20.4 owner verdicts on `05-VERIFICATION.md` §5 (audit_log activity source, T-02-52 reading, identity-card extras, inert range chips) are **deliberately deferred** — the phase is not accepted until they run (§20.7).
+
+Progress: [███████████] 11/11 plans (100%) — Phase 5 ran as 5 tickets; see `05-VERIFICATION.md`.
+
+## History (Phases 2–4)
 
 Execution note: plan 02-01 closed its **blocking owner visual-review gate** (CONTEXT.md D-27) on 2026-10-06 with `review.gateStatus: approved-with-changes` — `frame` (#F1F4F8) and `surfaceMuted` (#E8E8ED) are re-sampled and frozen, so every inset control now has a visible boundary without a border (INV-15/INV-16) or a third shadow (INV-13). Plan 02-03 generates `bg-surface-muted` as an ordinary utility; plan 02-06's `INSET_FILL` resolves to the plain muted inset fill, never the raised-plus-shadow fallback. Nothing downstream hardcodes the gate outcome — `review.gateStatus` is read at module load.
 

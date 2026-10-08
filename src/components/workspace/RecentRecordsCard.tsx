@@ -36,12 +36,22 @@ const MONTH_ABBR = [
   'Dec',
 ] as const;
 
-/** "2026-10-06" (or an ISO instant) → { day: "06", month: "Oct" }. */
+/**
+ * An ISO-8601 date → { day: "06", month: "Oct" }, read off the UTC CALENDAR
+ * DATE characters — not via `new Date()`'s local getters. Postgres hands back
+ * UTC instants; the stat row prints them with `.slice(0, 10)` (the
+ * FolderCard precedent), so this card must agree with that card or one
+ * 23:30Z timestamp renders as two different days on the same screen.
+ * String arithmetic also makes the value timezone-independent by
+ * construction — no test or reviewer machine can disagree with it.
+ */
 function dateParts(iso: string): { day: string; month: string } {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return { day: '--', month: '' };
-  const month = MONTH_ABBR[date.getMonth()];
-  return { day: String(date.getDate()).padStart(2, '0'), month };
+  if (!/^\d{4}-\d{2}-\d{2}/.test(iso)) return { day: '--', month: '' };
+  const monthIndex = Number(iso.slice(5, 7)) - 1;
+  return {
+    day: iso.slice(8, 10),
+    month: MONTH_ABBR[monthIndex] ?? '',
+  };
 }
 
 export function RecentRecordsCard({ events }: { events: readonly ActivityEvent[] }) {

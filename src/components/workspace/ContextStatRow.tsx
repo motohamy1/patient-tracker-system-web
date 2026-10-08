@@ -29,6 +29,7 @@
 import type { ReactNode } from 'react';
 import { Pill } from '@/components/primitives/Pill';
 import { Surface } from '@/components/primitives';
+import { STAT_ROW_GRID } from '@/components/workspace/grids';
 import type { PatientRecord } from '@/lib/patients/queries';
 import { PATIENT_STATUS_LABELS, PATIENT_STATUS_TOKEN } from '@/lib/patients/status';
 
@@ -94,10 +95,7 @@ export function ContextStatRow({ patient }: { patient: PatientRecord }) {
   const monthsSinceOpened = wholeMonthsSince(patient.createdAt, now);
 
   return (
-    <div
-      className="grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-4"
-      aria-label="Current context"
-    >
+    <div className={STAT_ROW_GRID} aria-label="Current context">
       <StatCard
         label="Current status"
         supporting={`Updated ${patient.updatedAt.slice(0, 10)}`}

@@ -38,7 +38,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { composeRecentEvents, RECENT_ACTIVITY_LIMIT } from '@/lib/patients/activity';
-import { listPatientInvitations } from '@/lib/patients/queries';
+import { listPatientInvitations, SupabasePermissionError } from '@/lib/patients/queries';
 import { RecentRecordsCard } from '@/components/workspace/RecentRecordsCard';
 import type { ActivityEvent } from '@/lib/patients/activity';
 
@@ -133,9 +133,12 @@ describe('listPatientInvitations — org-scoped, patient-scoped, bounded', () =>
     ]);
   });
 
-  it('throws with the surface name on a database error', async () => {
+  it('throws a privilege-classified error on a permission failure', async () => {
     h.calls.length = 0;
     h.error = { message: 'permission denied' };
+    await expect(listPatientInvitations(ORG, PATIENT_ID)).rejects.toBeInstanceOf(
+      SupabasePermissionError,
+    );
     await expect(listPatientInvitations(ORG, PATIENT_ID)).rejects.toThrow(
       'listPatientInvitations failed: permission denied',
     );

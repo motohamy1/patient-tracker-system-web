@@ -202,11 +202,13 @@ Plans:
   3. Density matches the reference's compact clinical rhythm with no huge redundant cards.
 
 **UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill; one file per ticket):
 
-Plans:
-
-- [ ] 05-01: TBD
+- [x] 05-01: identity-and-tab-guard (WSP-01) — resolved
+- [x] 05-02: status-and-attention-context (WSP-02) — resolved
+- [x] 05-03: recent-patient-activity (WSP-02) — resolved
+- [x] 05-04: overview-region-frame (WSP-02) — resolved
+- [ ] 05-05: density-and-phase-proof (WSP-03) — ready-for-human (visual baselines + owner gate)
 
 ### Phase 6: D3 Clinical Timeline
 
@@ -537,9 +539,9 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 |-------|----------------|--------|-----------|
 | 1. Project Constitution + Reference UI Specification | 6/6 | Complete    | 2026-10-05 |
 | 2. Foundation and App Shell | 11/11 | Complete   | 2026-10-07 |
-| 3. Authentication, Organizations, RBAC and RLS | 7/8 | In Progress|  |
-| 4. Provider Home + Patient Folder Workspace | 0/TBD | Not started | - |
-| 5. Patient Workspace / Overview | 0/TBD | Not started | - |
+| 3. Authentication, Organizations, RBAC and RLS | 8/8 | Complete | 2026-10-08 |
+| 4. Provider Home + Patient Folder Workspace | 5/5 | Complete | 2026-10-08 |
+| 5. Patient Workspace / Overview | 5/5 tickets | Agent-complete — acceptance pending (visual baselines, pgTAP, owner §5 verdicts deferred) |  |
 | 6. D3 Clinical Timeline | 0/TBD | Not started | - |
 | 7. Visits Workflow | 0/TBD | Not started | - |
 | 8. Medications | 0/TBD | Not started | - |

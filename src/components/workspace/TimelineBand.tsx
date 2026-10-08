@@ -23,7 +23,7 @@ export function TimelineBand() {
     <section aria-label="Timeline" className="min-h-44">
       <Surface variant="surfaceMuted" className="flex h-full min-h-44 flex-col gap-md">
         <h2 className="text-heading font-semibold leading-heading text-text-primary">Timeline</h2>
-        <div className="flex flex-1 flex-col items-center justify-center gap-xs px-lg pb-lg text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-xs text-center">
           <span className="text-body font-semibold leading-body text-text-primary">
             No timeline events yet
           </span>

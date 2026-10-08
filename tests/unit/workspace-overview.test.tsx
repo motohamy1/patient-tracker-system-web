@@ -28,12 +28,20 @@ const queries = vi.hoisted(() => ({
   getPatient: vi.fn(),
   listPatients: vi.fn(),
   listPatientInvitations: vi.fn(),
+  // The module's privilege-error class, mirrored here so the mock and the
+  // page agree on `instanceof` while `@/lib/patients/queries` is replaced.
+  SupabasePermissionError: class SupabasePermissionError extends Error {},
 }));
 const workspace = vi.hoisted(() => ({ resolveWorkspaceRole: vi.fn() }));
 
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/supabase/server', () => ({ createClient: async () => ({}) }));
-vi.mock('@/lib/patients/queries', () => queries);
+vi.mock('@/lib/patients/queries', () => ({
+  getPatient: queries.getPatient,
+  listPatients: queries.listPatients,
+  listPatientInvitations: queries.listPatientInvitations,
+  SupabasePermissionError: queries.SupabasePermissionError,
+}));
 vi.mock('@/lib/auth/workspace', () => workspace);
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }), redirect: vi.fn() }));
 vi.mock('motion/react', () => ({
@@ -386,11 +394,25 @@ describe('WSP-02 — the region frame (T-04)', () => {
   });
 
   it('anchors the bottom row to the 55 / 22.5 / 22.5 grid (QA row 5)', () => {
-    const source = readFileSync(
+    // the live body and the skeleton share ONE declaration of both templates
+    const grids = readFileSync(
+      path.resolve(__dirname, '..', '..', 'src/components/workspace/grids.ts'),
+      'utf8',
+    );
+    expect(grids).toContain(
+      "BOTTOM_ROW_GRID = 'grid grid-cols-1 gap-lg md:grid-cols-[55fr_22.5fr_22.5fr]'",
+    );
+
+    const body = readFileSync(
       path.resolve(__dirname, '..', '..', 'src/components/workspace/OverviewBody.tsx'),
       'utf8',
     );
-    expect(source).toContain('md:grid-cols-[55fr_22.5fr_22.5fr]');
+    expect(body).toContain('className={BOTTOM_ROW_GRID}');
+    const skeleton = readFileSync(
+      path.resolve(__dirname, '..', '..', 'src/components/workspace/OverviewSkeleton.tsx'),
+      'utf8',
+    );
+    expect(skeleton).toContain('className={BOTTOM_ROW_GRID}');
   });
 
   it('draws no fake timeline: no SVG, no nodes, no axis marks (§3.5, §27)', async () => {
@@ -470,7 +492,9 @@ describe('WSP-02 — the region frame (T-04)', () => {
   });
 
   it('shows the no-leak permission copy when the activity read is denied', async () => {
-    queries.listPatientInvitations.mockRejectedValue(new Error('permission denied'));
+    queries.listPatientInvitations.mockRejectedValue(
+      new queries.SupabasePermissionError('listPatientInvitations failed: permission denied'),
+    );
     const doc = await renderBody(PATIENT_ID);
 
     expect(doc.body.textContent).toContain("You don't have access to recent records");
@@ -480,6 +504,16 @@ describe('WSP-02 — the region frame (T-04)', () => {
       (a) => a.textContent?.trim() === 'Go to your workspace',
     );
     expect(action?.getAttribute('href')).toBe('/provider');
+  });
+
+  it('renders the denial copy, not the connection copy, when the record read is denied', async () => {
+    queries.getPatient.mockRejectedValue(
+      new queries.SupabasePermissionError('getPatient failed: permission denied'),
+    );
+    const doc = await renderBody(PATIENT_ID);
+
+    expect(doc.body.textContent).toContain("You don't have access to this patient record");
+    expect(doc.body.textContent).not.toContain("Couldn't load patient record");
   });
 
   it('renders the composed trail in the recent-records slot', async () => {

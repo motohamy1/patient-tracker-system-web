@@ -16,9 +16,9 @@ export type StateVariantProps = {
   onRetry?: () => void;
   /**
    * Server-Component retry target: an anchor that re-requests the same route.
-   * One of `onRetry` or `retryHref` must be supplied, so the "Try again"
-   * action is never a dead control (D-24); a page with no client action uses
-   * this form (Phase-5 Overview).
+   * A page with no client action passes this instead of `onRetry`, so the
+   * "Try again" action is a wired destination rather than a dead control
+   * (D-24). One of the two should be supplied at every call site.
    */
   retryHref?: string;
   /** True while the retry request is in flight: the button reports aria-busy. */

@@ -36,7 +36,7 @@ vi.mock('@/lib/supabase/server', () => ({
   },
 }));
 
-import { getPatient } from '@/lib/patients/queries';
+import { getPatient, SupabasePermissionError } from '@/lib/patients/queries';
 
 const ORG = '10000000-0000-0000-0000-000000000001';
 const PATIENT_ID = '11111111-1111-4111-8111-111111111111';
@@ -110,11 +110,25 @@ describe('getPatient — one patient, org-scoped, id bound', () => {
     expect(record).toBeNull();
   });
 
-  it('throws with the surface name on a database error', async () => {
+  it('classifies a permission failure so the caller can render denial (not "connection")', async () => {
     h.calls.length = 0;
     h.single = null;
     h.error = { message: 'permission denied' };
-    await expect(getPatient(ORG, PATIENT_ID)).rejects.toThrow('getPatient failed: permission denied');
+    await expect(getPatient(ORG, PATIENT_ID)).rejects.toBeInstanceOf(SupabasePermissionError);
+    await expect(getPatient(ORG, PATIENT_ID)).rejects.toThrow(
+      'getPatient failed: permission denied',
+    );
+    h.error = null;
+  });
+
+  it('keeps a non-privilege failure a plain error', async () => {
+    h.calls.length = 0;
+    h.single = null;
+    h.error = { message: 'connection reset' };
+    await expect(getPatient(ORG, PATIENT_ID)).rejects.toThrow(
+      'getPatient failed: connection reset',
+    );
+    await expect(getPatient(ORG, PATIENT_ID)).rejects.not.toBeInstanceOf(SupabasePermissionError);
     h.error = null;
   });
 });
