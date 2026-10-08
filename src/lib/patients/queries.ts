@@ -85,6 +85,50 @@ function mapRow(row: PatientRowRecord): PatientFolderRow {
   };
 }
 
+export type PatientRecord = PatientFolderRow & {
+  createdAt: string;
+  updatedAt: string;
+};
+
+const RECORD_COLUMNS = `${SELECT_COLUMNS}, created_at, updated_at`;
+
+type PatientRecordRow = PatientRowRecord & {
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * One patient for the workspace Overview (WSP-02, Phase-5 T-01).
+ *
+ * The id arrives pre-validated as a UUID (patientIdSchema) and is bound as a
+ * PostgREST equality predicate — never interpolated into a string, a path or
+ * an interpreter (ASVS V5, T-02-52). The explicit `.eq('org_id', orgId)` is
+ * defense in depth on top of migration 0005's RLS: a member of another
+ * organization gets `null`, and the caller renders the no-leak denial state
+ * rather than asking the database twice (AUTH-03).
+ *
+ * Server Component call sites only — never import from a client file.
+ */
+export async function getPatient(orgId: string, patientId: string): Promise<PatientRecord | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('patients')
+    .select(RECORD_COLUMNS)
+    .eq('org_id', orgId)
+    .eq('id', patientId)
+    .maybeSingle();
+
+  if (error) throw new Error(`getPatient failed: ${error.message}`);
+  if (!data) return null;
+
+  const row = data as PatientRecordRow;
+  return {
+    ...mapRow(row),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function listPatients(
   query: ListPatientsQuery,
 ): Promise<{ rows: PatientFolderRow[]; hasMore: boolean; total: number }> {

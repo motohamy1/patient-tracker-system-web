@@ -43,7 +43,11 @@ export const listPatientsQuerySchema = z.object({
 });
 
 // One strict id gate for every patient mutation (matches z.string().uuid():
-// v4 gen_random_uuid() ids pass; hand-shaped fakes fail loudly).
+// v4 gen_random_uuid() ids pass; hand-shaped fakes fail loudly). Phase 5
+// additionally routes the `[patientId]` route parameter through this gate
+// before it may reach getPatient's bound equality predicate — a malformed
+// segment is rejected at the boundary and never enters a query string, a
+// path, a template, a log line or any interpreter (ASVS V5, T-02-52).
 export const patientIdSchema = z.string().uuid();
 
 export type CreatePatientInput = z.infer<typeof createPatientSchema>;
