@@ -201,6 +201,118 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"documents": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"filename": string,"id": string,"kind": string,"mime_type": string | null,"org_id": string,"patient_id": string,"size_bytes": number | null,"source": string,"storage_path": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"filename": string,"id"?: string,"kind": string,"mime_type"?: string | null,"org_id": string,"patient_id": string,"size_bytes"?: number | null,"source"?: string,"storage_path": string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"filename"?: string,"id"?: string,"kind"?: string,"mime_type"?: string | null,"org_id"?: string,"patient_id"?: string,"size_bytes"?: number | null,"source"?: string,"storage_path"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "documents_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"lab_orders": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"document_id": string | null,"id": string,"name": string,"notes": string | null,"ordered_at": string,"org_id": string,"patient_id": string,"source": string,"status": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"id"?: string,"name": string,"notes"?: string | null,"ordered_at"?: string,"org_id": string,"patient_id": string,"source"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"id"?: string,"name"?: string,"notes"?: string | null,"ordered_at"?: string,"org_id"?: string,"patient_id"?: string,"source"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_orders_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"lab_results": {
+                  Row: {
+                    "analyte": string,"created_at": string,"created_by": string | null,"document_id": string | null,"flag": string | null,"id": string,"order_id": string,"org_id": string,"patient_id": string,"reference_range": string | null,"resulted_at": string,"source": string,"unit": string | null,"value": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "analyte": string,"created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"flag"?: string | null,"id"?: string,"order_id": string,"org_id": string,"patient_id": string,"reference_range"?: string | null,"resulted_at"?: string,"source"?: string,"unit"?: string | null,"value"?: number | null
+                  }
+                  Update: {
+                    "analyte"?: string,"created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"flag"?: string | null,"id"?: string,"order_id"?: string,"org_id"?: string,"patient_id"?: string,"reference_range"?: string | null,"resulted_at"?: string,"source"?: string,"unit"?: string | null,"value"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_results_order_id_fkey"
+      columns: ["order_id"]
+isOneToOne: false
+      referencedRelation: "lab_orders"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_results_document_id_fkey"
+      columns: ["document_id"]
+isOneToOne: false
+      referencedRelation: "documents"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"imaging_orders": {
+                  Row: {
+                    "body_site": string | null,"created_at": string,"created_by": string | null,"id": string,"modality": string,"notes": string | null,"ordered_at": string,"org_id": string,"patient_id": string,"source": string,"status": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body_site"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"modality": string,"notes"?: string | null,"ordered_at"?: string,"org_id": string,"patient_id": string,"source"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "body_site"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"modality"?: string,"notes"?: string | null,"ordered_at"?: string,"org_id"?: string,"patient_id"?: string,"source"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "imaging_orders_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"imaging_results": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"document_id": string | null,"id": string,"impression": string,"order_id": string,"org_id": string,"patient_id": string,"resulted_at": string,"source": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"id"?: string,"impression": string,"order_id": string,"org_id": string,"patient_id": string,"resulted_at"?: string,"source"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"id"?: string,"impression"?: string,"order_id"?: string,"org_id"?: string,"patient_id"?: string,"resulted_at"?: string,"source"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "imaging_results_order_id_fkey"
+      columns: ["order_id"]
+isOneToOne: false
+      referencedRelation: "imaging_orders"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "imaging_results_document_id_fkey"
+      columns: ["document_id"]
+isOneToOne: false
+      referencedRelation: "documents"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {

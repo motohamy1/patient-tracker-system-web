@@ -50,6 +50,13 @@ import {
 import { patientIdSchema } from '@/lib/patients/schemas';
 import { listVisits, type VisitRecord } from '@/lib/visits/queries';
 import { listMedicationEvents, type MedicationEventRecord } from '@/lib/medications/queries';
+import { listLabOrders, listLabResults, type LabOrderRecord, type LabResultRecord } from '@/lib/labs/queries';
+import {
+  listImagingOrders,
+  listImagingResults,
+  type ImagingOrderRecord,
+  type ImagingResultRecord,
+} from '@/lib/imaging/queries';
 import { tabHref } from '@/app/(provider)/provider/patients/[patientId]/tabs';
 
 /** How the recent-activity slice fared; each state owns its slot's copy. */
@@ -145,10 +152,41 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
     }
   }
 
+  // Labs + imaging feed the timeline (LAB-03). Each read degrades to empty on
+  // failure — the tabs own their own error states, and the axis keeps whatever
+  // other real events exist.
+  let labOrders: LabOrderRecord[] = [];
+  let labResults: LabResultRecord[] = [];
+  let imagingOrders: ImagingOrderRecord[] = [];
+  let imagingResults: ImagingResultRecord[] = [];
+  if (parsedId.success) {
+    try {
+      labOrders = await listLabOrders(resolution.orgId, parsedId.data);
+      labResults = await listLabResults(resolution.orgId, parsedId.data);
+    } catch {
+      labOrders = [];
+      labResults = [];
+    }
+    try {
+      imagingOrders = await listImagingOrders(resolution.orgId, parsedId.data);
+      imagingResults = await listImagingResults(resolution.orgId, parsedId.data);
+    } catch {
+      imagingOrders = [];
+      imagingResults = [];
+    }
+  }
+
   // The timeline projects whatever the org may read: lifecycle events always,
   // invite events when the invite read succeeded (a failed read degrades the
   // recent-records CARD only — the axis keeps its real events).
-  const timelineEvents = projectCareEvents(patient, invites, visits, medicationEvents);
+  const timelineEvents = projectCareEvents(patient, invites, {
+    visits,
+    medicationEvents,
+    labOrders,
+    labResults,
+    imagingOrders,
+    imagingResults,
+  });
   const events = activityPosture === 'ok' ? composeRecentEvents(patient, invites) : [];
 
   return (

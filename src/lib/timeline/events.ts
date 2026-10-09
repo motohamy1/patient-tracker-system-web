@@ -24,9 +24,12 @@ import type { PatientInviteRow } from '@/lib/patients/queries';
 import type { VisitRecord } from '@/lib/visits/queries';
 import {
   MEDICATION_EVENT_LABELS,
+  MEDICATION_SOURCE_LABELS,
   type MedicationEventKind,
 } from '@/lib/medications/status';
 import type { MedicationEventRecord } from '@/lib/medications/queries';
+import type { LabOrderRecord, LabResultRecord } from '@/lib/labs/queries';
+import type { ImagingOrderRecord, ImagingResultRecord } from '@/lib/imaging/queries';
 
 /**
  * The event vocabulary: §8.2's clinical kinds (which future phases supply)
@@ -67,7 +70,25 @@ export type CareEventSource =
   | { table: 'patients'; column: 'created_at' | 'updated_at' }
   | { table: 'invitations'; column: 'created_at' | 'redeemed_at' }
   | { table: 'visits'; column: 'scheduled_at' | 'follow_up_at' }
-  | { table: 'medication_events'; column: 'at' };
+  | { table: 'medication_events'; column: 'at' }
+  | { table: 'lab_orders'; column: 'ordered_at' }
+  | { table: 'lab_results'; column: 'resulted_at' }
+  | { table: 'imaging_orders'; column: 'ordered_at' }
+  | { table: 'imaging_results'; column: 'resulted_at' };
+
+/**
+ * The named producer set (the §8.2 seam). Each phase adds one key; the
+ * timeline engine never changes. All sources default to empty, and the
+ * existing two-argument callers keep working unchanged.
+ */
+export type ClinicalSources = {
+  visits?: readonly VisitRecord[];
+  medicationEvents?: readonly MedicationEventRecord[];
+  labOrders?: readonly LabOrderRecord[];
+  labResults?: readonly LabResultRecord[];
+  imagingOrders?: readonly ImagingOrderRecord[];
+  imagingResults?: readonly ImagingResultRecord[];
+};
 
 export type VerificationState =
   | 'clinician-verified'
@@ -192,24 +213,23 @@ function visitEvent(visit: VisitRecord): CareEvent {
   };
 }
 
+/** Map a provenance `source` string onto the timeline's verification vocabulary. */
+function sourceVerification(source: string | null | undefined): VerificationState {
+  if (source === 'ai-extracted') return 'ai-extracted';
+  if (source === 'imported') return 'system-generated';
+  return 'clinician-verified';
+}
+
 /**
  * Map a medication lifecycle history row onto the timeline (MED-02). The
  * vocabulary has three medication kinds; `paused`/`resumed` are lifecycle
  * changes and map to `medication-changed` while carrying their own precise
  * label, so the band shows the real transition without inventing new kinds.
- * Provenance follows the PARENT medication's source, so an AI-extracted
- * medication's events never render as clinician-verified (§23).
  */
 function medicationEventKind(kind: MedicationEventKind): CareEventKind {
   if (kind === 'started') return 'medication-started';
   if (kind === 'stopped') return 'medication-stopped';
   return 'medication-changed';
-}
-
-function medicationVerification(source: MedicationEventRecord['medicationSource']): VerificationState {
-  if (source === 'ai-extracted') return 'ai-extracted';
-  if (source === 'imported') return 'system-generated';
-  return 'clinician-verified';
 }
 
 function medicationTimelineEvent(event: MedicationEventRecord): CareEvent {
@@ -221,7 +241,69 @@ function medicationTimelineEvent(event: MedicationEventRecord): CareEvent {
     at: event.at,
     label: event.medicationName !== null ? `${label}: ${event.medicationName}` : label,
     source: { table: 'medication_events', column: 'at' },
-    verification: medicationVerification(event.medicationSource),
+    verification: sourceVerification(event.medicationSource),
+  };
+}
+
+/**
+ * Lab + imaging projection (LAB-03): an ORDER is the milestone; its RESULTS
+ * are CHILD events (branch layer), each at its own `resulted_at`. Distinct
+ * §8.2 kinds: lab-ordered / lab-result, imaging-ordered / imaging-result. An
+ * unresulted order shows only its ordered event — nothing is invented.
+ */
+function labOrderEvent(order: LabOrderRecord, results: readonly LabResultRecord[]): CareEvent {
+  const mine = results.filter((result) => result.orderId === order.id);
+  return {
+    id: `lab-order:${order.id}`,
+    kind: 'lab-ordered',
+    category: 'clinical',
+    at: order.orderedAt,
+    label: `Lab ordered: ${order.name}`,
+    source: { table: 'lab_orders', column: 'ordered_at' },
+    verification: sourceVerification(order.source),
+    children:
+      mine.length > 0
+        ? mine.map((result) => ({
+            id: `lab-result:${result.id}`,
+            kind: 'lab-result' as const,
+            category: 'clinical' as const,
+            at: result.resultedAt,
+            label: `${result.analyte}${
+              result.value !== null ? `: ${result.value}${result.unit ? ` ${result.unit}` : ''}` : ''
+            }`,
+            source: { table: 'lab_results' as const, column: 'resulted_at' as const },
+            verification: sourceVerification(result.source),
+          }))
+        : undefined,
+  };
+}
+
+function imagingOrderEvent(
+  order: ImagingOrderRecord,
+  results: readonly ImagingResultRecord[],
+): CareEvent {
+  const mine = results.filter((result) => result.orderId === order.id);
+  return {
+    id: `imaging-order:${order.id}`,
+    kind: 'imaging-ordered',
+    category: 'clinical',
+    at: order.orderedAt,
+    label: `Imaging ordered: ${order.modality}${order.bodySite ? ` (${order.bodySite})` : ''}`,
+    source: { table: 'imaging_orders', column: 'ordered_at' },
+    verification: sourceVerification(order.source),
+    children:
+      mine.length > 0
+        ? mine.map((result) => ({
+            id: `imaging-result:${result.id}`,
+            kind: 'imaging-result' as const,
+            category: 'clinical' as const,
+            at: result.resultedAt,
+            label: 'Imaging result',
+            detail: result.impression.slice(0, 160),
+            source: { table: 'imaging_results' as const, column: 'resulted_at' as const },
+            verification: sourceVerification(result.source),
+          }))
+        : undefined,
   };
 }
 
@@ -231,26 +313,22 @@ function medicationTimelineEvent(event: MedicationEventRecord): CareEvent {
  * so the projection adds no I/O and the same input always yields the same
  * output (unit-testable, deterministic).
  *
- * Producers, one per source table, all merged here (the §8.2 seam):
- *   - the patient row's own lifecycle (created / updated);
- *   - invitations (sent / redeemed);
- *   - visits (the visit milestone + its follow-up child);
- *   - medication lifecycle events (started / changed / paused / resumed /
- *     stopped), read from the HISTORY table so an edit never rewrites history.
- * Later phases (labs/imaging, allergies/genetics) add a mapper each; the
- * timeline engine never changes.
- *
- * `updated_at` on a patient row is bumped by the DB trigger on every change
- * (migration 0005) — until the diff-reading audit surface is authorized for
- * staff roles (Phase-5 05-VERIFICATION §5 item 1), the label stays honest:
- * "Record updated".
+ * Producers (the §8.2 seam), each a key in `sources`:
+ *   patients (lifecycle), invitations, visits (+ follow-up child),
+ *   medication_events, lab_orders (+ result children), imaging_orders
+ *   (+ result children). Later phases add a producer; the engine never changes.
  */
 export function projectCareEvents(
   patient: Pick<PatientRecord, 'id' | 'createdAt' | 'updatedAt'>,
   invitations: readonly PatientInviteRow[],
-  visits: readonly VisitRecord[] = [],
-  medicationEvents: readonly MedicationEventRecord[] = [],
+  sources: ClinicalSources = {},
 ): CareEvent[] {
+  const visits = sources.visits ?? [];
+  const medicationEvents = sources.medicationEvents ?? [];
+  const labOrders = sources.labOrders ?? [];
+  const labResults = sources.labResults ?? [];
+  const imagingOrders = sources.imagingOrders ?? [];
+  const imagingResults = sources.imagingResults ?? [];
   const events: CareEvent[] = [
     {
       id: `patient:${patient.id}:created`,
@@ -303,6 +381,8 @@ export function projectCareEvents(
     ...events,
     ...visits.map(visitEvent),
     ...medicationEvents.map(medicationTimelineEvent),
+    ...labOrders.map((order) => labOrderEvent(order, labResults)),
+    ...imagingOrders.map((order) => imagingOrderEvent(order, imagingResults)),
   ];
   return ordered.sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
 }

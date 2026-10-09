@@ -24,6 +24,10 @@ const SOURCE_LABEL: Record<CareEvent['source']['table'], string> = {
   invitations: 'Invitation',
   visits: 'Visit',
   medication_events: 'Medication history',
+  lab_orders: 'Lab order',
+  lab_results: 'Lab result',
+  imaging_orders: 'Imaging order',
+  imaging_results: 'Imaging result',
 };
 
 const VERIFICATION_LABEL: Record<CareEvent['verification'], string> = {
