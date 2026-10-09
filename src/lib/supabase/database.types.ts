@@ -405,6 +405,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                    ]
+                 },"patient_observations": {
+                   Row: {
+                     "created_at": string,"created_by": string | null,"id": string,"kind": string,"note": string | null,"observed_at": string,"org_id": string,"patient_id": string,"source": string,"unit": string | null,"user_id": string,"value_numeric": number | null,"value_secondary": number | null
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "created_at"?: string,"created_by"?: string | null,"id"?: string,"kind": string,"note"?: string | null,"observed_at"?: string,"org_id": string,"patient_id": string,"source"?: string,"unit"?: string | null,"user_id"?: string,"value_numeric"?: number | null,"value_secondary"?: number | null
+                   }
+                   Update: {
+                     "created_at"?: string,"created_by"?: string | null,"id"?: string,"kind"?: string,"note"?: string | null,"observed_at"?: string,"org_id"?: string,"patient_id"?: string,"source"?: string,"unit"?: string | null,"user_id"?: string,"value_numeric"?: number | null,"value_secondary"?: number | null
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "patient_observations_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                   ]
                  }
            }
           Views: {

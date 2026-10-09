@@ -1,22 +1,24 @@
-// /patient/home — the patient care-activity empty shell (D-01, D-04).
+// /patient/home — the patient's care surface (Phase 13, ticket 13-02;
+// PTH-01, docs/governance/reference-ui-specification.md §14).
 //
-// A Server Component with no client boundary and no client state. It renders a
-// `canvas` field holding the shared `EmptyState`. No action is rendered,
-// because no destination is wired in this phase (02-UI-SPEC.md §5.5).
-//
-// COPY: the exact string from 02-UI-SPEC.md §9.1, in the second person, with no
-// fabricated urgency and no named condition, medication or measurement
-// (FOUND-01, docs/governance/reference-ui-specification.md §7).
+// Server Component, force-dynamic. The page owns only the streaming boundary:
+// `PatientHomeBody` resolves the signed-in patient from the VERIFIED SESSION
+// (never the URL, never client state — §3.1) and runs inside its own
+// `<Suspense>` so a slow read streams a token-derived skeleton instead of a
+// blank panel (§24). The fallback renders no patient data of any kind.
+import { Suspense } from 'react';
 import { Surface } from '@/components/primitives';
-import { EmptyState } from '@/components/primitives/EmptyState';
+import { PatientHomeBody } from '@/components/patient/PatientHomeBody';
+import { PatientHomeSkeleton } from '@/components/patient/PatientHomeSkeleton';
+
+export const dynamic = 'force-dynamic';
 
 export default function PatientHomePage() {
   return (
-    <Surface variant="canvas" className="flex flex-1 items-center justify-center bg-canvas p-lg">
-      <EmptyState
-        title="No care activity yet"
-        body="Today's care, next actions and your care plan appear here as your care progresses."
-      />
+    <Surface variant="canvas" className="flex flex-1 bg-canvas p-lg">
+      <Suspense fallback={<PatientHomeSkeleton />}>
+        <PatientHomeBody />
+      </Suspense>
     </Surface>
   );
 }

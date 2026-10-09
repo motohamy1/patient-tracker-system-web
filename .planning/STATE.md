@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 12
-current_phase_name: Prescription OCR + Document Intelligence (Phase 12)
+current_phase: 13
+current_phase_name: Patient Home (Phase 13)
 status: in_progress
-stopped_at: Phase 12 agent work COMPLETE (tickets 12-01..12-03 resolved; 12-04 ready-for-human) · Phases 7-11 COMPLETE (07-06/08-05/09-06/10-05/11-04 ready-for-human) — cloud-Supabase applies of 0006..0011, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
-last_updated: "2026-10-09T20:40:00.000Z"
+stopped_at: Phase 13 agent work COMPLETE (tickets 13-01..13-03 resolved; 13-04 ready-for-human) · Phases 7-12 COMPLETE (07-06/08-05/09-06/10-05/11-04/12-04 ready-for-human) — cloud-Supabase applies of 0006..0012, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
+last_updated: "2026-10-09T21:20:00.000Z"
 last_activity: 2026-10-09
-last_activity_desc: Phase 12 shipped via Matt's to-tickets + implement skills — ocr_extractions substrate (0011) with a four-stage status lifecycle, session attribution and content immutability; provider-agnostic pipeline (OcrProvider adapter + honest zero-field no-provider default, Zod-validated payloads, deterministic normalization, confidence analysis, real-record candidate matching); verification surface with the original image (signed URL) beside per-field confirmation, unclear-field marking, reject-with-reason and the single confirm-and-record path through the record_extracted_medication definer (source=ai-extracted + verification=clinician-verified, §23 pair completed on medications); 12-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
+last_activity_desc: Phase 13 shipped via Matt's to-tickets + implement skills — patient_observations (0012) as the patient's only authoring surface (closed measurement vocabulary, self-scoped INSERT re-derived from auth.uid(), append-only); patient self-read on medications/visits/lab_results/documents through a self-or-staff SELECT policy; Patient Home's nine §14 regions at lower density with per-region degradation; Quick Log form with capability + session resolution; 13-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
 progress:
   total_phases: 22
   completed_phases: 4

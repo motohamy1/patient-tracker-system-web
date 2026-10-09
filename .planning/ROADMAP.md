@@ -369,11 +369,12 @@ Plans:
   3. The experience contains no gamification (points, levels, fireworks, cartoon rewards).
 
 **UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill; one file per ticket):
 
-Plans:
-
-- [ ] 13-01: TBD
+- [x] 13-01: identity-and-observations (PTH-02 foundation) — resolved
+- [x] 13-02: patient-home-surface (PTH-01/03) — resolved
+- [x] 13-03: quick-log (PTH-02/03) — resolved
+- [ ] 13-04: phase-proof — ready-for-human (cloud apply + pgTAP + owner patient-account pass + visual baselines)
 
 ### Phase 14: Care Tasks / Adherence
 
@@ -562,7 +563,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 10. Allergies + Genetics | 5/5 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §8 verdicts) |  |
 | 11. AI Analytics / Patient Intelligence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §8 verdicts) |  |
 | 12. Prescription OCR + Document Intelligence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP + storage smoke, owner test pass, visual baselines, §8 verdicts) |  |
-| 13. Patient Home | 0/TBD | Not started | - |
+| 13. Patient Home | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner patient-account pass, visual baselines, §8 verdicts) |  |
 | 14. Care Tasks / Adherence | 0/TBD | Not started | - |
 | 15. Communication | 0/TBD | Not started | - |
 | 16. WhatsApp + Telegram | 0/TBD | Not started | - |
