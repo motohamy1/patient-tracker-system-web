@@ -25,8 +25,10 @@
 import { notFound } from 'next/navigation';
 import { Gallery } from '@/components/dev/Gallery';
 import { MockDoctorDashboard } from '@/components/dev/MockDoctorDashboard';
+import { TimelinePreview } from '@/components/dev/TimelinePreview';
 import { isDevRouteAllowed } from '@/lib/dev/dev-route-gate';
 import { MOCK_PATIENTS } from '@/lib/dev/mock-clinical';
+import { DEV_TIMELINE_EVENTS } from '@/lib/dev/timeline-fixture';
 import { EMPTY_PATIENT_LIST } from '@/lib/dev/fixtures';
 
 // The gate MUST be evaluated per request, so the route is forced dynamic. A
@@ -51,6 +53,10 @@ export default async function DevGalleryPage({
 
   if (preview === 'doctor') {
     return <MockDoctorDashboard patients={MOCK_PATIENTS} />;
+  }
+
+  if (preview === 'timeline') {
+    return <TimelinePreview events={DEV_TIMELINE_EVENTS} />;
   }
 
   return <Gallery emptyCount={EMPTY_PATIENT_LIST.length} />;

@@ -223,12 +223,15 @@ Plans:
   3. Milestone branches are thin, calm, collision-aware paths — never crossing spaghetti.
   4. Timeline interaction works via keyboard and touch where practical.
 
-**UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill; one file per ticket):
 
-Plans:
-
-- [ ] 06-01: TBD
+- [x] 06-01: care-event-projection-and-d3-tracer-bullet (TL-01/TL-02) — resolved
+- [x] 06-02: pan-and-semantic-zoom-clustering (TL-03/TL-04) — resolved
+- [x] 06-03: event-selection-and-category-filter (TL-07) — resolved
+- [x] 06-04: bottom-scrubber (TL-06) — resolved
+- [x] 06-05: milestone-branches (TL-05) — resolved
+- [x] 06-06: keyboard-touch-accessibility (TL-08/UX-05) — resolved
+- [ ] 06-07: perf-proof-and-phase-verification (TL-09/UX-04) — ready-for-human (owner test pass + visual gate)
 
 ### Phase 7: Visits Workflow
 
@@ -542,7 +545,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 3. Authentication, Organizations, RBAC and RLS | 8/8 | Complete | 2026-10-08 |
 | 4. Provider Home + Patient Folder Workspace | 5/5 | Complete | 2026-10-08 |
 | 5. Patient Workspace / Overview | 5/5 tickets | Agent-complete — acceptance pending (visual baselines, pgTAP, owner §5 verdicts deferred) |  |
-| 6. D3 Clinical Timeline | 0/TBD | Not started | - |
+| 6. D3 Clinical Timeline | 7/7 tickets | Agent-complete — acceptance pending (owner test pass, visual baselines, §7 verdicts deferred) |  |
 | 7. Visits Workflow | 0/TBD | Not started | - |
 | 8. Medications | 0/TBD | Not started | - |
 | 9. Labs + Imaging | 0/TBD | Not started | - |

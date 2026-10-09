@@ -75,3 +75,47 @@ export const DEV_TIMELINE_EVENTS: CareEvent[] = [
   ]),
   event('dev-e11', 'medication-stopped', 'clinical', '2026-07-30T16:00:00Z', 'Medication stopped'),
 ];
+
+/**
+ * A deterministic multi-thousand-event set for performance review — the
+ * "thousands of events" case TL-09/UX-04 grades. Spread over ~5 years with a
+ * handful of milestones carrying sub-events so clustering AND branching are
+ * both exercised. Fixed arithmetic (no Date.now) so repeated runs are
+ * identical.
+ */
+export function buildSyntheticTimelineEvents(count = 4000): CareEvent[] {
+  const start = Date.parse('2021-01-04T09:00:00Z');
+  const kinds: CareEvent['kind'][] = [
+    'visit',
+    'lab-result',
+    'medication-changed',
+    'vital-measurement',
+    'symptom',
+    'document',
+  ];
+  const events: CareEvent[] = [
+    event('syn-e0', 'record-created', 'lifecycle', '2021-01-04T08:00:00Z', 'Record created'),
+  ];
+  for (let index = 0; index < count; index += 1) {
+    // ~2.6 events/day over five years
+    const at = new Date(start + index * 12 * 3_600_000).toISOString();
+    const kind = kinds[index % kinds.length];
+    const isMilestone = index % 250 === 0;
+    events.push(
+      event(
+        `syn-e${index + 1}`,
+        kind,
+        'clinical',
+        at,
+        `${kind.replace(/-/g, ' ')} ${index + 1}`,
+        isMilestone
+          ? [
+              event(`syn-e${index + 1}-a`, 'follow-up', 'clinical', at, 'Follow-up scheduled'),
+              event(`syn-e${index + 1}-b`, 'document', 'clinical', at, 'Note filed'),
+            ]
+          : undefined,
+      ),
+    );
+  }
+  return events;
+}
