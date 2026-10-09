@@ -48,6 +48,7 @@ import {
   type PatientRecord,
 } from '@/lib/patients/queries';
 import { patientIdSchema } from '@/lib/patients/schemas';
+import { listVisits, type VisitRecord } from '@/lib/visits/queries';
 import { tabHref } from '@/app/(provider)/provider/patients/[patientId]/tabs';
 
 /** How the recent-activity slice fared; each state owns its slot's copy. */
@@ -120,10 +121,22 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
       activityPosture = error instanceof SupabasePermissionError ? 'denied' : 'error';
     }
   }
+  // Visits feed the timeline (VIS-02). A failed visit read only removes the
+  // visit events from the axis; the Visits tab owns its own error state and
+  // the record's lifecycle events still render (region-level degradation).
+  let visits: VisitRecord[] = [];
+  if (parsedId.success) {
+    try {
+      visits = await listVisits(resolution.orgId, parsedId.data);
+    } catch {
+      visits = [];
+    }
+  }
+
   // The timeline projects whatever the org may read: lifecycle events always,
   // invite events when the invite read succeeded (a failed read degrades the
   // recent-records CARD only — the axis keeps its real events).
-  const timelineEvents = projectCareEvents(patient, invites);
+  const timelineEvents = projectCareEvents(patient, invites, visits);
   const events = activityPosture === 'ok' ? composeRecentEvents(patient, invites) : [];
 
   return (

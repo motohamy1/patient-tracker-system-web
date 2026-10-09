@@ -22,6 +22,7 @@ const CloseGlyph = makeIcon(X);
 const SOURCE_LABEL: Record<CareEvent['source']['table'], string> = {
   patients: 'Patient record',
   invitations: 'Invitation',
+  visits: 'Visit',
 };
 
 const VERIFICATION_LABEL: Record<CareEvent['verification'], string> = {

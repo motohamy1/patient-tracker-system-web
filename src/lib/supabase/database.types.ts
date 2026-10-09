@@ -117,6 +117,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"visits": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"documentation": string | null,"follow_up": string | null,"follow_up_at": string | null,"id": string,"location": string | null,"org_id": string,"patient_id": string,"reason": string | null,"scheduled_at": string,"source": string,"stage": string,"updated_at": string,"updated_by": string | null,"visit_type": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"documentation"?: string | null,"follow_up"?: string | null,"follow_up_at"?: string | null,"id"?: string,"location"?: string | null,"org_id": string,"patient_id": string,"reason"?: string | null,"scheduled_at": string,"source"?: string,"stage"?: string,"updated_at"?: string,"updated_by"?: string | null,"visit_type"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"documentation"?: string | null,"follow_up"?: string | null,"follow_up_at"?: string | null,"id"?: string,"location"?: string | null,"org_id"?: string,"patient_id"?: string,"reason"?: string | null,"scheduled_at"?: string,"source"?: string,"stage"?: string,"updated_at"?: string,"updated_by"?: string | null,"visit_type"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "visits_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "visits_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {

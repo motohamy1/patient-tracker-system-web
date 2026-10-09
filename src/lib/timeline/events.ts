@@ -21,6 +21,7 @@
 // AI-extracted data must never look clinician-verified.
 import type { PatientRecord } from '@/lib/patients/queries';
 import type { PatientInviteRow } from '@/lib/patients/queries';
+import type { VisitRecord } from '@/lib/visits/queries';
 
 /**
  * The event vocabulary: §8.2's clinical kinds (which future phases supply)
@@ -59,7 +60,8 @@ export type CareEventCategory = 'clinical' | 'lifecycle';
 /** Where the event was read from — the provenance trail (§23). */
 export type CareEventSource =
   | { table: 'patients'; column: 'created_at' | 'updated_at' }
-  | { table: 'invitations'; column: 'created_at' | 'redeemed_at' };
+  | { table: 'invitations'; column: 'created_at' | 'redeemed_at' }
+  | { table: 'visits'; column: 'scheduled_at' | 'follow_up_at' };
 
 export type VerificationState =
   | 'clinician-verified'
@@ -138,10 +140,64 @@ export const CARE_EVENT_LABELS: Record<CareEventKind, string> = {
 };
 
 /**
+ * Map a visit's stored `source` onto the timeline's verification vocabulary so
+ * an AI-extracted or imported visit can never render as clinician-verified.
+ */
+function visitVerification(source: VisitRecord['source']): VerificationState {
+  if (source === 'ai-extracted') return 'ai-extracted';
+  if (source === 'imported') return 'system-generated';
+  return 'clinician-verified';
+}
+
+/**
+ * Project one visit into the timeline (VIS-02): the visit itself, plus its
+ * follow-up as a CHILD event so the branch layer can render the relationship
+ * honestly. The label comes from the SCHEDULING fields only (`visit_type`),
+ * never from clinical documentation — a role that may schedule but not author
+ * must never see clinical prose leak into a timeline label.
+ */
+function visitEvent(visit: VisitRecord): CareEvent {
+  const verification = visitVerification(visit.source);
+  const children: CareEvent[] =
+    visit.followUp !== null || visit.followUpAt !== null
+      ? [
+          {
+            id: `visit:${visit.id}:follow-up`,
+            kind: 'follow-up',
+            category: 'clinical',
+            at: visit.followUpAt !== null ? `${visit.followUpAt}T00:00:00Z` : visit.scheduledAt,
+            label: 'Follow-up scheduled',
+            source: { table: 'visits', column: 'follow_up_at' },
+            verification,
+          },
+        ]
+      : [];
+
+  return {
+    id: `visit:${visit.id}`,
+    kind: 'visit',
+    category: 'clinical',
+    at: visit.scheduledAt,
+    label: visit.visitType ?? 'Visit',
+    detail: visit.location ?? undefined,
+    source: { table: 'visits', column: 'scheduled_at' },
+    verification,
+    children: children.length > 0 ? children : undefined,
+  };
+}
+
+/**
  * Project every real, patient-scoped event available today into one
  * chronological axis set. Pure: callers pass the records they already hold
  * so the projection adds no I/O and the same input always yields the same
  * output (unit-testable, deterministic).
+ *
+ * Producers, one per source table, all merged here (the §8.2 seam):
+ *   - the patient row's own lifecycle (created / updated);
+ *   - invitations (sent / redeemed);
+ *   - visits (the visit milestone + its follow-up child).
+ * Later phases (labs/imaging, medications, allergies/genetics) add a mapper
+ * each; the timeline engine never changes.
  *
  * `updated_at` on a patient row is bumped by the DB trigger on every change
  * (migration 0005) — until the diff-reading audit surface is authorized for
@@ -151,6 +207,7 @@ export const CARE_EVENT_LABELS: Record<CareEventKind, string> = {
 export function projectCareEvents(
   patient: Pick<PatientRecord, 'id' | 'createdAt' | 'updatedAt'>,
   invitations: readonly PatientInviteRow[],
+  visits: readonly VisitRecord[] = [],
 ): CareEvent[] {
   const events: CareEvent[] = [
     {
@@ -200,7 +257,8 @@ export function projectCareEvents(
   }
 
   // Chronological, stable on identical timestamps by id (no visual jitter).
-  return events.sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
+  const ordered = [...events, ...visits.map(visitEvent)];
+  return ordered.sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
 }
 
 /** Optional category filter for the timeline (TL-07); undefined = all. */
