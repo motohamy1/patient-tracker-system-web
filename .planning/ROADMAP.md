@@ -389,11 +389,12 @@ Plans:
   3. No gaming-heavy patterns appear anywhere in the care-task UI.
 
 **UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill; one file per ticket):
 
-Plans:
-
-- [ ] 14-01: TBD
+- [x] 14-01: tasks-substrate (TASK-01/02 foundation) — resolved
+- [x] 14-02: tasks-actions (TASK-01/02) — resolved
+- [x] 14-03: task-surfaces (TASK-01/02/03) — resolved
+- [ ] 14-04: phase-proof — ready-for-human (cloud apply + pgTAP + owner two-role pass + visual baselines + §27 check)
 
 ### Phase 15: Communication
 
@@ -564,7 +565,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 11. AI Analytics / Patient Intelligence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §8 verdicts) |  |
 | 12. Prescription OCR + Document Intelligence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP + storage smoke, owner test pass, visual baselines, §8 verdicts) |  |
 | 13. Patient Home | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner patient-account pass, visual baselines, §8 verdicts) |  |
-| 14. Care Tasks / Adherence | 0/TBD | Not started | - |
+| 14. Care Tasks / Adherence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner two-role pass, visual baselines, §8 verdicts) |  |
 | 15. Communication | 0/TBD | Not started | - |
 | 16. WhatsApp + Telegram | 0/TBD | Not started | - |
 | 17. Telehealth | 0/TBD | Not started | - |

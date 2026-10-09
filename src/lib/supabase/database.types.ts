@@ -425,6 +425,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                    ]
+                 },"care_tasks": {
+                   Row: {
+                     "created_at": string,"created_by": string | null,"detail": string | null,"due_at": string | null,"id": string,"kind": string,"org_id": string,"patient_id": string,"source": string,"status": string,"title": string,"updated_at": string,"updated_by": string | null
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "created_at"?: string,"created_by"?: string | null,"detail"?: string | null,"due_at"?: string | null,"id"?: string,"kind"?: string,"org_id": string,"patient_id": string,"source"?: string,"status"?: string,"title": string,"updated_at"?: string,"updated_by"?: string | null
+                   }
+                   Update: {
+                     "created_at"?: string,"created_by"?: string | null,"detail"?: string | null,"due_at"?: string | null,"id"?: string,"kind"?: string,"org_id"?: string,"patient_id"?: string,"source"?: string,"status"?: string,"title"?: string,"updated_at"?: string,"updated_by"?: string | null
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "care_tasks_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                   ]
+                 },"care_task_completions": {
+                   Row: {
+                     "completed_at": string,"created_at": string,"created_by": string | null,"id": string,"note": string | null,"org_id": string,"patient_id": string,"source": string,"task_id": string,"user_id": string
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "completed_at"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"note"?: string | null,"org_id": string,"patient_id": string,"source"?: string,"task_id": string,"user_id"?: string
+                   }
+                   Update: {
+                     "completed_at"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"note"?: string | null,"org_id"?: string,"patient_id"?: string,"source"?: string,"task_id"?: string,"user_id"?: string
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "care_task_completions_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "care_task_completions_task_id_fkey"
+      columns: ["task_id"]
+isOneToOne: false
+      referencedRelation: "care_tasks"
+      referencedColumns: ["id"]
+    }
+                   ]
                  }
            }
           Views: {

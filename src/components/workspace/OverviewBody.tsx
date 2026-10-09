@@ -29,6 +29,8 @@
 import { Lock } from 'lucide-react';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import { OverviewAttentionStrip } from '@/components/ai/OverviewAttentionStrip';
+import { CareTasksRegion } from '@/components/care-tasks/CareTasksRegion';
+import { loadCareTaskState } from '@/lib/care-tasks/load';
 import { StateVariant } from '@/components/state/StateVariant';
 import { ContextStatRow } from '@/components/workspace/ContextStatRow';
 import { LabsCard } from '@/components/workspace/LabsCard';
@@ -189,6 +191,17 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
     imagingOrders,
     imagingResults,
   });
+  // Care tasks + their completion log (TASK-02): the same rows the patient's
+  // Home reads, derived the same way. A failed read degrades this region only.
+  let careTaskState = null;
+  if (parsedId.success) {
+    try {
+      careTaskState = await loadCareTaskState(resolution.orgId, parsedId.data);
+    } catch {
+      careTaskState = null;
+    }
+  }
+
   const events = activityPosture === 'ok' ? composeRecentEvents(patient, invites) : [];
 
   // Attention insights bridge the Overview to AI Analytics (WSP-02). The read
@@ -215,6 +228,15 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
       <TimelineBand events={timelineEvents} />
 
       <OverviewAttentionStrip items={attentionInsights} patientId={patientId} />
+
+      {careTaskState !== null ? (
+        <CareTasksRegion
+          tasks={careTaskState.tasks}
+          adherence={careTaskState.adherence}
+          variant="provider"
+          patientId={patientId}
+        />
+      ) : null}
 
       <div className={BOTTOM_ROW_GRID}>
         <VitalsHistoryCard />

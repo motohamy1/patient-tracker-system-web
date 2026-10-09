@@ -19,6 +19,8 @@ import { EmptyState } from '@/components/primitives/EmptyState';
 import { StateVariant } from '@/components/state/StateVariant';
 import { Surface } from '@/components/primitives';
 import { QuickLogControl } from '@/components/patient/QuickLogControl';
+import { CareTasksRegion } from '@/components/care-tasks/CareTasksRegion';
+import { loadCareTaskState } from '@/lib/care-tasks/load';
 import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { listVisits, type VisitRecord } from '@/lib/visits/queries';
 import { listMedications, type MedicationRecord } from '@/lib/medications/queries';
@@ -139,6 +141,13 @@ export async function PatientHomeBody() {
     documents = await listPatientDocuments(patient.orgId, patient.id);
   } catch {
     documents = [];
+  }
+
+  let careTaskState = null;
+  try {
+    careTaskState = await loadCareTaskState(patient.orgId, patient.id);
+  } catch {
+    careTaskState = null;
   }
 
   const now = new Date();
@@ -300,6 +309,10 @@ export async function PatientHomeBody() {
           <QuickLogControl insetFill={INSET_FILL} />
         </div>
       </Region>
+
+      {careTaskState !== null ? (
+        <CareTasksRegion tasks={careTaskState.tasks} adherence={careTaskState.adherence} variant="patient" />
+      ) : null}
 
       <div className="grid grid-cols-1 gap-lg lg:grid-cols-2">
         <Region title="Care plan">
