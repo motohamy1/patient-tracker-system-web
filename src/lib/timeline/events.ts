@@ -22,6 +22,11 @@
 import type { PatientRecord } from '@/lib/patients/queries';
 import type { PatientInviteRow } from '@/lib/patients/queries';
 import type { VisitRecord } from '@/lib/visits/queries';
+import {
+  MEDICATION_EVENT_LABELS,
+  type MedicationEventKind,
+} from '@/lib/medications/status';
+import type { MedicationEventRecord } from '@/lib/medications/queries';
 
 /**
  * The event vocabulary: §8.2's clinical kinds (which future phases supply)
@@ -61,7 +66,8 @@ export type CareEventCategory = 'clinical' | 'lifecycle';
 export type CareEventSource =
   | { table: 'patients'; column: 'created_at' | 'updated_at' }
   | { table: 'invitations'; column: 'created_at' | 'redeemed_at' }
-  | { table: 'visits'; column: 'scheduled_at' | 'follow_up_at' };
+  | { table: 'visits'; column: 'scheduled_at' | 'follow_up_at' }
+  | { table: 'medication_events'; column: 'at' };
 
 export type VerificationState =
   | 'clinician-verified'
@@ -187,6 +193,39 @@ function visitEvent(visit: VisitRecord): CareEvent {
 }
 
 /**
+ * Map a medication lifecycle history row onto the timeline (MED-02). The
+ * vocabulary has three medication kinds; `paused`/`resumed` are lifecycle
+ * changes and map to `medication-changed` while carrying their own precise
+ * label, so the band shows the real transition without inventing new kinds.
+ * Provenance follows the PARENT medication's source, so an AI-extracted
+ * medication's events never render as clinician-verified (§23).
+ */
+function medicationEventKind(kind: MedicationEventKind): CareEventKind {
+  if (kind === 'started') return 'medication-started';
+  if (kind === 'stopped') return 'medication-stopped';
+  return 'medication-changed';
+}
+
+function medicationVerification(source: MedicationEventRecord['medicationSource']): VerificationState {
+  if (source === 'ai-extracted') return 'ai-extracted';
+  if (source === 'imported') return 'system-generated';
+  return 'clinician-verified';
+}
+
+function medicationTimelineEvent(event: MedicationEventRecord): CareEvent {
+  const label = MEDICATION_EVENT_LABELS[event.kind];
+  return {
+    id: `medication-event:${event.id}`,
+    kind: medicationEventKind(event.kind),
+    category: 'clinical',
+    at: event.at,
+    label: event.medicationName !== null ? `${label}: ${event.medicationName}` : label,
+    source: { table: 'medication_events', column: 'at' },
+    verification: medicationVerification(event.medicationSource),
+  };
+}
+
+/**
  * Project every real, patient-scoped event available today into one
  * chronological axis set. Pure: callers pass the records they already hold
  * so the projection adds no I/O and the same input always yields the same
@@ -195,9 +234,11 @@ function visitEvent(visit: VisitRecord): CareEvent {
  * Producers, one per source table, all merged here (the §8.2 seam):
  *   - the patient row's own lifecycle (created / updated);
  *   - invitations (sent / redeemed);
- *   - visits (the visit milestone + its follow-up child).
- * Later phases (labs/imaging, medications, allergies/genetics) add a mapper
- * each; the timeline engine never changes.
+ *   - visits (the visit milestone + its follow-up child);
+ *   - medication lifecycle events (started / changed / paused / resumed /
+ *     stopped), read from the HISTORY table so an edit never rewrites history.
+ * Later phases (labs/imaging, allergies/genetics) add a mapper each; the
+ * timeline engine never changes.
  *
  * `updated_at` on a patient row is bumped by the DB trigger on every change
  * (migration 0005) — until the diff-reading audit surface is authorized for
@@ -208,6 +249,7 @@ export function projectCareEvents(
   patient: Pick<PatientRecord, 'id' | 'createdAt' | 'updatedAt'>,
   invitations: readonly PatientInviteRow[],
   visits: readonly VisitRecord[] = [],
+  medicationEvents: readonly MedicationEventRecord[] = [],
 ): CareEvent[] {
   const events: CareEvent[] = [
     {
@@ -257,7 +299,11 @@ export function projectCareEvents(
   }
 
   // Chronological, stable on identical timestamps by id (no visual jitter).
-  const ordered = [...events, ...visits.map(visitEvent)];
+  const ordered = [
+    ...events,
+    ...visits.map(visitEvent),
+    ...medicationEvents.map(medicationTimelineEvent),
+  ];
   return ordered.sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
 }
 

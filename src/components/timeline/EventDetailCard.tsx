@@ -23,6 +23,7 @@ const SOURCE_LABEL: Record<CareEvent['source']['table'], string> = {
   patients: 'Patient record',
   invitations: 'Invitation',
   visits: 'Visit',
+  medication_events: 'Medication history',
 };
 
 const VERIFICATION_LABEL: Record<CareEvent['verification'], string> = {

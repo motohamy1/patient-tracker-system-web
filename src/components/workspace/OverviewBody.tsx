@@ -49,6 +49,7 @@ import {
 } from '@/lib/patients/queries';
 import { patientIdSchema } from '@/lib/patients/schemas';
 import { listVisits, type VisitRecord } from '@/lib/visits/queries';
+import { listMedicationEvents, type MedicationEventRecord } from '@/lib/medications/queries';
 import { tabHref } from '@/app/(provider)/provider/patients/[patientId]/tabs';
 
 /** How the recent-activity slice fared; each state owns its slot's copy. */
@@ -133,10 +134,21 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
     }
   }
 
+  // Medication lifecycle events feed the timeline too (MED-02), read from the
+  // HISTORY table. A failed read removes only those events from the axis.
+  let medicationEvents: MedicationEventRecord[] = [];
+  if (parsedId.success) {
+    try {
+      medicationEvents = await listMedicationEvents(resolution.orgId, parsedId.data);
+    } catch {
+      medicationEvents = [];
+    }
+  }
+
   // The timeline projects whatever the org may read: lifecycle events always,
   // invite events when the invite read succeeded (a failed read degrades the
   // recent-records CARD only — the axis keeps its real events).
-  const timelineEvents = projectCareEvents(patient, invites, visits);
+  const timelineEvents = projectCareEvents(patient, invites, visits, medicationEvents);
   const events = activityPosture === 'ok' ? composeRecentEvents(patient, invites) : [];
 
   return (

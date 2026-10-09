@@ -143,6 +143,64 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"medications": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"dose_amount": number | null,"dose_unit": string | null,"frequency": string | null,"id": string,"name": string,"org_id": string,"patient_id": string,"paused_at": string | null,"route": string | null,"rxnorm_code": string | null,"source": string,"started_at": string,"status": string,"stopped_at": string | null,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"dose_amount"?: number | null,"dose_unit"?: string | null,"frequency"?: string | null,"id"?: string,"name": string,"org_id": string,"patient_id": string,"paused_at"?: string | null,"route"?: string | null,"rxnorm_code"?: string | null,"source"?: string,"started_at"?: string,"status"?: string,"stopped_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"dose_amount"?: number | null,"dose_unit"?: string | null,"frequency"?: string | null,"id"?: string,"name"?: string,"org_id"?: string,"patient_id"?: string,"paused_at"?: string | null,"route"?: string | null,"rxnorm_code"?: string | null,"source"?: string,"started_at"?: string,"status"?: string,"stopped_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "medications_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "medications_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"medication_events": {
+                  Row: {
+                    "actor": string | null,"at": string,"created_at": string,"detail": Json | null,"id": string,"kind": string,"medication_id": string,"org_id": string,"patient_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor"?: string | null,"at"?: string,"created_at"?: string,"detail"?: Json | null,"id"?: string,"kind": string,"medication_id": string,"org_id": string,"patient_id": string
+                  }
+                  Update: {
+                    "actor"?: string | null,"at"?: string,"created_at"?: string,"detail"?: Json | null,"id"?: string,"kind"?: string,"medication_id"?: string,"org_id"?: string,"patient_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "medication_events_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "medication_events_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "medication_events_medication_id_fkey"
+      columns: ["medication_id"]
+isOneToOne: false
+      referencedRelation: "medications"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
