@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 07
-current_phase_name: Visits Workflow (Phase 7)
+current_phase: 08
+current_phase_name: Medications (Phase 8)
 status: in_progress
-stopped_at: Phase 7 agent work COMPLETE (tickets 07-01..07-05 resolved; 07-06 ready-for-human) — migration 0006 apply + RLS/pgTAP on cloud Supabase, owner test pass, visual baselines and the 07-VERIFICATION §6 verdicts deferred; Phase 8 started (tickets published)
-last_updated: "2026-10-09T11:30:00.000Z"
+stopped_at: Phase 7 COMPLETE (07-06 ready-for-human) · Phase 8 in progress (08-01/08-02/08-04 resolved; 08-03 Medications tab + 08-05 proof remain) — cloud-Supabase applies of 0006/0007, RLS/pgTAP, owner test pass, visual baselines and owner verdicts all deferred
+last_updated: "2026-10-09T12:15:00.000Z"
 last_activity: 2026-10-09
-last_activity_desc: Phase 7 shipped via Matt's to-tickets + implement skills — visits table (0006) with role-aware clinical guard, scheduling, Pre/Dur/Post workflow, Visits tab + detail, timeline projection (visit + follow-up branch child); 07-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
+last_activity_desc: Phases 7-8 started via Matt's to-tickets + implement skills — visits (0006) shipped end-to-end (VIS-01/02/03) with 07-VERIFICATION.md; medications (0007) schema + DB-owned lifecycle history + transition actions + timeline projection shipped (MED-01/02/03); tsc 0, 473/473, lint 0, build exit 0
 progress:
   total_phases: 22
   completed_phases: 4

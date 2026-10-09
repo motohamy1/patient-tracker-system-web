@@ -268,12 +268,12 @@ Plans:
   3. The medication schema is CDSS-ready (structured, interactions-ready) while no autonomous decision-making exists.
 
 **UI hint**: yes
-**Tickets** (published; implementation starting):
+**Tickets** (executed via Matt's implement skill):
 
-- [ ] 08-01: medications-schema (MED-01/MED-03) — ready-for-agent
-- [ ] 08-02: medication-lifecycle-actions (MED-01) — ready-for-agent
+- [x] 08-01: medications-schema (MED-01/MED-03) — resolved
+- [x] 08-02: medication-lifecycle-actions (MED-01) — resolved
 - [ ] 08-03: medications-tab-surface (MED-01) — ready-for-agent
-- [ ] 08-04: medications-timeline-projection (MED-02) — ready-for-agent
+- [x] 08-04: medications-timeline-projection (MED-02) — resolved
 - [ ] 08-05: phase-proof — ready-for-agent
 
 ### Phase 9: Labs + Imaging
@@ -552,7 +552,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 5. Patient Workspace / Overview | 5/5 tickets | Agent-complete — acceptance pending (visual baselines, pgTAP, owner §5 verdicts deferred) |  |
 | 6. D3 Clinical Timeline | 7/7 tickets | Agent-complete — acceptance pending (owner test pass, visual baselines, §7 verdicts deferred) |  |
 | 7. Visits Workflow | 6/6 tickets | Agent-complete — acceptance pending (migration apply + RLS/pgTAP on cloud Supabase, owner test pass, visual baselines, §6 verdicts) |  |
-| 8. Medications | 0/5 tickets | Tickets published — implementation starting |  |
+| 8. Medications | 3/5 tickets | In progress — schema/history/actions/timeline projection resolved; Medications tab (08-03) + phase proof (08-05) remain |  |
 | 9. Labs + Imaging | 0/TBD | Not started | - |
 | 10. Allergies + Genetics | 0/TBD | Not started | - |
 | 11. AI Analytics / Patient Intelligence | 0/TBD | Not started | - |
