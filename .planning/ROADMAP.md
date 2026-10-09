@@ -288,12 +288,14 @@ Plans:
   2. Imaging records preserve document/media relationships accessible from the workspace.
   3. Lab and imaging events appear on the patient's timeline.
 
-**UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill):
 
-Plans:
-
-- [ ] 09-01: TBD
+- [x] 09-01: schema-documents-rls (LAB-01/02 foundation) — resolved
+- [x] 09-02: lab-lifecycle-actions (LAB-01) — resolved
+- [x] 09-03: imaging-lifecycle-actions (LAB-02) — resolved
+- [x] 09-04: timeline-projection (LAB-03) — resolved
+- [x] 09-05: tab-surfaces (LAB-01/02 UI) — resolved
+- [ ] 09-06: phase-proof — ready-for-human (cloud apply + owner pass)
 
 ### Phase 10: Allergies + Genetics
 
@@ -553,7 +555,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 6. D3 Clinical Timeline | 7/7 tickets | Agent-complete — acceptance pending (owner test pass, visual baselines, §7 verdicts deferred) |  |
 | 7. Visits Workflow | 6/6 tickets | Agent-complete — acceptance pending (migration apply + RLS/pgTAP on cloud Supabase, owner test pass, visual baselines, §6 verdicts) |  |
 | 8. Medications | 5/5 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §7 verdicts) |  |
-| 9. Labs + Imaging | 0/TBD | Not started | - |
+| 9. Labs + Imaging | 6/6 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, storage smoke test, owner test pass, visual baselines, §7 verdicts) |  |
 | 10. Allergies + Genetics | 0/TBD | Not started | - |
 | 11. AI Analytics / Patient Intelligence | 0/TBD | Not started | - |
 | 12. Prescription OCR + Document Intelligence | 0/TBD | Not started | - |
