@@ -145,14 +145,14 @@ isOneToOne: false
                   ]
                 },"medications": {
                   Row: {
-                    "created_at": string,"created_by": string | null,"dose_amount": number | null,"dose_unit": string | null,"frequency": string | null,"id": string,"name": string,"org_id": string,"patient_id": string,"paused_at": string | null,"route": string | null,"rxnorm_code": string | null,"source": string,"started_at": string,"status": string,"stopped_at": string | null,"updated_at": string,"updated_by": string | null
+                    "created_at": string,"created_by": string | null,"dose_amount": number | null,"dose_unit": string | null,"frequency": string | null,"id": string,"name": string,"org_id": string,"patient_id": string,"paused_at": string | null,"route": string | null,"rxnorm_code": string | null,"source": string,"started_at": string,"status": string,"stopped_at": string | null,"updated_at": string,"updated_by": string | null,"verification": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"created_by"?: string | null,"dose_amount"?: number | null,"dose_unit"?: string | null,"frequency"?: string | null,"id"?: string,"name": string,"org_id": string,"patient_id": string,"paused_at"?: string | null,"route"?: string | null,"rxnorm_code"?: string | null,"source"?: string,"started_at"?: string,"status"?: string,"stopped_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null
+                    "created_at"?: string,"created_by"?: string | null,"dose_amount"?: number | null,"dose_unit"?: string | null,"frequency"?: string | null,"id"?: string,"name": string,"org_id": string,"patient_id": string,"paused_at"?: string | null,"route"?: string | null,"rxnorm_code"?: string | null,"source"?: string,"started_at"?: string,"status"?: string,"stopped_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"verification"?: string
                   }
                   Update: {
-                    "created_at"?: string,"created_by"?: string | null,"dose_amount"?: number | null,"dose_unit"?: string | null,"frequency"?: string | null,"id"?: string,"name"?: string,"org_id"?: string,"patient_id"?: string,"paused_at"?: string | null,"route"?: string | null,"rxnorm_code"?: string | null,"source"?: string,"started_at"?: string,"status"?: string,"stopped_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null
+                    "created_at"?: string,"created_by"?: string | null,"dose_amount"?: number | null,"dose_unit"?: string | null,"frequency"?: string | null,"id"?: string,"name"?: string,"org_id"?: string,"patient_id"?: string,"paused_at"?: string | null,"route"?: string | null,"rxnorm_code"?: string | null,"source"?: string,"started_at"?: string,"status"?: string,"stopped_at"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"verification"?: string
                   }
                   Relationships: [
                     {
@@ -379,6 +379,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                    ]
+                 },"ocr_extractions": {
+                   Row: {
+                     "created_at": string,"created_by": string | null,"document_id": string,"id": string,"org_id": string,"patient_id": string,"payload": Json | null,"provider": string | null,"rejection_reason": string | null,"source": string,"status": string,"updated_at": string,"updated_by": string | null,"verification": string,"verified_at": string | null,"verified_by": string | null
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "created_at"?: string,"created_by"?: string | null,"document_id": string,"id"?: string,"org_id": string,"patient_id": string,"payload"?: Json | null,"provider"?: string | null,"rejection_reason"?: string | null,"source"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null,"verification"?: string,"verified_at"?: string | null,"verified_by"?: string | null
+                   }
+                   Update: {
+                     "created_at"?: string,"created_by"?: string | null,"document_id"?: string,"id"?: string,"org_id"?: string,"patient_id"?: string,"payload"?: Json | null,"provider"?: string | null,"rejection_reason"?: string | null,"source"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null,"verification"?: string,"verified_at"?: string | null,"verified_by"?: string | null
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "ocr_extractions_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ocr_extractions_document_id_fkey"
+      columns: ["document_id"]
+isOneToOne: false
+      referencedRelation: "documents"
+      referencedColumns: ["id"]
+    }
+                   ]
                  }
            }
           Views: {
@@ -399,6 +425,9 @@ isOneToOne: false
                            },
             "show_limit":
 { Args: Record<PropertyKey, never>; Returns: number
+                            },
+"record_extracted_medication":
+{ Args: { "p_dose_amount": number | null, "p_dose_unit": string | null, "p_frequency": string | null, "p_name": string, "p_org_id": string, "p_patient_id": string, "p_route": string | null, "p_started_at": string | null }; Returns: string
                             },
 "supersede_pending_ai_insights":
 { Args: { "p_patient_id": string }; Returns: undefined

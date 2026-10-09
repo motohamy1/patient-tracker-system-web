@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 11
-current_phase_name: AI Analytics / Patient Intelligence (Phase 11)
+current_phase: 12
+current_phase_name: Prescription OCR + Document Intelligence (Phase 12)
 status: in_progress
-stopped_at: Phase 11 agent work COMPLETE (tickets 11-01..11-03 resolved; 11-04 ready-for-human) · Phases 7-10 COMPLETE (07-06/08-05/09-06/10-05 ready-for-human) — cloud-Supabase applies of 0006..0010, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
-last_updated: "2026-10-09T19:30:00.000Z"
+stopped_at: Phase 12 agent work COMPLETE (tickets 12-01..12-03 resolved; 12-04 ready-for-human) · Phases 7-11 COMPLETE (07-06/08-05/09-06/10-05/11-04 ready-for-human) — cloud-Supabase applies of 0006..0011, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
+last_updated: "2026-10-09T20:40:00.000Z"
 last_activity: 2026-10-09
-last_activity_desc: Phase 11 shipped via Matt's to-tickets + implement skills — ai_insights substrate (0010) with AI provenance (system-derived/ai-generated), verification defaulting to ai-extracted (§23) and a one-way human-review lifecycle with session attribution and content immutability; deterministic pure generator over the real record (change/summary/attention/trend/documentation-gap families, every row citing evidence); AI Analytics tab with provenance + review pills, evidence links and Accept/Dismiss; Overview attention strip; CAN_REVIEW_AI capability mirror; 11-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
+last_activity_desc: Phase 12 shipped via Matt's to-tickets + implement skills — ocr_extractions substrate (0011) with a four-stage status lifecycle, session attribution and content immutability; provider-agnostic pipeline (OcrProvider adapter + honest zero-field no-provider default, Zod-validated payloads, deterministic normalization, confidence analysis, real-record candidate matching); verification surface with the original image (signed URL) beside per-field confirmation, unclear-field marking, reject-with-reason and the single confirm-and-record path through the record_extracted_medication definer (source=ai-extracted + verification=clinician-verified, §23 pair completed on medications); 12-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
 progress:
   total_phases: 22
   completed_phases: 4

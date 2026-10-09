@@ -19,7 +19,9 @@ import {
   MEDICATION_STATUS_TOKEN,
   MEDICATION_STATUSES,
   MEDICATION_SOURCE_LABELS,
+  MEDICATION_VERIFICATION_LABELS,
   type MedicationSource,
+  type MedicationVerification,
   type MedicationStatus,
 } from '@/lib/medications/status';
 import type { MedicationRecord } from '@/lib/medications/queries';
@@ -84,8 +86,9 @@ export function MedicationList({
                     </Link>
                     <span className="flex items-center gap-md">
                       {medication.source !== 'clinician' ? (
-                        <span className="text-label leading-label text-text-secondary">
-                          {MEDICATION_SOURCE_LABELS[medication.source as MedicationSource]}
+                        <span className="text-label leading-label text-text-secondary tabular-nums">
+                          {MEDICATION_SOURCE_LABELS[medication.source as MedicationSource]} ·{' '}
+                          {MEDICATION_VERIFICATION_LABELS[medication.verification as MedicationVerification]}
                         </span>
                       ) : null}
                       <Pill

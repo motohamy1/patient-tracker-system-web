@@ -14,6 +14,7 @@ import type {
   MedicationRoute,
   MedicationSource,
   MedicationStatus,
+  MedicationVerification,
 } from '@/lib/medications/status';
 
 export type MedicationRecord = {
@@ -30,6 +31,7 @@ export type MedicationRecord = {
   stoppedAt: string | null;
   rxnormCode: string | null;
   source: MedicationSource;
+  verification: MedicationVerification;
   createdAt: string;
   updatedAt: string;
 };
@@ -41,13 +43,15 @@ export type MedicationEventRecord = {
   /** The parent medication's provenance source (so an AI-extracted medication
    *  never renders as clinician-verified on the timeline — §23). */
   medicationSource: MedicationSource | null;
+  /** The parent medication's verification state (§23 pair, Phase 12). */
+  medicationVerification: MedicationVerification | null;
   kind: MedicationEventKind;
   at: string;
   detail: unknown;
 };
 
 const MEDICATION_COLUMNS =
-  'id, patient_id, name, dose_amount, dose_unit, frequency, route, status, started_at, paused_at, stopped_at, rxnorm_code, source, created_at, updated_at';
+  'id, patient_id, name, dose_amount, dose_unit, frequency, route, status, started_at, paused_at, stopped_at, rxnorm_code, source, verification, created_at, updated_at';
 
 type MedicationRow = {
   id: string;
@@ -63,6 +67,7 @@ type MedicationRow = {
   stopped_at: string | null;
   rxnorm_code: string | null;
   source: MedicationSource;
+  verification: MedicationVerification;
   created_at: string;
   updated_at: string;
 };
@@ -82,6 +87,7 @@ function mapMedication(row: MedicationRow): MedicationRecord {
     stoppedAt: row.stopped_at,
     rxnormCode: row.rxnorm_code,
     source: row.source,
+    verification: row.verification,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -117,7 +123,7 @@ export async function listMedicationEvents(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('medication_events')
-    .select('id, medication_id, kind, at, detail, medications(name, source)')
+    .select('id, medication_id, kind, at, detail, medications(name, source, verification)')
     .eq('org_id', orgId)
     .eq('patient_id', patientId)
     .order('at', { ascending: false })
@@ -132,13 +138,14 @@ export async function listMedicationEvents(
       kind: MedicationEventKind;
       at: string;
       detail: unknown;
-      medications: { name: string; source: MedicationSource } | null;
+      medications: { name: string; source: MedicationSource; verification: MedicationVerification } | null;
     }>
   ).map((row) => ({
     id: row.id,
     medicationId: row.medication_id,
     medicationName: row.medications?.name ?? null,
     medicationSource: row.medications?.source ?? null,
+    medicationVerification: row.medications?.verification ?? null,
     kind: row.kind,
     at: row.at,
     detail: row.detail,

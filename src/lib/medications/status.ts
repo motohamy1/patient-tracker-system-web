@@ -111,8 +111,22 @@ export type MedicationSource = 'clinician' | 'ai-extracted' | 'imported';
 
 export const MEDICATION_SOURCE_LABELS: Record<MedicationSource, string> = {
   clinician: 'Clinician-authored',
-  'ai-extracted': 'AI-extracted, awaiting review',
+  'ai-extracted': 'AI-extracted',
   imported: 'Imported',
+};
+
+/**
+ * The §23 verification half of the provenance pair (added in Phase 12 with
+ * migration 0011). A clinician-confirmed extraction carries
+ * source='ai-extracted' + verification='clinician-verified', so it reads as
+ * extracted-but-checked — never as a directly-authored medication, and never
+ * as an unreviewed AI value.
+ */
+export type MedicationVerification = 'clinician-verified' | 'ai-extracted';
+
+export const MEDICATION_VERIFICATION_LABELS: Record<MedicationVerification, string> = {
+  'clinician-verified': 'Confirmed by clinician',
+  'ai-extracted': 'Unreviewed AI output',
 };
 
 /**

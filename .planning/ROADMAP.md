@@ -349,11 +349,12 @@ Plans:
   3. Verified extractions project into the patient record and timeline with source/provenance metadata.
 
 **UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill; one file per ticket):
 
-Plans:
-
-- [ ] 12-01: TBD
+- [x] 12-01: extraction-substrate (OCR-01 foundation) — resolved
+- [x] 12-02: extraction-pipeline (OCR-01/03/04) — resolved
+- [x] 12-03: verification-surface (OCR-01/02/03, UX-08) — resolved
+- [ ] 12-04: phase-proof — ready-for-human (cloud apply + storage smoke + owner pass + visual baselines)
 
 ### Phase 13: Patient Home
 
@@ -560,7 +561,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 9. Labs + Imaging | 6/6 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, storage smoke test, owner test pass, visual baselines, §7 verdicts) |  |
 | 10. Allergies + Genetics | 5/5 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §8 verdicts) |  |
 | 11. AI Analytics / Patient Intelligence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §8 verdicts) |  |
-| 12. Prescription OCR + Document Intelligence | 0/TBD | Not started | - |
+| 12. Prescription OCR + Document Intelligence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP + storage smoke, owner test pass, visual baselines, §8 verdicts) |  |
 | 13. Patient Home | 0/TBD | Not started | - |
 | 14. Care Tasks / Adherence | 0/TBD | Not started | - |
 | 15. Communication | 0/TBD | Not started | - |

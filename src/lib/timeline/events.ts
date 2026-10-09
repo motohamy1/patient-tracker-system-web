@@ -234,6 +234,15 @@ function medicationEventKind(kind: MedicationEventKind): CareEventKind {
 
 function medicationTimelineEvent(event: MedicationEventRecord): CareEvent {
   const label = MEDICATION_EVENT_LABELS[event.kind];
+  // §23 (Phase 12): the parent medication's REAL verification state wins over
+  // a source-derived guess, so a clinician-confirmed extraction never renders
+  // as unreviewed AI data on the axis.
+  const verification: VerificationState =
+    event.medicationVerification === 'ai-extracted'
+      ? 'ai-extracted'
+      : event.medicationSource === 'imported'
+        ? 'system-generated'
+        : 'clinician-verified';
   return {
     id: `medication-event:${event.id}`,
     kind: medicationEventKind(event.kind),
@@ -241,7 +250,7 @@ function medicationTimelineEvent(event: MedicationEventRecord): CareEvent {
     at: event.at,
     label: event.medicationName !== null ? `${label}: ${event.medicationName}` : label,
     source: { table: 'medication_events', column: 'at' },
-    verification: sourceVerification(event.medicationSource),
+    verification,
   };
 }
 
