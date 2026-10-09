@@ -106,6 +106,12 @@ export function categoryOf(kind: CareEventKind): CareEventCategory {
   return CLINICAL_KINDS.has(kind) ? 'clinical' : 'lifecycle';
 }
 
+/** The filter chips' labels (sentence case, clinician-facing — §7). */
+export const CARE_EVENT_CATEGORY_LABELS: Record<CareEventCategory, string> = {
+  clinical: 'Clinical events',
+  lifecycle: 'Record activity',
+};
+
 /** Sentence-case labels for every declared kind (the §7 copy contract). */
 export const CARE_EVENT_LABELS: Record<CareEventKind, string> = {
   visit: 'Visit',

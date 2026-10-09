@@ -122,14 +122,14 @@ export type ClusterableEvent = {
   at: string;
 };
 
-export type ClusterRow = {
+export type ClusterRow<T extends ClusterableEvent = ClusterableEvent> = {
   /** Stable identity: the bucket start, or `event:<id>` for a singleton. */
   key: string;
   kind: 'cluster' | 'event';
   /** 1 for an individual event, ≥2 for a cluster. */
   count: number;
   /** Members in chronological order (the cluster's underlying events). */
-  events: ClusterableEvent[];
+  events: T[];
   /** First / last member instant — the renderer positions at their midpoint. */
   from: string;
   to: string;
@@ -146,15 +146,15 @@ export type ClusterRow = {
  * bucket). Same input → same output, always, which is what the unit proof
  * pins.
  */
-export function clusterVisibleEvents(
-  events: readonly ClusterableEvent[],
+export function clusterVisibleEvents<T extends ClusterableEvent>(
+  events: readonly T[],
   options: {
     fromMs: number;
     toMs: number;
     level: SemanticLevel;
     maxNodes?: number;
   },
-): ClusterRow[] {
+): ClusterRow<T>[] {
   const maxNodes = options.maxNodes ?? MAX_VISIBLE_NODES;
   const visible = events
     .filter((event) => {
@@ -165,7 +165,7 @@ export function clusterVisibleEvents(
 
   if (visible.length === 0) return [];
 
-  let rows: Array<{ startMs: number; events: ClusterableEvent[] }>;
+  let rows: Array<{ startMs: number; events: T[] }>;
   if (options.level === 'event') {
     // Individual events — the deepest semantic level. The cap below still
     // applies: a pile of same-instant events is never 200 discrete marks.
@@ -175,7 +175,7 @@ export function clusterVisibleEvents(
     }));
   } else {
     const bucketMs = BUCKET_MS[options.level];
-    const buckets = new Map<number, ClusterableEvent[]>();
+    const buckets = new Map<number, T[]>();
     for (const event of visible) {
       const ms = new Date(event.at).getTime();
       const bucketStart = Math.floor((ms - options.fromMs) / bucketMs);
@@ -222,12 +222,33 @@ export function clusterVisibleEvents(
 }
 
 /**
+ * The transform that frames a time range across most of the band — a cluster
+ * click zooms INTO the stretch it represents (TL-07: expanding a cluster is a
+ * range move, never a fake selection). The range is framed at 80% of the
+ * width so the cluster's edges are visible with breathing room, then clamped
+ * by the same law as every other transform.
+ */
+export function transformForRange(
+  scale: TimelineScale,
+  width: number,
+  pad: number,
+  fromMs: number,
+  toMs: number,
+): TimelineTransform {
+  const fromBase = scale(new Date(fromMs));
+  const toBase = scale(new Date(toMs));
+  const span = Math.max(toBase - fromBase, 8);
+  const k = Math.min(Math.max((width * 0.8) / span, 1), MAX_ZOOM_K);
+  const centerBase = (fromBase + toBase) / 2;
+  return clampTransform(scale, { k, tx: width / 2 - k * centerBase }, width, pad);
+}
+
+/**
  * Where a row sits in base pixels: a cluster sits at the midpoint of its
  * members (the count badge reads as "this stretch of time"), a single event
  * at its own position.
  */
-export function rowBaseX(scale: TimelineScale, row: ClusterRow): number {
-  if (row.kind === 'event') return scale(new Date(row.events[0].at));
+export function rowBaseX(scale: TimelineScale, row: ClusterRow): number {  if (row.kind === 'event') return scale(new Date(row.events[0].at));
   const first = scale(new Date(row.from));
   const last = scale(new Date(row.to));
   return (first + last) / 2;

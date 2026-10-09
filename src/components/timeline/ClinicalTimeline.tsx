@@ -1,11 +1,11 @@
-// ClinicalTimeline — the real timeline surface (TL-01/TL-02; tickets 06-01
-// and 06-02; reference §5 axis grammar).
+// ClinicalTimeline — the real timeline surface (TL-01/TL-02/TL-03/TL-04/TL-07;
+// tickets 06-01…06-03; reference §5 axis grammar).
 //
 // React owns the SVG node tree; D3 owns ONLY the temporal math and the zoom
 // BEHAVIOR — no imperative redraw of the tree, no second charting engine, no
 // static drawing (§8.1, §27). The two-layer split is deliberate:
-//   * structure (lattice, clusters, nodes, badges) is React-rendered from
-//     pure helpers and re-computed when a gesture ENDS;
+//   * structure (lattice, clusters, nodes, badges, selection, filter) is
+//     React-rendered from pure helpers and re-computed when a gesture ENDS;
 //   * per-frame motion is imperative `transform` writes on the existing
 //     marks, driven by `d3-zoom` through a ref.
 // No React state changes per frame (UX-04/TL-09): a pan across thousands of
@@ -17,17 +17,33 @@
 // text never stretches, and hairlines stay 1px without a non-scaling-stroke
 // escape hatch (INV-11 holds by construction).
 //
-// 'use client' (the island boundary): the band measures its container and
-// attaches the zoom behavior. All DATA arrives from the Server Component as
-// props, so the query itself stays server-side under RLS.
+// Selection (TL-07): an event node opens its detail card at overlay
+// elevation; a CLUSTER node instead zooms into the range it represents (a
+// cluster is not a thing to select — expanding it is a range move). The card
+// is dismissed by its close control, by clicking the band, or by Escape.
+// Category filtering (TL-07) narrows the timeline to the event kinds present
+// and recomposes the axis over the filtered set, so the axis always describes
+// what is actually shown.
+//
+// 'use client' (the island boundary): the band measures its container,
+// attaches the zoom behavior and owns the selection/filter state. All DATA
+// arrives from the Server Component as props, so the query itself stays
+// server-side under RLS.
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RefObject } from 'react';
+import type { CSSProperties, RefObject } from 'react';
 import { select } from 'd3-selection';
 import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom';
 import { AXIS_Y, TIMELINE_BAND_HEIGHT, buildTimeScale, monthTicks } from '@/lib/timeline/scale';
-import type { CareEvent } from '@/lib/timeline/events';
+import {
+  availableCategories,
+  CARE_EVENT_CATEGORY_LABELS,
+  filterByCategory,
+  type CareEvent,
+  type CareEventCategory,
+} from '@/lib/timeline/events';
+import { EventDetailCard } from '@/components/timeline/EventDetailCard';
 import {
   clampTransform,
   clusterVisibleEvents,
@@ -36,7 +52,9 @@ import {
   levelForSpanDays,
   MAX_ZOOM_K,
   rowBaseX,
+  transformForRange,
   visibleWindow,
+  type ClusterRow,
   type TimelineTransform,
 } from '@/lib/timeline/zoom';
 
@@ -50,8 +68,12 @@ const NODE_RADIUS = 4;
 const DIVIDER_HALF_LENGTH = 24;
 /** Cluster badge radius (the reference's small accent count badge). */
 const BADGE_RADIUS = 7;
+/** Detail card width — also its positioning clamp (w-64 = 16rem = 256px). */
+const CARD_WIDTH = 256;
 
 const DAY_MS = 86_400_000;
+
+type CategoryFilter = 'all' | CareEventCategory;
 
 function useElementWidth(ref: RefObject<HTMLDivElement | null>): number {
   const [width, setWidth] = useState(DEFAULT_WIDTH);
@@ -73,6 +95,11 @@ function useElementWidth(ref: RefObject<HTMLDivElement | null>): number {
   return width;
 }
 
+/** "2026-10-06" / "2026-10-06T09:30:00Z" → the UTC calendar date. */
+function dayOf(iso: string): string {
+  return iso.slice(0, 10);
+}
+
 export function ClinicalTimeline({
   events,
   initialTransform,
@@ -81,7 +108,7 @@ export function ClinicalTimeline({
   events: readonly CareEvent[];
   /** A transform the scrubber (06-04) can hand in; clamped before use. */
   initialTransform?: TimelineTransform;
-  /** Fired when a gesture ends or the transform changes structurally. */
+  /** Fired when a gesture or a cluster-zoom changes the transform. */
   onTransformEnd?: (transform: TimelineTransform) => void;
 }) {
   const holderRef = useRef<HTMLDivElement>(null);
@@ -91,17 +118,25 @@ export function ClinicalTimeline({
   const [transform, setTransform] = useState<TimelineTransform>(
     initialTransform ?? IDENTITY_TRANSFORM,
   );
+  const [category, setCategory] = useState<CategoryFilter>('all');
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  // One scale over the FULL event domain — pan/zoom change which slice is
-  // visible, never the scale's own law (positions stay stable under panning).
+  const categories = useMemo(() => availableCategories(events), [events]);
+  const filteredEvents = useMemo(
+    () => (category === 'all' ? [...events] : filterByCategory(events, category)),
+    [events, category],
+  );
+
+  // One scale over the FULL (filtered) event domain — pan/zoom change which
+  // slice is visible, never the scale's own law (stable under panning).
   const geometry = useMemo(
     () =>
       buildTimeScale({
-        dates: events.map((event) => event.at),
+        dates: filteredEvents.map((event) => event.at),
         width,
         padding: EDGE_PADDING,
       }),
-    [events, width],
+    [filteredEvents, width],
   );
 
   // Registry of marks carrying a `data-base-x`; rebuilt after every render so
@@ -130,8 +165,8 @@ export function ClinicalTimeline({
     if (!svg || geometry === null) return;
     const behavior = d3Zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, MAX_ZOOM_K])
-      // The event domain's edges may not travel past the band's edges:
-      // bounded pan, no overscroll into empty space (06-02 criterion).
+      // The visible window stays inside the event domain: bounded pan, no
+      // overscroll into empty space (06-02 criterion).
       .translateExtent([
         [EDGE_PADDING, 0],
         [width - EDGE_PADDING, TIMELINE_BAND_HEIGHT],
@@ -177,41 +212,81 @@ export function ClinicalTimeline({
   const window_ =
     geometry === null ? null : visibleWindow(geometry.scale, transform, Math.max(width, 1));
 
+  const rows =
+    geometry === null || window_ === null
+      ? []
+      : clusterVisibleEvents(filteredEvents, {
+          fromMs: window_.fromMs,
+          toMs: window_.toMs,
+          level: levelForSpanDays((window_.toMs - window_.fromMs) / DAY_MS),
+        });
+
+  // A selection whose row left the view (filter change, re-cluster, pan)
+  // simply stops being selected — no stale card floats over nothing.
+  const selectedRow = rows.find((row) => row.key === selectedKey) ?? null;
+
+  useEffect(() => {
+    if (selectedKey !== null && selectedRow === null) setSelectedKey(null);
+  }, [selectedKey, selectedRow]);
+
+  useEffect(() => {
+    if (selectedKey === null) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedKey(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedKey]);
+
   if (geometry === null || window_ === null) {
+    const filteredEmpty = events.length > 0;
     return (
       <div ref={holderRef} className="w-full">
+        <FilterChips
+          category={category}
+          categories={categories}
+          onSelect={setCategory}
+        />
         <div className="flex flex-col items-center justify-center gap-xs text-center">
-          <span className="text-body font-semibold leading-body text-text-primary">
-            No timeline events yet
-          </span>
-          <span className="text-body leading-body text-text-secondary">
-            Visits, medications and results will appear here as care progresses.
-          </span>
-          <span className="text-label leading-label text-text-secondary">
-            Document a visit to place the first event.
-          </span>
+          {filteredEmpty ? (
+            <>
+              <span className="text-body font-semibold leading-body text-text-primary">
+                {category === 'clinical'
+                  ? 'No clinical events yet'
+                  : 'No record activity yet'}
+              </span>
+              <span className="text-body leading-body text-text-secondary">
+                Events of this kind will appear here as care progresses.
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-body font-semibold leading-body text-text-primary">
+                No timeline events yet
+              </span>
+              <span className="text-body leading-body text-text-secondary">
+                Visits, medications and results will appear here as care progresses.
+              </span>
+              <span className="text-label leading-label text-text-secondary">
+                Document a visit to place the first event.
+              </span>
+            </>
+          )}
         </div>
       </div>
     );
   }
 
-  const spanDays = (window_.toMs - window_.fromMs) / DAY_MS;
-  const level = levelForSpanDays(spanDays);
   const lattice = monthTicks(
     geometry.scale,
     [new Date(window_.fromMs), new Date(window_.toMs)],
     Math.max(width, 1),
   );
-  const rows = clusterVisibleEvents(events, {
-    fromMs: window_.fromMs,
-    toMs: window_.toMs,
-    level,
-  });
 
-  const firstAt = events[0]?.at.slice(0, 10) ?? '';
-  const lastAt = events[events.length - 1]?.at.slice(0, 10) ?? '';
+  const firstAt = filteredEvents[0]?.at.slice(0, 10) ?? '';
+  const lastAt = filteredEvents[filteredEvents.length - 1]?.at.slice(0, 10) ?? '';
   const clusterCount = rows.filter((row) => row.kind === 'cluster').length;
-  const summary = `Timeline with ${events.length} events, ${firstAt} to ${lastAt}${
+  const summary = `Timeline with ${filteredEvents.length} events, ${firstAt} to ${lastAt}${
     clusterCount === 1
       ? ', 1 cluster in view'
       : clusterCount > 1
@@ -219,17 +294,51 @@ export function ClinicalTimeline({
         : ''
   }`;
 
+  /** A cluster click frames the stretch it represents; an event click selects. */
+  const onRowActivate = (row: ClusterRow) => {
+    if (row.kind === 'cluster') {
+      const next = transformForRange(
+        geometry.scale,
+        Math.max(width, 1),
+        EDGE_PADDING,
+        new Date(row.from).getTime(),
+        new Date(row.to).getTime(),
+      );
+      setTransform(next);
+      setSelectedKey(null);
+      onTransformEnd?.(next);
+      return;
+    }
+    setSelectedKey(row.key);
+  };
+
+  const selectedEvent =
+    selectedRow !== null && selectedRow.kind === 'event' ? selectedRow.events[0] : null;
+  const cardStyle: CSSProperties | null =
+    selectedRow === null
+      ? null
+      : {
+          left: `${Math.min(
+            Math.max(frameX(transform.k, transform.tx, rowBaseX(geometry.scale, selectedRow)) - CARD_WIDTH / 2, 8),
+            Math.max(width - CARD_WIDTH - 8, 8),
+          )}px`,
+          top: `${AXIS_Y + 16}px`,
+        };
+
   return (
-    <div ref={holderRef} className="w-full">
+    <div ref={holderRef} className="relative w-full">
+      <FilterChips category={category} categories={categories} onSelect={setCategory} />
+
       <svg
         ref={svgRef}
         role="img"
         aria-label={summary}
         viewBox={`0 0 ${Math.max(width, 1)} ${TIMELINE_BAND_HEIGHT}`}
         className="block h-auto w-full touch-none"
+        onClick={() => setSelectedKey(null)}
       >
+        {/* Lattice + axis are decoration and stay hidden from assistive tech. */}
         <g aria-hidden="true">
-          {/* Month dividers — the 1px lattice, borderSubtle only (INV-15). */}
           {lattice.map((tick) => (
             <g
               key={`divider-${tick.date.toISOString()}`}
@@ -248,7 +357,6 @@ export function ClinicalTimeline({
             </g>
           ))}
 
-          {/* Month labels, plus the year in its place on January. */}
           {lattice.map((tick) => (
             <g
               key={`label-${tick.date.toISOString()}`}
@@ -276,11 +384,15 @@ export function ClinicalTimeline({
             className="stroke-border-subtle"
             strokeWidth={1}
           />
+        </g>
 
-          {/* Event nodes and cluster badges, each at its transform-derived x. */}
+        {/* Event nodes and cluster badges: real controls, exposed to AT. */}
+        <g>
           {rows.map((row) => {
             const baseX = rowBaseX(geometry.scale, row);
             const x = frameX(transform.k, transform.tx, baseX);
+            const isSelected = row.kind === 'event' && selectedRow?.key === row.key;
+
             if (row.kind === 'cluster') {
               return (
                 <g
@@ -289,6 +401,14 @@ export function ClinicalTimeline({
                   data-role="node"
                   data-count={row.count}
                   transform={`translate(${x},0)`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${row.count} events between ${dayOf(row.from)} and ${dayOf(row.to)}. Expand this range.`}
+                  className="cursor-pointer"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRowActivate(row);
+                  }}
                 >
                   {/* Filled accent node + count badge — the §8.4 dense-zoom
                       language. The count is centered on the badge with BOTH
@@ -306,6 +426,8 @@ export function ClinicalTimeline({
                 </g>
               );
             }
+
+            const event = row.events[0];
             return (
               <g
                 key={row.key}
@@ -313,12 +435,25 @@ export function ClinicalTimeline({
                 data-role="node"
                 data-count={row.count}
                 transform={`translate(${x},0)`}
+                role="button"
+                tabIndex={0}
+                aria-label={`${event.label}, ${dayOf(event.at)}`}
+                aria-pressed={isSelected}
+                className="cursor-pointer"
+                onClick={(clickEvent) => {
+                  clickEvent.stopPropagation();
+                  onRowActivate(row);
+                }}
               >
-                {/* Inactive/past node: light with a stroked rim (reference §5). */}
+                {/* Inactive node: light with a stroked rim (reference §5).
+                    The selected node reads active through the accent fill —
+                    inside the one sanctioned accent list (INV-05). */}
                 <circle
                   cy={AXIS_Y}
-                  r={NODE_RADIUS}
-                  className="fill-surface stroke-text-primary"
+                  r={isSelected ? BADGE_RADIUS : NODE_RADIUS}
+                  className={
+                    isSelected ? 'fill-accent stroke-text-primary' : 'fill-surface stroke-text-primary'
+                  }
                   strokeWidth={1}
                 />
               </g>
@@ -326,6 +461,52 @@ export function ClinicalTimeline({
           })}
         </g>
       </svg>
+
+      {selectedEvent !== null && cardStyle !== null ? (
+        <EventDetailCard
+          event={selectedEvent}
+          style={cardStyle}
+          onClose={() => setSelectedKey(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/** The category filter — real pill controls, active one emphasized by fill. */
+function FilterChips({
+  category,
+  categories,
+  onSelect,
+}: {
+  category: CategoryFilter;
+  categories: readonly CareEventCategory[];
+  onSelect: (category: CategoryFilter) => void;
+}) {
+  if (categories.length <= 1) return null;
+  const options: Array<{ value: CategoryFilter; label: string }> = [
+    { value: 'all', label: 'All' },
+    ...categories.map((value) => ({ value, label: CARE_EVENT_CATEGORY_LABELS[value] })),
+  ];
+  return (
+    <div className="mb-sm flex items-center gap-xs" role="group" aria-label="Filter timeline">
+      {options.map((option) => {
+        const active = option.value === category;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onSelect(option.value)}
+            className={[
+              'inline-flex min-h-8 items-center justify-center rounded-pill px-md text-label leading-label text-text-primary',
+              active ? 'bg-surface-raised shadow-raised' : 'bg-transparent',
+            ].join(' ')}
+          >
+            {option.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
