@@ -4,7 +4,7 @@
 
 **Blocked by:** 07-01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `createVisitAction` parses with Zod, requires the `CAN_SCHEDULE` capability server-side, inserts only scheduling fields, and returns a typed result (never throws for expected failures)
 - [ ] A DB trigger rejects a clinical-field write by a role without `CAN_AUTHOR_CLINICAL` (raise `visit_clinical_forbidden`) — the §3.1/§12 server-side enforcement, not a UI-only guard

@@ -4,7 +4,7 @@
 
 **Blocked by:** 07-01, 07-02
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] The stage vocabulary is exactly `pre_visit → during_visit → after_visit` in one declaration (`status.ts` mirror of the SQL check, 0005 drift discipline)
 - [ ] Clinician actions: save pre-visit reason, move to During, save documentation, move to After, save follow-up (text + date) — each Zod-parsed and `CAN_AUTHOR_CLINICAL`-gated server-side

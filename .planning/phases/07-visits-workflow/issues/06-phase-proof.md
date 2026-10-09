@@ -4,7 +4,7 @@
 
 **Blocked by:** 07-01, 07-02, 07-03, 07-04, 07-05
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
 - [ ] `07-VERIFICATION.md` written: VIS-01..03 trace, 12-row QA gate, INV-01…17 sweep
 - [ ] Role-limit evidence recorded: the receptionist path can schedule and cannot author (trigger + action + UI hiding), with the DB-side proof deferred to the cloud-Supabase apply

@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `public.visits` exists with `org_id`, `patient_id` (FK patients, cascade), `stage` closed vocabulary (`pre_visit`, `during_visit`, `after_visit`), scheduling (`scheduled_at`, `visit_type`, `location`), documentation (`reason`, `documentation`), follow-up (`follow_up`, `follow_up_at`), and provenance (`source`, `created_by`, `updated_by`, `created_at`, `updated_at`) — §13, §23
 - [ ] The acting user's identity is trigger-owned from `auth.uid()`; the app never writes creator/updater/timestamps (0005 discipline)

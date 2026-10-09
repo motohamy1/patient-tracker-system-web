@@ -4,7 +4,7 @@
 
 **Blocked by:** 07-01, 07-03
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] The Care-Event projection gains a visits mapper: each visit becomes a `visit` event (category clinical) positioned at its schedule/occurrence instant, labelled from the visit type or reason (real values only)
 - [ ] A visit's follow-up becomes a child event (`follow-up`) so the branch layer renders it thin and collision-free — no fabricated relationships

@@ -4,7 +4,7 @@
 
 **Blocked by:** 07-01, 07-02, 07-03
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `visits/page.tsx` renders the patient's real visits under org RLS, newest first, each with a semantic stage marker and the scheduled date (tabular-nums)
 - [ ] A visit detail surface hosts the three-stage workflow (07-03) for authorised roles
