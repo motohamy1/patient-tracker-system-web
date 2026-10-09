@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 09
-current_phase_name: Labs + Imaging (Phase 9)
+current_phase: 10
+current_phase_name: Allergies + Genetics (Phase 10)
 status: in_progress
-stopped_at: Phase 9 agent work COMPLETE (tickets 09-01..09-05 resolved; 09-06 ready-for-human) · Phases 7-8 COMPLETE (07-06/08-05 ready-for-human) — cloud-Supabase applies of 0006/0007/0008, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
-last_updated: "2026-10-09T13:40:00.000Z"
+stopped_at: Phase 10 agent work COMPLETE (tickets 10-01..10-04 resolved; 10-05 ready-for-human) · Phases 7-9 COMPLETE (07-06/08-05/09-06 ready-for-human) — cloud-Supabase applies of 0006..0009, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
+last_updated: "2026-10-09T14:35:00.000Z"
 last_activity: 2026-10-09
-last_activity_desc: Phase 9 shipped via Matt's to-tickets + implement skills — labs + imaging lifecycles (0008), documents/media relationship + private Storage bucket policies, structured results with flag vocabulary, Labs/Imaging tab surfaces, timeline projection (ordered + result-child events); 09-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
+last_activity_desc: Phase 10 shipped via Matt's to-tickets + implement skills — allergies + genetics tables (0009) with data-layer role visibility (genetics restricted to provider_doctor/admin_owner; allergies all staff), CAN_VIEW_GENETICS mirror, provenance with distinguishable AI-extraction, record/resolve actions, Allergies + Genetics tab surfaces; 10-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
 progress:
   total_phases: 22
   completed_phases: 4

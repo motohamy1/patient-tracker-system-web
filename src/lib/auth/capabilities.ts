@@ -35,6 +35,7 @@ const CAN_CERTIFIED = [
   'CAN_MANAGE_MEMBERSHIP',
   'CAN_MANAGE_PATIENTS',
   'CAN_RETRIEVE_AUDIT',
+  'CAN_VIEW_GENETICS',
 ] as const;
 
 export const CAN_AUTHOR_CLINICAL: Capability = 'CAN_AUTHOR_CLINICAL';
@@ -47,6 +48,12 @@ export const CAN_MANAGE_MEMBERSHIP: Capability = 'CAN_MANAGE_MEMBERSHIP';
 // AUTH-07's structural exclusion is preserved (see the header note).
 export const CAN_MANAGE_PATIENTS: Capability = 'CAN_MANAGE_PATIENTS';
 export const CAN_RETRIEVE_AUDIT: Capability = 'CAN_RETRIEVE_AUDIT';
+// Phase 10 (ALG-02/ALG-03): genetics is a SENSITIVE category. This capability
+// mirrors migration 0009's genetics SELECT policy byte-for-byte at the role
+// level (provider_doctor + admin_owner): it exists so the UI can show a
+// truthful denial instead of an empty list — the data layer remains the
+// enforcement, this is its UI mirror (the CAN_RETRIEVE_AUDIT precedent).
+export const CAN_VIEW_GENETICS: Capability = 'CAN_VIEW_GENETICS';
 
 // The D- assignments, once and forever:
 //   provider_doctor  -> CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE,
@@ -55,18 +62,19 @@ export const CAN_RETRIEVE_AUDIT: Capability = 'CAN_RETRIEVE_AUDIT';
 //   receptionist     -> CAN_SCHEDULE, CAN_MANAGE_PATIENTS
 //   patient          -> CAN_SUBMIT_OBSERVATION                        (D-11)
 //   admin_owner      -> CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT,
-//                       CAN_MANAGE_PATIENTS
+//                       CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS
+//   provider_doctor  -> … CAN_VIEW_GENETICS (Phase 10's sensitive-category read)
 //
 // CAN_MANAGE_PATIENTS (Phase 4): walk-in registration is front-desk work
 // (D-01) and every staff role manages the folder workspace; the patient set
 // above stays observation-only so AUTH-07's structural claim holds verbatim.
 // Migration 0005's patients policies mirror this role list byte-for-byte.
 export const ROLE_CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {
-  provider_doctor: new Set([CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS]),
+  provider_doctor: new Set([CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS]),
   nurse: new Set([CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS]),
   receptionist: new Set([CAN_SCHEDULE, CAN_MANAGE_PATIENTS]),
   patient: new Set([CAN_SUBMIT_OBSERVATION]),
-  admin_owner: new Set([CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS]),
+  admin_owner: new Set([CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS]),
 };
 
 // The ONLY spelling valid in product code (plans 03-04/05): a capability check

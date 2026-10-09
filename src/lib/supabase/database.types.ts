@@ -313,6 +313,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"allergies": {
+                  Row: {
+                    "allergen": string,"created_at": string,"created_by": string | null,"id": string,"notes": string | null,"noted_at": string,"org_id": string,"patient_id": string,"reaction": string | null,"severity": string | null,"source": string,"status": string,"updated_at": string,"updated_by": string | null,"verification": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allergen": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"notes"?: string | null,"noted_at"?: string,"org_id": string,"patient_id": string,"reaction"?: string | null,"severity"?: string | null,"source"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null,"verification"?: string
+                  }
+                  Update: {
+                    "allergen"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"notes"?: string | null,"noted_at"?: string,"org_id"?: string,"patient_id"?: string,"reaction"?: string | null,"severity"?: string | null,"source"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null,"verification"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "allergies_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"genetics": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"document_id": string | null,"gene": string | null,"id": string,"interpretation": string | null,"kind": string,"org_id": string,"patient_id": string,"reported_at": string,"significance": string | null,"source": string,"updated_at": string,"updated_by": string | null,"variant": string | null,"verification": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"gene"?: string | null,"id"?: string,"interpretation"?: string | null,"kind": string,"org_id": string,"patient_id": string,"reported_at"?: string,"significance"?: string | null,"source"?: string,"updated_at"?: string,"updated_by"?: string | null,"variant"?: string | null,"verification"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"gene"?: string | null,"id"?: string,"interpretation"?: string | null,"kind"?: string,"org_id"?: string,"patient_id"?: string,"reported_at"?: string,"significance"?: string | null,"source"?: string,"updated_at"?: string,"updated_by"?: string | null,"variant"?: string | null,"verification"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "genetics_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "genetics_document_id_fkey"
+      columns: ["document_id"]
+isOneToOne: false
+      referencedRelation: "documents"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {

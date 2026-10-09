@@ -21,6 +21,7 @@ import {
   CAN_RETRIEVE_AUDIT,
   CAN_SCHEDULE,
   CAN_SUBMIT_OBSERVATION,
+  CAN_VIEW_GENETICS,
   ROLE_CAPABILITIES,
   runsCapability,
   type Capability,
@@ -32,12 +33,17 @@ const MY_DIR = fileURLToPath(new URL('.', import.meta.url));
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
 const ALL_ROLES = ROLES as readonly Role[];
+// CAN_VIEW_GENETICS was added in Phase 10 (ALG-02/ALG-03): it mirrors
+// migration 0009's genetics SELECT policy at the role level
+// (provider_doctor + admin_owner) exactly as CAN_RETRIEVE_AUDIT mirrors the
+// admin_owner-only audit policy. The exact-set assertion is updated so the
+// deliberate widening stays visible rather than silently drifting.
 const expected: Record<Role, readonly Capability[]> = {
-  provider_doctor: [CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS],
+  provider_doctor: [CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS],
   nurse: [CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS],
   receptionist: [CAN_SCHEDULE, CAN_MANAGE_PATIENTS],
   patient: [CAN_SUBMIT_OBSERVATION],
-  admin_owner: [CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS],
+  admin_owner: [CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS],
 };
 
 describe('roles — byte-identical to migration 0001 (D-09)', () => {

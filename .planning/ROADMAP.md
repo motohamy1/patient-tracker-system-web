@@ -308,12 +308,13 @@ Plans:
   1. Clinicians can record and view allergies and genetics with source/creator/verification provenance.
   2. Role-based visibility is enforced at the data layer for these sensitive categories.
 
-**UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill):
 
-Plans:
-
-- [ ] 10-01: TBD
+- [x] 10-01: schema-role-visibility (ALG-01/02/03 foundation) — resolved
+- [x] 10-02: allergy-record-view (ALG-01) — resolved
+- [x] 10-03: genetics-record-view (ALG-02/03) — resolved
+- [x] 10-04: tab-surfaces (ALG-01/02/03 UI) — resolved
+- [ ] 10-05: phase-proof — ready-for-human (cloud apply + owner pass)
 
 ### Phase 11: AI Analytics / Patient Intelligence
 
@@ -556,7 +557,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 7. Visits Workflow | 6/6 tickets | Agent-complete — acceptance pending (migration apply + RLS/pgTAP on cloud Supabase, owner test pass, visual baselines, §6 verdicts) |  |
 | 8. Medications | 5/5 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §7 verdicts) |  |
 | 9. Labs + Imaging | 6/6 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, storage smoke test, owner test pass, visual baselines, §7 verdicts) |  |
-| 10. Allergies + Genetics | 0/TBD | Not started | - |
+| 10. Allergies + Genetics | 5/5 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §8 verdicts) |  |
 | 11. AI Analytics / Patient Intelligence | 0/TBD | Not started | - |
 | 12. Prescription OCR + Document Intelligence | 0/TBD | Not started | - |
 | 13. Patient Home | 0/TBD | Not started | - |
