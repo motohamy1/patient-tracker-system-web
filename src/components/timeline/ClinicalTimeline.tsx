@@ -46,6 +46,7 @@ import {
 import { EventDetailCard } from '@/components/timeline/EventDetailCard';
 import { TimelineScrubber } from '@/components/timeline/TimelineScrubber';
 import { useElementWidth } from '@/components/timeline/useElementWidth';
+import { branchPath, hasChildren, layoutMilestones } from '@/lib/timeline/branches';
 import {
   clampTransform,
   clusterVisibleEvents,
@@ -128,13 +129,26 @@ export function ClinicalTimeline({
     [filteredEvents, width],
   );
 
-  // Registry of marks carrying a `data-base-x`; rebuilt after every render so
-  // it never holds detached nodes.
+  // Registries rebuilt after every render so they never hold detached nodes:
+  // marks are TRANSLATED per frame; branch paths are RE-DRAWN per frame (their
+  // two endpoints move independently, so a path cannot be translated).
   const registryRef = useRef<SVGGElement[]>([]);
+  const branchPathsRef = useRef<SVGPathElement[]>([]);
 
   const applyFrame = (k: number, tx: number) => {
     for (const mark of registryRef.current) {
       mark.setAttribute('transform', `translate(${frameX(k, tx, Number(mark.dataset.baseX))},0)`);
+    }
+    for (const path of branchPathsRef.current) {
+      path.setAttribute(
+        'd',
+        branchPath(
+          frameX(k, tx, Number(path.dataset.parentBaseX)),
+          Number(path.dataset.parentY),
+          frameX(k, tx, Number(path.dataset.childBaseX)),
+          Number(path.dataset.childY),
+        ),
+      );
     }
   };
 
@@ -144,6 +158,7 @@ export function ClinicalTimeline({
     const svg = svgRef.current;
     if (svg === null) return;
     registryRef.current = Array.from(svg.querySelectorAll<SVGGElement>('g[data-base-x]'));
+    branchPathsRef.current = Array.from(svg.querySelectorAll<SVGPathElement>('path[data-branch]'));
     applyFrame(transform.k, transform.tx);
   });
 
@@ -271,6 +286,27 @@ export function ClinicalTimeline({
     Math.max(width, 1),
   );
 
+  // Milestone branches (TL-05): only events that genuinely carry sub-events
+  // render a branch — with today's schema that set is empty, so nothing is
+  // fabricated (§27). Child events are excluded from the flat node layer so a
+  // sub-event is never drawn twice.
+  const milestoneRows = rows.filter((row) => row.kind === 'event' && hasChildren(row.events[0]));
+  const milestones = layoutMilestones(
+    milestoneRows.map((row) => ({
+      parentKey: row.key,
+      parentBaseX: rowBaseX(geometry.scale, row),
+      parentY: AXIS_Y,
+      children: (row.events[0].children ?? []).map((child) => ({
+        id: child.id,
+        at: child.at,
+        baseX: geometry.scale(new Date(child.at)),
+      })),
+    })),
+  );
+  const childIds = new Set(
+    milestoneRows.flatMap((row) => (row.events[0].children ?? []).map((child) => child.id)),
+  );
+
   const firstAt = filteredEvents[0]?.at.slice(0, 10) ?? '';
   const lastAt = filteredEvents[filteredEvents.length - 1]?.at.slice(0, 10) ?? '';
   const clusterCount = rows.filter((row) => row.kind === 'cluster').length;
@@ -375,7 +411,9 @@ export function ClinicalTimeline({
 
         {/* Event nodes and cluster badges: real controls, exposed to AT. */}
         <g>
-          {rows.map((row) => {
+          {rows
+            .filter((row) => !(row.kind === 'event' && childIds.has(row.events[0].id)))
+            .map((row) => {
             const baseX = rowBaseX(geometry.scale, row);
             const x = frameX(transform.k, transform.tx, baseX);
             const isSelected = row.kind === 'event' && selectedRow?.key === row.key;
@@ -447,6 +485,59 @@ export function ClinicalTimeline({
             );
           })}
         </g>
+
+        {/* Milestone branches (TL-05): thin, calm, collision-free curves in
+            the same scene. Paths are redrawn per frame (both endpoints move),
+            so they pan and zoom with their nodes. Today's schema produces no
+            sub-events, so this layer renders nothing in the product — the
+            algorithm and its dev fixture prove it until a phase supplies
+            children (§27, no fabricated branches). */}
+        {milestones.length > 0 ? (
+          <g aria-hidden="true">
+            {milestones.flatMap((milestone) =>
+              milestone.placements.map((placement) => (
+                <path
+                  key={`branch-${milestone.parentKey}-${placement.childId}`}
+                  data-branch
+                  data-parent-base-x={milestone.parentBaseX}
+                  data-child-base-x={placement.childBaseX}
+                  data-parent-y={milestone.parentY}
+                  data-child-y={placement.childY}
+                  d={branchPath(
+                    frameX(transform.k, transform.tx, milestone.parentBaseX),
+                    milestone.parentY,
+                    frameX(transform.k, transform.tx, placement.childBaseX),
+                    placement.childY,
+                  )}
+                  className="fill-none stroke-text-primary"
+                  strokeWidth={1}
+                />
+              )),
+            )}
+          </g>
+        ) : null}
+
+        {milestones.length > 0 ? (
+          <g>
+            {milestones.flatMap((milestone) =>
+              milestone.placements.map((placement) => (
+                <g
+                  key={`child-${placement.childId}`}
+                  data-base-x={placement.childBaseX}
+                  data-role="branch-child"
+                  transform={`translate(${frameX(transform.k, transform.tx, placement.childBaseX)},0)`}
+                >
+                  <circle
+                    cy={placement.childY}
+                    r={3}
+                    className="fill-surface stroke-text-primary"
+                    strokeWidth={1}
+                  />
+                </g>
+              )),
+            )}
+          </g>
+        ) : null}
       </svg>
 
       {selectedEvent !== null && cardStyle !== null ? (
