@@ -4,7 +4,7 @@
 
 **Blocked by:** 08-01, 08-02
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `medications/page.tsx` renders the patient's real medications under org RLS, grouped by state (active / paused / stopped) with structured dose, frequency, route and dates (tabular-nums)
 - [ ] Lifecycle controls are present exactly for roles holding `CAN_AUTHOR_CLINICAL` and for legal transitions only (no dead controls; others read-only)
