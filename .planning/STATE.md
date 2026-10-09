@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 10
-current_phase_name: Allergies + Genetics (Phase 10)
+current_phase: 11
+current_phase_name: AI Analytics / Patient Intelligence (Phase 11)
 status: in_progress
-stopped_at: Phase 10 agent work COMPLETE (tickets 10-01..10-04 resolved; 10-05 ready-for-human) · Phases 7-9 COMPLETE (07-06/08-05/09-06 ready-for-human) — cloud-Supabase applies of 0006..0009, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
-last_updated: "2026-10-09T14:35:00.000Z"
+stopped_at: Phase 11 agent work COMPLETE (tickets 11-01..11-03 resolved; 11-04 ready-for-human) · Phases 7-10 COMPLETE (07-06/08-05/09-06/10-05 ready-for-human) — cloud-Supabase applies of 0006..0010, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
+last_updated: "2026-10-09T19:30:00.000Z"
 last_activity: 2026-10-09
-last_activity_desc: Phase 10 shipped via Matt's to-tickets + implement skills — allergies + genetics tables (0009) with data-layer role visibility (genetics restricted to provider_doctor/admin_owner; allergies all staff), CAN_VIEW_GENETICS mirror, provenance with distinguishable AI-extraction, record/resolve actions, Allergies + Genetics tab surfaces; 10-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
+last_activity_desc: Phase 11 shipped via Matt's to-tickets + implement skills — ai_insights substrate (0010) with AI provenance (system-derived/ai-generated), verification defaulting to ai-extracted (§23) and a one-way human-review lifecycle with session attribution and content immutability; deterministic pure generator over the real record (change/summary/attention/trend/documentation-gap families, every row citing evidence); AI Analytics tab with provenance + review pills, evidence links and Accept/Dismiss; Overview attention strip; CAN_REVIEW_AI capability mirror; 11-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
 progress:
   total_phases: 22
   completed_phases: 4

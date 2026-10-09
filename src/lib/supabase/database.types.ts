@@ -344,8 +344,8 @@ isOneToOne: false
                   Update: {
                     "created_at"?: string,"created_by"?: string | null,"document_id"?: string | null,"gene"?: string | null,"id"?: string,"interpretation"?: string | null,"kind"?: string,"org_id"?: string,"patient_id"?: string,"reported_at"?: string,"significance"?: string | null,"source"?: string,"updated_at"?: string,"updated_by"?: string | null,"variant"?: string | null,"verification"?: string
                   }
-                  Relationships: [
-                    {
+                   Relationships: [
+                     {
       foreignKeyName: "genetics_patient_id_fkey"
       columns: ["patient_id"]
 isOneToOne: false
@@ -358,9 +358,29 @@ isOneToOne: false
       referencedRelation: "documents"
       referencedColumns: ["id"]
     }
-                  ]
-                }
-          }
+                   ]
+                 },"ai_insights": {
+                   Row: {
+                     "body": string,"created_at": string,"created_by": string | null,"evidence": Json,"id": string,"kind": string,"org_id": string,"patient_id": string,"provenance": string,"review_state": string,"reviewed_at": string | null,"reviewed_by": string | null,"title": string,"updated_at": string,"updated_by": string | null,"verification": string,"window": Json | null
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "body": string,"created_at"?: string,"created_by"?: string | null,"evidence": Json,"id"?: string,"kind": string,"org_id": string,"patient_id": string,"provenance"?: string,"review_state"?: string,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"title": string,"updated_at"?: string,"updated_by"?: string | null,"verification"?: string,"window"?: Json | null
+                   }
+                   Update: {
+                     "body"?: string,"created_at"?: string,"created_by"?: string | null,"evidence"?: Json,"id"?: string,"kind"?: string,"org_id"?: string,"patient_id"?: string,"provenance"?: string,"review_state"?: string,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"title"?: string,"updated_at"?: string,"updated_by"?: string | null,"verification"?: string,"window"?: Json | null
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "ai_insights_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                   ]
+                 }
+           }
           Views: {
             [_ in never]: never
           }
@@ -377,9 +397,12 @@ isOneToOne: false
 "remove_membership":
 { Args: { "p_membership_id": string }; Returns: undefined
                            },
-"show_limit":
+            "show_limit":
 { Args: Record<PropertyKey, never>; Returns: number
-                           },
+                            },
+"supersede_pending_ai_insights":
+{ Args: { "p_patient_id": string }; Returns: undefined
+                            },
 "show_trgm":
 { Args: { "": string }; Returns: (string)[]
                            }

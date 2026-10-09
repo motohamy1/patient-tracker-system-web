@@ -28,6 +28,7 @@
 // Server Component: no hook, no client directive.
 import { Lock } from 'lucide-react';
 import { EmptyState } from '@/components/primitives/EmptyState';
+import { OverviewAttentionStrip } from '@/components/ai/OverviewAttentionStrip';
 import { StateVariant } from '@/components/state/StateVariant';
 import { ContextStatRow } from '@/components/workspace/ContextStatRow';
 import { LabsCard } from '@/components/workspace/LabsCard';
@@ -37,6 +38,7 @@ import { TimelineBand } from '@/components/workspace/TimelineBand';
 import { VitalsHistoryCard } from '@/components/workspace/VitalsHistoryCard';
 import { BOTTOM_ROW_GRID, UPPER_GRID } from '@/components/workspace/grids';
 import { composeRecentEvents } from '@/lib/patients/activity';
+import { listAiInsights, type AiInsightRecord } from '@/lib/ai/queries';
 import { projectCareEvents } from '@/lib/timeline/events';
 import type { Role } from '@/lib/auth/roles';
 import { ownWorkspaceTarget } from '@/lib/auth/redirect';
@@ -189,6 +191,20 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
   });
   const events = activityPosture === 'ok' ? composeRecentEvents(patient, invites) : [];
 
+  // Attention insights bridge the Overview to AI Analytics (WSP-02). The read
+  // degrades silently to no strip: the Overview never breaks for a derived
+  // signal, and an empty strip is honest rather than decorative.
+  let attentionInsights: AiInsightRecord[] = [];
+  if (parsedId.success) {
+    try {
+      attentionInsights = (await listAiInsights(resolution.orgId, parsedId.data)).filter(
+        (insight) => insight.kind === 'attention',
+      );
+    } catch {
+      attentionInsights = [];
+    }
+  }
+
   return (
     <>
       <section aria-label="Patient overview" className={UPPER_GRID}>
@@ -197,6 +213,8 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
       </section>
 
       <TimelineBand events={timelineEvents} />
+
+      <OverviewAttentionStrip items={attentionInsights} patientId={patientId} />
 
       <div className={BOTTOM_ROW_GRID}>
         <VitalsHistoryCard />

@@ -329,11 +329,12 @@ Plans:
   3. No autonomous diagnosis or prescribing exists anywhere in the flow.
 
 **UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill; one file per ticket):
 
-Plans:
-
-- [ ] 11-01: TBD
+- [x] 11-01: ai-insights-substrate (AI-02 foundation) — resolved
+- [x] 11-02: deterministic-generation (AI-01) — resolved
+- [x] 11-03: ai-analytics-surface (AI-01/AI-02 UI) — resolved
+- [ ] 11-04: phase-proof — ready-for-human (cloud apply + RLS/pgTAP + owner pass + visual baselines)
 
 ### Phase 12: Prescription OCR + Document Intelligence
 
@@ -558,7 +559,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 8. Medications | 5/5 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §7 verdicts) |  |
 | 9. Labs + Imaging | 6/6 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, storage smoke test, owner test pass, visual baselines, §7 verdicts) |  |
 | 10. Allergies + Genetics | 5/5 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §8 verdicts) |  |
-| 11. AI Analytics / Patient Intelligence | 0/TBD | Not started | - |
+| 11. AI Analytics / Patient Intelligence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + RLS/pgTAP, owner test pass, visual baselines, §8 verdicts) |  |
 | 12. Prescription OCR + Document Intelligence | 0/TBD | Not started | - |
 | 13. Patient Home | 0/TBD | Not started | - |
 | 14. Care Tasks / Adherence | 0/TBD | Not started | - |
