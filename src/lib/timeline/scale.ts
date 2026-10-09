@@ -106,7 +106,12 @@ export type MonthTick = {
  * drift). `timeMonth` is the local-time interval; `utcMonth` is the fixed
  * one, so 2025-06-01T00:00:00.000Z means the same thing everywhere.
  */
-export function monthTicks(scale: TimelineScale, domain: readonly [Date, Date]): MonthTick[] {
+export function monthTicks(
+  scale: TimelineScale,
+  domain: readonly [Date, Date],
+  /** Clip x to the band's pixel width (a zoomed window can overflow). */
+  clipX: number = scale.range()[1],
+): MonthTick[] {
   // `utcMonth` IS the every(1) interval — the identity step, stated as the
   // interval itself so no second interval object is derived.
   const interval: CountableTimeInterval = utcMonth;
@@ -116,7 +121,7 @@ export function monthTicks(scale: TimelineScale, domain: readonly [Date, Date]):
   let date: Date = start;
   while (date.getTime() <= end.getTime()) {
     const x = scale(date);
-    if (x >= 0 && x <= scale.range()[1]) {
+    if (x >= 0 && x <= clipX) {
       ticks.push({
         date,
         x,
