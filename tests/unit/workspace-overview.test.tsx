@@ -439,8 +439,12 @@ describe('WSP-02 — the region frame (T-04)', () => {
     const markup = renderToStaticMarkup(
       createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
     );
-    // no interactive element anywhere in the body answers nothing (D-24)
-    expect(markup).not.toContain('<button');
+    // The chips are visual chrome for a control that does not exist yet, so
+    // they must NOT be dead buttons (D-24). The timeline's own controls
+    // (06-03 filter chips, 06-04 zoom buttons) are WIRED and are expected to
+    // be real buttons — this guard is scoped to the chips' card.
+    const vitalsCard = parse(markup).querySelector('section[aria-label="Vital Signs History"]');
+    expect(vitalsCard?.querySelectorAll('button')).toHaveLength(0);
 
     const doc = parse(markup);
     const vitals = doc.querySelector('section[aria-label="Vital Signs History"]');

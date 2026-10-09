@@ -244,6 +244,22 @@ export function transformForRange(
 }
 
 /**
+ * The transform that puts a chosen instant at the band's centre at zoom `k`
+ * — the scrubber's recenter and its zoom buttons both go through here, so
+ * every transform the timeline receives obeys one law (and one clamp).
+ */
+export function transformForCenter(
+  scale: TimelineScale,
+  width: number,
+  pad: number,
+  centerMs: number,
+  k: number,
+): TimelineTransform {
+  const baseCenter = scale(new Date(centerMs));
+  return clampTransform(scale, { k, tx: width / 2 - k * baseCenter }, width, pad);
+}
+
+/**
  * Where a row sits in base pixels: a cluster sits at the midpoint of its
  * members (the count badge reads as "this stretch of time"), a single event
  * at its own position.

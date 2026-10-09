@@ -32,7 +32,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, RefObject } from 'react';
+import type { CSSProperties } from 'react';
 import { select } from 'd3-selection';
 import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom';
 import { AXIS_Y, TIMELINE_BAND_HEIGHT, buildTimeScale, monthTicks } from '@/lib/timeline/scale';
@@ -44,6 +44,8 @@ import {
   type CareEventCategory,
 } from '@/lib/timeline/events';
 import { EventDetailCard } from '@/components/timeline/EventDetailCard';
+import { TimelineScrubber } from '@/components/timeline/TimelineScrubber';
+import { useElementWidth } from '@/components/timeline/useElementWidth';
 import {
   clampTransform,
   clusterVisibleEvents,
@@ -75,26 +77,6 @@ const DAY_MS = 86_400_000;
 
 type CategoryFilter = 'all' | CareEventCategory;
 
-function useElementWidth(ref: RefObject<HTMLDivElement | null>): number {
-  const [width, setWidth] = useState(DEFAULT_WIDTH);
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const measure = () => {
-      const next = element.clientWidth;
-      if (next > 0) setWidth(next);
-    };
-    measure();
-    // jsdom (unit render proof) has no ResizeObserver; the measure() above
-    // already ran, and a 0 measurement keeps the first-paint default.
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
-}
-
 /** "2026-10-06" / "2026-10-06T09:30:00Z" → the UTC calendar date. */
 function dayOf(iso: string): string {
   return iso.slice(0, 10);
@@ -113,13 +95,20 @@ export function ClinicalTimeline({
 }) {
   const holderRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const width = useElementWidth(holderRef);
+  const width = useElementWidth(holderRef, DEFAULT_WIDTH);
 
   const [transform, setTransform] = useState<TimelineTransform>(
     initialTransform ?? IDENTITY_TRANSFORM,
   );
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  /** One entry point for every deliberate transform change (gesture end,
+   *  cluster zoom, scrubber) so the shared transform and its listener agree. */
+  const applyTransform = (next: TimelineTransform) => {
+    setTransform(next);
+    onTransformEnd?.(next);
+  };
 
   const categories = useMemo(() => availableCategories(events), [events]);
   const filteredEvents = useMemo(
@@ -191,8 +180,7 @@ export function ClinicalTimeline({
           width,
           EDGE_PADDING,
         );
-        setTransform(next);
-        onTransformEnd?.(next);
+        applyTransform(next);
       });
 
     select(svg).call(behavior);
@@ -304,9 +292,8 @@ export function ClinicalTimeline({
         new Date(row.from).getTime(),
         new Date(row.to).getTime(),
       );
-      setTransform(next);
       setSelectedKey(null);
-      onTransformEnd?.(next);
+      applyTransform(next);
       return;
     }
     setSelectedKey(row.key);
@@ -469,6 +456,15 @@ export function ClinicalTimeline({
           onClose={() => setSelectedKey(null)}
         />
       ) : null}
+
+      {/* The bottom scrubber shares this exact transform (TL-06). */}
+      <TimelineScrubber
+        scale={geometry.scale}
+        bandWidth={Math.max(width, 1)}
+        pad={EDGE_PADDING}
+        transform={transform}
+        onTransform={applyTransform}
+      />
     </div>
   );
 }
