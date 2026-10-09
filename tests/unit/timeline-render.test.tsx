@@ -62,7 +62,9 @@ describe('ClinicalTimeline — real nodes on a real axis', () => {
     const events = projectCareEvents(PATIENT, INVITES);
     const doc = renderBand(events);
     const svg = doc.querySelector('svg');
-    expect(svg?.getAttribute('role')).toBe('img');
+    // `group`, not `img`: the timeline now exposes interactive event nodes to
+    // assistive tech (06-06), and an `img` role would hide them.
+    expect(svg?.getAttribute('role')).toBe('group');
     expect(svg?.getAttribute('aria-label')).toBe(
       'Timeline with 3 events, 2025-05-12 to 2026-10-06, 1 cluster in view',
     );

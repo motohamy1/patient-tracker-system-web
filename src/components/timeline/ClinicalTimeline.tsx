@@ -32,7 +32,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { select } from 'd3-selection';
 import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom';
 import { AXIS_Y, TIMELINE_BAND_HEIGHT, buildTimeScale, monthTicks } from '@/lib/timeline/scale';
@@ -55,6 +55,7 @@ import {
   levelForSpanDays,
   MAX_ZOOM_K,
   rowBaseX,
+  transformForCenter,
   transformForRange,
   visibleWindow,
   type ClusterRow,
@@ -335,6 +336,43 @@ export function ClinicalTimeline({
     setSelectedKey(row.key);
   };
 
+  /** Zoom about the visible window's centre (the +/- keys and the scrubber). */
+  const zoomByCentered = (factor: number) => {
+    const centerMs = window_.fromMs + (window_.toMs - window_.fromMs) / 2;
+    applyTransform(
+      transformForCenter(geometry.scale, Math.max(width, 1), EDGE_PADDING, centerMs, transform.k * factor),
+    );
+  };
+
+  /** Keyboard (TL-08): arrows pan, +/- zoom, Escape dismisses the detail. */
+  const onTimelineKeyDown = (event: ReactKeyboardEvent<SVGSVGElement>) => {
+    const panStep = Math.max(Math.max(width, 1) * 0.1, 40);
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      const direction = event.key === 'ArrowRight' ? -1 : 1;
+      applyTransform(
+        clampTransform(
+          geometry.scale,
+          { k: transform.k, tx: transform.tx + direction * panStep },
+          Math.max(width, 1),
+          EDGE_PADDING,
+        ),
+      );
+      event.preventDefault();
+      return;
+    }
+    if (event.key === '+' || event.key === '=') {
+      zoomByCentered(1.6);
+      event.preventDefault();
+      return;
+    }
+    if (event.key === '-' || event.key === '_') {
+      zoomByCentered(1 / 1.6);
+      event.preventDefault();
+      return;
+    }
+    if (event.key === 'Escape') setSelectedKey(null);
+  };
+
   const selectedEvent =
     selectedRow !== null && selectedRow.kind === 'event' ? selectedRow.events[0] : null;
   const cardStyle: CSSProperties | null =
@@ -354,10 +392,12 @@ export function ClinicalTimeline({
 
       <svg
         ref={svgRef}
-        role="img"
+        role="group"
         aria-label={summary}
         viewBox={`0 0 ${Math.max(width, 1)} ${TIMELINE_BAND_HEIGHT}`}
         className="block h-auto w-full touch-none"
+        tabIndex={0}
+        onKeyDown={onTimelineKeyDown}
         onClick={() => setSelectedKey(null)}
       >
         {/* Lattice + axis are decoration and stay hidden from assistive tech. */}
@@ -434,7 +474,17 @@ export function ClinicalTimeline({
                     event.stopPropagation();
                     onRowActivate(row);
                   }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onRowActivate(row);
+                    }
+                  }}
                 >
+                  {/* A 44px invisible hit area: the visible node is small by
+                      design, the touch target is not (UX-05/§26). A rect, not
+                      a circle, so the drawn-node geometry stays exact. */}
+                  <rect x={-22} y={AXIS_Y - 22} width={44} height={44} className="fill-transparent" />
                   {/* Filled accent node + count badge — the §8.4 dense-zoom
                       language. The count is centered on the badge with BOTH
                       anchors plus dominant-baseline, never off-axis. */}
@@ -469,7 +519,16 @@ export function ClinicalTimeline({
                   clickEvent.stopPropagation();
                   onRowActivate(row);
                 }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onRowActivate(row);
+                  }
+                }}
               >
+                {/* 44px invisible hit area (UX-05/§26) — the mark stays small.
+                    A rect keeps the drawn-node geometry exact. */}
+                <rect x={-22} y={AXIS_Y - 22} width={44} height={44} className="fill-transparent" />
                 {/* Inactive node: light with a stroked rim (reference §5).
                     The selected node reads active through the accent fill —
                     inside the one sanctioned accent list (INV-05). */}
@@ -586,7 +645,7 @@ function FilterChips({
             aria-pressed={active}
             onClick={() => onSelect(option.value)}
             className={[
-              'inline-flex min-h-8 items-center justify-center rounded-pill px-md text-label leading-label text-text-primary',
+              'inline-flex min-h-11 items-center justify-center rounded-pill px-md text-label leading-label text-text-primary md:min-h-8',
               active ? 'bg-surface-raised shadow-raised' : 'bg-transparent',
             ].join(' ')}
           >
