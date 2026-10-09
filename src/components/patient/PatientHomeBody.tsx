@@ -20,6 +20,8 @@ import { StateVariant } from '@/components/state/StateVariant';
 import { Surface } from '@/components/primitives';
 import { QuickLogControl } from '@/components/patient/QuickLogControl';
 import { CareTasksRegion } from '@/components/care-tasks/CareTasksRegion';
+import { ThreadView } from '@/components/messaging/ThreadView';
+import { getOwnConversation, listConversationMessages } from '@/lib/messaging/queries';
 import { loadCareTaskState } from '@/lib/care-tasks/load';
 import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { listVisits, type VisitRecord } from '@/lib/visits/queries';
@@ -148,6 +150,22 @@ export async function PatientHomeBody() {
     careTaskState = await loadCareTaskState(patient.orgId, patient.id);
   } catch {
     careTaskState = null;
+  }
+
+  // The patient's own conversation (the unified model, Phase 15): resolved
+  // from the session, never the URL. A closed or absent thread shows the
+  // honest empty region.
+  let conversationId: string | undefined;
+  let conversationMessages: Awaited<ReturnType<typeof listConversationMessages>> = [];
+  try {
+    const own = await getOwnConversation(patient.orgId, patient.id);
+    if (own !== null) {
+      conversationId = own.id;
+      conversationMessages = await listConversationMessages(patient.orgId, own.id);
+    }
+  } catch {
+    conversationId = undefined;
+    conversationMessages = [];
   }
 
   const now = new Date();
@@ -355,11 +373,19 @@ export async function PatientHomeBody() {
       </div>
 
       <Region title="Communication">
-        <EmptyState
-          icon={MessageCircle}
-          title="No messages yet"
-          body="Messages from your care team will appear here."
-        />
+        {conversationId !== undefined ? (
+          <ThreadView
+            conversationId={conversationId}
+            messages={conversationMessages}
+            viewer="patient"
+          />
+        ) : (
+          <EmptyState
+            icon={MessageCircle}
+            title="No messages yet"
+            body="Your care team can start a conversation here."
+          />
+        )}
       </Region>
     </div>
   );

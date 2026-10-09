@@ -471,6 +471,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                    ]
+                 },"conversations": {
+                   Row: {
+                     "created_at": string,"created_by": string | null,"id": string,"org_id": string,"patient_id": string,"status": string,"updated_at": string,"updated_by": string | null
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "created_at"?: string,"created_by"?: string | null,"id"?: string,"org_id": string,"patient_id": string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                   }
+                   Update: {
+                     "created_at"?: string,"created_by"?: string | null,"id"?: string,"org_id"?: string,"patient_id"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "conversations_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                   ]
+                 },"conversation_messages": {
+                   Row: {
+                     "body": string,"channel": string,"conversation_id": string,"created_at": string,"created_by": string | null,"id": string,"org_id": string | null,"patient_id": string | null,"sender_kind": string,"sender_user_id": string | null
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "body": string,"channel"?: string,"conversation_id": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"org_id"?: string | null,"patient_id"?: string | null,"sender_kind"?: string,"sender_user_id"?: string | null
+                   }
+                   Update: {
+                     "body"?: string,"channel"?: string,"conversation_id"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"org_id"?: string | null,"patient_id"?: string | null,"sender_kind"?: string,"sender_user_id"?: string | null
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "conversation_messages_conversation_id_fkey"
+      columns: ["conversation_id"]
+isOneToOne: false
+      referencedRelation: "conversations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "conversation_messages_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                   ]
                  }
            }
           Views: {

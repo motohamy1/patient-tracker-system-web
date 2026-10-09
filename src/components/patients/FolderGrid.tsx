@@ -95,6 +95,8 @@ export type FolderGridProps = {
   limit: number;
   /** The resolved role holds CAN_MANAGE_MEMBERSHIP (server-known). */
   canInvite?: boolean;
+  /** The resolved role holds CAN_MESSAGE (Phase 15, server-known). */
+  canMessage?: boolean;
   /** The wired "Add new patient" trigger for the All-empty branch (04-04). */
   emptyAction?: ReactNode;
 };
@@ -108,6 +110,7 @@ export function FolderGrid({
   shown,
   limit,
   canInvite = false,
+  canMessage = false,
   emptyAction,
 }: FolderGridProps) {
   if (rows.length === 0) {
@@ -125,7 +128,7 @@ export function FolderGrid({
     <div className="flex w-full flex-col gap-lg">
       <div className={FOLDER_GRID_CLASSES}>
         {rows.map((patient) => (
-          <FolderCard key={patient.id} patient={patient} canInvite={canInvite} />
+          <FolderCard key={patient.id} patient={patient} canInvite={canInvite} canMessage={canMessage} />
         ))}
       </div>
       {hasMore ? (

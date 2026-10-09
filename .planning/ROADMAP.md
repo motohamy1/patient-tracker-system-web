@@ -409,11 +409,12 @@ Plans:
   3. Messaging content does not duplicate or replace the clinical record.
 
 **UI hint**: yes
-**Plans**: TBD
+**Tickets** (executed via Matt's implement skill; one file per ticket):
 
-Plans:
-
-- [ ] 15-01: TBD
+- [x] 15-01: conversation-substrate (COMM-01 foundation) — resolved
+- [x] 15-02: messaging-actions (COMM-01/02) — resolved
+- [x] 15-03: communication-surfaces (COMM-01/02/03) — resolved
+- [ ] 15-04: phase-proof — ready-for-human (cloud apply + pgTAP + owner two-role pass + visual baselines)
 
 ### Phase 16: WhatsApp + Telegram
 
@@ -566,7 +567,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 12. Prescription OCR + Document Intelligence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP + storage smoke, owner test pass, visual baselines, §8 verdicts) |  |
 | 13. Patient Home | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner patient-account pass, visual baselines, §8 verdicts) |  |
 | 14. Care Tasks / Adherence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner two-role pass, visual baselines, §8 verdicts) |  |
-| 15. Communication | 0/TBD | Not started | - |
+| 15. Communication | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner two-role pass, visual baselines, §9 verdicts) |  |
 | 16. WhatsApp + Telegram | 0/TBD | Not started | - |
 | 17. Telehealth | 0/TBD | Not started | - |
 | 18. Payments | 0/TBD | Not started | - |

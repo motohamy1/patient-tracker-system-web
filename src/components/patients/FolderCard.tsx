@@ -49,6 +49,8 @@ export type FolderCardProps = {
   patient: PatientFolderRow;
   /** The resolved role holds CAN_MANAGE_MEMBERSHIP (server-known, D-04). */
   canInvite?: boolean;
+  /** The resolved role holds CAN_MESSAGE (Phase 15, server-known). */
+  canMessage?: boolean;
 };
 
 function initialsOf(patient: PatientFolderRow): string {
@@ -57,7 +59,7 @@ function initialsOf(patient: PatientFolderRow): string {
   return `${first}${last}`.toUpperCase();
 }
 
-export function FolderCard({ patient, canInvite = false }: FolderCardProps) {
+export function FolderCard({ patient, canInvite = false, canMessage = false }: FolderCardProps) {
   // The D-10 mapping is consumed from @/lib/patients/status, never re-derived
   // here: only the utility prefix is composed onto the shared token name.
   const token = PATIENT_STATUS_TOKEN[patient.status];
@@ -142,6 +144,7 @@ export function FolderCard({ patient, canInvite = false }: FolderCardProps) {
           status={patient.status}
           unlinked={unlinked}
           canInvite={canInvite}
+          canMessage={canMessage}
         />
       </div>
     </div>

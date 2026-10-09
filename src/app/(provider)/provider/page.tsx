@@ -34,7 +34,7 @@ import { FolderGrid } from '@/components/patients/FolderGrid';
 import { NewPatientControl } from '@/components/patients/NewPatientControl';
 import { ProviderSearchControl } from '@/components/patients/ProviderSearchControl';
 import { RetrievalControls } from '@/components/patients/RetrievalControls';
-import { CAN_MANAGE_MEMBERSHIP, runsCapability } from '@/lib/auth/capabilities';
+import { CAN_MANAGE_MEMBERSHIP, CAN_MESSAGE, runsCapability } from '@/lib/auth/capabilities';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { listPatients } from '@/lib/patients/queries';
 import { listPatientsQuerySchema, type ListPatientsQueryInput } from '@/lib/patients/schemas';
@@ -94,6 +94,10 @@ export default async function ProviderHomePage({
   // (04-RESEARCH Open Question 4 — the capability is not widened), and the
   // action re-checks it anyway.
   const canInvite = runsCapability(resolution.role, CAN_MANAGE_MEMBERSHIP);
+  // Phase 15 (COMM-03): the folder card's "Message patient" row is the
+  // provider-side entry to the unified conversation. The capability mirrors
+  // migration 0014's write policy; the action re-checks it anyway.
+  const canMessage = runsCapability(resolution.role, CAN_MESSAGE);
 
   return (
     <Surface variant="canvas" className="flex flex-1 flex-col bg-canvas p-lg">
@@ -131,6 +135,7 @@ export default async function ProviderHomePage({
           shown={query.shown}
           limit={query.limit}
           canInvite={canInvite}
+          canMessage={canMessage}
           emptyAction={<NewPatientControl insetFill={INSET_FILL} variant="secondary" />}
         />
       </div>

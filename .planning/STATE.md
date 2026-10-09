@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 14
-current_phase_name: Care Tasks / Adherence (Phase 14)
+current_phase: 15
+current_phase_name: Communication (Phase 15)
 status: in_progress
-stopped_at: Phase 14 agent work COMPLETE (tickets 14-01..14-03 resolved; 14-04 ready-for-human) · Phases 7-13 COMPLETE (07-06/08-05/09-06/10-05/11-04/12-04/13-04 ready-for-human) — cloud-Supabase applies of 0006..0013, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
-last_updated: "2026-10-09T22:05:00.000Z"
+stopped_at: Phase 15 agent work COMPLETE (tickets 15-01..15-03 resolved; 15-04 ready-for-human) · Phases 7-14 COMPLETE (07-06/08-05/09-06/10-05/11-04/12-04/13-04/14-04 ready-for-human) — cloud-Supabase applies of 0006..0014, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
+last_updated: "2026-10-09T23:10:00.000Z"
 last_activity: 2026-10-09
-last_activity_desc: Phase 14 shipped via Matt's to-tickets + implement skills — care_tasks + care_task_completions (0013): doctor-authored assignable tasks and an append-only patient-self-only completion log; adherence derived purely from the log (count + last date, no score/streak/level); assign/mark-done/archive actions with server-side capability checks; the same region on the patient Home and the patient Overview through one loader; §27 checked row by row; 14-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
+last_activity_desc: Phase 15 shipped via Matt's to-tickets + implement skills — conversations + conversation_messages (0014): the unified abstraction with the channel seam (in_app/whatsapp/telegram), session re-derived senders, one open conversation per patient, append-only log, CAN_MESSAGE capability mirror; one send action for both sides, find-or-create open, derived (never stored) unread; /provider/messages profile surface + the folder card's Message-patient entry + the patient Home's real Communication region; §6's 8-tab navigation untouched; 15-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
 progress:
   total_phases: 22
   completed_phases: 4

@@ -110,6 +110,7 @@ export type QuickActionsPresentationProps = {
   status: PatientStatus;
   unlinked: boolean;
   canInvite: boolean;
+  canMessage?: boolean;
   invite: InviteResult | null;
   copied: boolean;
   pending: boolean;
@@ -117,6 +118,7 @@ export type QuickActionsPresentationProps = {
   onStatus: (status: PatientStatus) => void;
   onInvite: () => void;
   onCopy: () => void;
+  onMessage?: () => void;
 };
 
 /** The pure §4.6 anatomy — every state is prop-driven so tests render it statically. */
@@ -125,6 +127,7 @@ export function QuickActionsPresentation({
   status,
   unlinked,
   canInvite,
+  canMessage = false,
   invite,
   copied,
   pending,
@@ -132,6 +135,7 @@ export function QuickActionsPresentation({
   onStatus,
   onInvite,
   onCopy,
+  onMessage,
 }: QuickActionsPresentationProps) {
   if (invite) {
     return <InviteConfirm firstName={firstName} invite={invite} copied={copied} onCopy={onCopy} />;
@@ -181,6 +185,19 @@ export function QuickActionsPresentation({
         </button>
       ) : null}
 
+      {/* Phase 15 (COMM-03): the folder card's entry into the unified
+          conversation — a profile-level communication control, never a tab. */}
+      {canMessage && onMessage !== undefined ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={onMessage}
+          className={`${ROW_CLASSES} hover:bg-surface-raised`}
+        >
+          <span>Message patient</span>
+        </button>
+      ) : null}
+
       {/* D-15: an honest disabled affordance with its note — never a dead enabled control. */}
       <button
         type="button"
@@ -203,8 +220,11 @@ export type QuickActionsBodyProps = {
   status: PatientStatus;
   unlinked: boolean;
   canInvite: boolean;
+  canMessage?: boolean;
   /** Closes the overlay and `router.refresh()`es — the parent owns both. */
   onDone: () => void;
+  /** Opens the patient's conversation (Phase 15); the parent navigates. */
+  onMessage?: () => void | Promise<void>;
 };
 
 export function QuickActionsBody({
@@ -213,12 +233,28 @@ export function QuickActionsBody({
   status,
   unlinked,
   canInvite,
+  canMessage = false,
   onDone,
+  onMessage,
 }: QuickActionsBodyProps) {
   const [pending, setPending] = useState(false);
+  const [messagePending, setMessagePending] = useState(false);
   const [invite, setInvite] = useState<InviteResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleMessage(): Promise<void> {
+    if (onMessage === undefined) return;
+    setMessagePending(true);
+    setError(null);
+    try {
+      await onMessage();
+    } catch {
+      setError("That conversation couldn't be opened. Try again.");
+    } finally {
+      setMessagePending(false);
+    }
+  }
 
   async function handleStatus(next: PatientStatus): Promise<void> {
     setPending(true);
@@ -267,13 +303,15 @@ export function QuickActionsBody({
       status={status}
       unlinked={unlinked}
       canInvite={canInvite}
+      canMessage={canMessage}
       invite={null}
       copied={copied}
-      pending={pending}
+      pending={pending || messagePending}
       error={error}
       onStatus={handleStatus}
       onInvite={handleInvite}
       onCopy={handleCopy}
+      onMessage={handleMessage}
     />
   );
 }
@@ -284,6 +322,8 @@ export type QuickActionsOverlayProps = {
   status: PatientStatus;
   unlinked: boolean;
   canInvite: boolean;
+  /** The resolved role holds CAN_MESSAGE (Phase 15, server-known). */
+  canMessage?: boolean;
 };
 
 export function QuickActionsOverlay({
@@ -292,6 +332,7 @@ export function QuickActionsOverlay({
   status,
   unlinked,
   canInvite,
+  canMessage = false,
 }: QuickActionsOverlayProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -312,6 +353,20 @@ export function QuickActionsOverlay({
           status={status}
           unlinked={unlinked}
           canInvite={canInvite}
+          canMessage={canMessage}
+          onMessage={async () => {
+            // The unified conversation is opened server-side (find-or-create)
+            // and the provider lands on it; the action re-checks CAN_MESSAGE.
+            const { startConversationAction } = await import('@/lib/messaging/actions');
+            const result = await startConversationAction({
+              patientId,
+              body: `Hello ${firstName}, this is your care team.`,
+            });
+            if (result.ok && result.conversationId !== undefined) {
+              setOpen(false);
+              router.push(`/provider/messages?thread=${result.conversationId}`);
+            }
+          }}
           onDone={() => {
             setOpen(false);
             router.refresh();

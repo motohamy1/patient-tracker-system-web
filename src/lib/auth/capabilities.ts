@@ -37,6 +37,7 @@ const CAN_CERTIFIED = [
   'CAN_RETRIEVE_AUDIT',
   'CAN_VIEW_GENETICS',
   'CAN_REVIEW_AI',
+  'CAN_MESSAGE',
 ] as const;
 
 export const CAN_AUTHOR_CLINICAL: Capability = 'CAN_AUTHOR_CLINICAL';
@@ -61,6 +62,11 @@ export const CAN_VIEW_GENETICS: Capability = 'CAN_VIEW_GENETICS';
 // and the data layer can never disagree about who may review. Generation
 // itself stays with provider_doctor (CAN_AUTHOR_CLINICAL).
 export const CAN_REVIEW_AI: Capability = 'CAN_REVIEW_AI';
+// Phase 15 (COMM-01..03): messaging through the unified conversation model.
+// Mirrors migration 0014's conversations write policy byte-for-byte at the
+// role level (provider_doctor + nurse): it gates the composer and the
+// thread-opening controls so the UI and the data layer cannot disagree.
+export const CAN_MESSAGE: Capability = 'CAN_MESSAGE';
 
 // The D- assignments, once and forever:
 //   provider_doctor  -> CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE,
@@ -77,8 +83,8 @@ export const CAN_REVIEW_AI: Capability = 'CAN_REVIEW_AI';
 // above stays observation-only so AUTH-07's structural claim holds verbatim.
 // Migration 0005's patients policies mirror this role list byte-for-byte.
 export const ROLE_CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {
-  provider_doctor: new Set([CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS, CAN_REVIEW_AI]),
-  nurse: new Set([CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS, CAN_REVIEW_AI]),
+  provider_doctor: new Set([CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS, CAN_REVIEW_AI, CAN_MESSAGE]),
+  nurse: new Set([CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS, CAN_REVIEW_AI, CAN_MESSAGE]),
   receptionist: new Set([CAN_SCHEDULE, CAN_MANAGE_PATIENTS]),
   patient: new Set([CAN_SUBMIT_OBSERVATION]),
   admin_owner: new Set([CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS]),
