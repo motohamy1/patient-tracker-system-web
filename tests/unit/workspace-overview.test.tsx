@@ -415,21 +415,24 @@ describe('WSP-02 — the region frame (T-04)', () => {
     expect(skeleton).toContain('className={BOTTOM_ROW_GRID}');
   });
 
-  it('draws no fake timeline: no SVG, no nodes, no axis marks (§3.5, §27)', async () => {
-    const markup = renderToStaticMarkup(
-      createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
+  it('draws only real nodes on the band axis — no invented clinical events (§27, 06-01)', async () => {
+    const doc = parse(
+      renderToStaticMarkup(createElement('div', null, await OverviewBody({ patientId: PATIENT_ID }))),
     );
-    expect(markup).not.toContain('<svg');
-    expect(markup).not.toContain('<circle');
-    expect(markup).not.toContain('<path');
-    // no scrubber chrome either (TL-06 is Phase 006)
-    expect(markup).not.toContain('scrubber');
-
-    const doc = parse(markup);
     const band = doc.querySelector('section[aria-label="Timeline"]');
-    expect(band?.textContent).toContain('No timeline events yet');
-    expect(band?.textContent).toContain('Visits, medications and results will appear here as care progresses.');
-    expect(band?.textContent).toContain('Document a visit to place the first event.');
+    // the Phase-006 placeholder is replaced by the real D3-sealed band
+    expect(band?.querySelector('svg')).not.toBeNull();
+    // one node per projected lifecycle event (created + updated), nothing more
+    expect(band?.querySelectorAll('circle')).toHaveLength(2);
+    // every label on the axis is a month name or a year — no clinical event
+    // vocabulary is invented where the schema has no data
+    const labels = Array.from(band?.querySelectorAll('text') ?? []).map((t) => t.textContent ?? '');
+    expect(labels.length).toBeGreaterThan(0);
+    for (const label of labels) {
+      expect(label, label).toMatch(/^(\d{4}|[A-Z][a-z]{2})$/);
+    }
+    // the scrubber chrome is still absent (06-04 owns TL-06)
+    expect(renderToStaticMarkup(createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })))).not.toContain('scrubber');
   });
 
   it('keeps the Month/Week range chips inert pill chrome — no dead buttons (INV-08)', async () => {

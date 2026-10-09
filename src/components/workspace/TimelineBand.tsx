@@ -1,39 +1,27 @@
-// TimelineBand — the framed host Phase 006 fills (ticket 04; WSP-02
-// "interactive timeline"; §3.5, §27).
-//
-// The band exists at the reference's full-width position so the Overview
-// reads as the complete layout, and it is honestly EMPTY: it draws no axis,
-// no month dividers, no event nodes, no branch arcs and no count badges —
-// those are Phase-006 deliverables and faking them here would be exactly the
-// "static decorative drawing" §3.5 forbids. The bottom scrubber and its dark
-// viewport window (TL-06) are likewise not drawn — QA rows 8–10 are recorded
-// N/A → Phase 006.
+// TimelineBand — the band frame that hosts the clinical timeline
+// (reference §5; replaced the Phase-5 placeholder in 06-01).
 //
 // The frame is the inset `surfaceMuted` fill: a recessed region on the
-// canvas, no shadow (INV-13 — recess is expressed by fill, never by a third
-// elevation) and no perimeter border (INV-16). Rows of copy follow the §7
-// contract: a "No {record-type} yet" heading, one line of what will appear,
-// one next step. No phase names appear in any user-facing string.
+// canvas, no shadow (INV-13 — recess is fill, not a third elevation) and no
+// border (INV-16). The band owns the frame, the heading and the states; the
+// timeline's axis grammar, its nodes and its (later) zoom/scrubber live in
+// `ClinicalTimeline`, so the band file stays stable across phases 006→010.
 //
-// Server Component: no hook, no client directive.
+// `events` arrive from the Server Component projection (real records only) —
+// the band adds no data of its own and never fabricates an axis (§27).
+//
+// Server Component: no hook, no client directive (the timeline itself is the
+// client island and arrives through `ClinicalTimeline`).
+import { ClinicalTimeline } from '@/components/timeline/ClinicalTimeline';
 import { Surface } from '@/components/primitives';
+import type { CareEvent } from '@/lib/timeline/events';
 
-export function TimelineBand() {
+export function TimelineBand({ events }: { events: readonly CareEvent[] }) {
   return (
     <section aria-label="Timeline" className="min-h-44">
       <Surface variant="surfaceMuted" className="flex h-full min-h-44 flex-col gap-md">
         <h2 className="text-heading font-semibold leading-heading text-text-primary">Timeline</h2>
-        <div className="flex flex-1 flex-col items-center justify-center gap-xs text-center">
-          <span className="text-body font-semibold leading-body text-text-primary">
-            No timeline events yet
-          </span>
-          <span className="text-body leading-body text-text-secondary">
-            Visits, medications and results will appear here as care progresses.
-          </span>
-          <span className="text-label leading-label text-text-secondary">
-            Document a visit to place the first event.
-          </span>
-        </div>
+        <ClinicalTimeline events={events} />
       </Surface>
     </section>
   );

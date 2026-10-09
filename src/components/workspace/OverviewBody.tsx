@@ -37,6 +37,7 @@ import { TimelineBand } from '@/components/workspace/TimelineBand';
 import { VitalsHistoryCard } from '@/components/workspace/VitalsHistoryCard';
 import { BOTTOM_ROW_GRID, UPPER_GRID } from '@/components/workspace/grids';
 import { composeRecentEvents } from '@/lib/patients/activity';
+import { projectCareEvents } from '@/lib/timeline/events';
 import type { Role } from '@/lib/auth/roles';
 import { ownWorkspaceTarget } from '@/lib/auth/redirect';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
@@ -119,6 +120,10 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
       activityPosture = error instanceof SupabasePermissionError ? 'denied' : 'error';
     }
   }
+  // The timeline projects whatever the org may read: lifecycle events always,
+  // invite events when the invite read succeeded (a failed read degrades the
+  // recent-records CARD only — the axis keeps its real events).
+  const timelineEvents = projectCareEvents(patient, invites);
   const events = activityPosture === 'ok' ? composeRecentEvents(patient, invites) : [];
 
   return (
@@ -128,7 +133,7 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
         <ContextStatRow patient={patient} />
       </section>
 
-      <TimelineBand />
+      <TimelineBand events={timelineEvents} />
 
       <div className={BOTTOM_ROW_GRID}>
         <VitalsHistoryCard />
