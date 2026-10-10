@@ -453,7 +453,10 @@ Plans:
 
 Plans:
 
-- [ ] 17-01: TBD
+- [x] 17-01: telehealth sessions — the consultation record under the visit — resolved
+- [x] 17-02: the consultation workflow (start / complete / cancel) — resolved
+- [x] 17-03: the consultation surfaces (provider room + patient join) — resolved
+ - [ ] 17-04: phase-proof — ready-for-human (cloud apply + pgTAP + owner pass + visual baselines)
 
 ### Phase 18: Payments
 
@@ -472,7 +475,10 @@ Plans:
 
 Plans:
 
-- [ ] 18-01: TBD
+- [x] 18-01: invoices, payments and the provider abstraction — resolved
+- [x] 18-02: the payment workflow (issue / record / void) — resolved
+- [x] 18-03: the billing surfaces (earnings overview + patient billing) — resolved
+- [ ] 18-04: phase-proof — ready-for-human (cloud apply + pgTAP + owner pass + visual baselines)
 
 ### Phase 19: Offline / Sync
 
@@ -491,7 +497,10 @@ Plans:
 
 Plans:
 
-- [ ] 19-01: TBD
+- [x] 19-01: the sync state machine (pure six-state reducer + conflict decision) — resolved
+- [x] 19-02: the outbox store and the flush (persistence, senders, reconnect drain) — resolved
+- [x] 19-03: the honest surfaces (queue panel + quick-log failure copy) — resolved
+- [ ] 19-04: phase-proof — ready-for-human (owner unit pass over the pure machine + interactive offline pass)
 
 ### Phase 20: Security / Audit Hardening
 
@@ -510,7 +519,10 @@ Plans:
 
 Plans:
 
-- [ ] 20-01: TBD
+- [x] 20-01: the security audit sweep (auth/RLS/isolation/sensitive data/documents/auditability/sessions/API/privacy) — resolved
+- [x] 20-02: finding resolutions (F-1 open-redirect fixed; F-2 storage self-read fixed via 0018; F-3 accepted; F-4..07 recorded) — resolved
+- [x] 20-03: the Phase-3 authorization regression verification — resolved
+- [ ] 20-04: phase-proof — ready-for-human (0018 cloud apply + pgTAP + five-role re-run)
 
 ### Phase 21: Interoperability
 
@@ -528,7 +540,10 @@ Plans:
 
 Plans:
 
-- [ ] 21-01: TBD
+- [x] 21-01: the mapping scope + the core clinical chain (Patient/Encounter/MedicationRequest) — resolved
+- [x] 21-02: observations, reports and allergies (labs/imaging/vitals/allergies) — resolved
+- [x] 21-03: the patient bundle + the pure structural validation gate (INTR-02 proven by grep) — resolved
+- [ ] 21-04: phase-proof — ready-for-human (owner unit pass + scope verdicts)
 
 ### Phase 22: Final Product QA and Convergence
 
@@ -547,7 +562,10 @@ Plans:
 
 Plans:
 
-- [ ] 22-01: TBD
+- [x] 22-01: the QA sweep across every dimension (build exit 0; visual/interaction/responsive/a11y/performance/authorization/regression recorded) — resolved
+- [x] 22-02: the reference-UI acceptance gate across all UI phases (0 generic-SaaS tells; no ninth tab anywhere in 17–21) — resolved
+- [x] 22-03: the convergence record (build manifest, regression record, all 22 phases agent-complete) — resolved
+- [ ] 22-04: phase-proof — ready-for-human (owner visual pass, five-role matrix, full suites, milestone close)
 
 ## Progress
 
@@ -572,9 +590,9 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 14. Care Tasks / Adherence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner two-role pass, visual baselines, §8 verdicts) |  |
 | 15. Communication | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner two-role pass, visual baselines, §9 verdicts) |  |
 | 16. WhatsApp + Telegram | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner test pass, visual baselines, §8 verdicts); no tests run, no commit (owner-directed) | - |
-| 17. Telehealth | 0/TBD | Not started | - |
-| 18. Payments | 0/TBD | Not started | - |
-| 19. Offline / Sync | 0/TBD | Not started | - |
-| 20. Security / Audit Hardening | 0/TBD | Not started | - |
-| 21. Interoperability | 0/TBD | Not started | - |
-| 22. Final Product QA and Convergence | 0/TBD | Not started | - |
+| 17. Telehealth | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner test pass, visual baselines, §8 verdicts); no tests run, no commit (owner-directed) | - |
+| 18. Payments | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner test pass, visual baselines, §8 verdicts); no tests run, no commit (owner-directed) | - |
+| 19. Offline / Sync | 4/4 tickets | Agent-complete — acceptance pending (owner unit pass over the pure machine + interactive offline pass); no tests run, no commit (owner-directed) | - |
+| 20. Security / Audit Hardening | 4/4 tickets | Agent-complete — acceptance pending (0018 cloud apply + pgTAP, five-role re-run); no tests run, no commit (owner-directed) | - |
+| 21. Interoperability | 4/4 tickets | Agent-complete — acceptance pending (owner unit pass + scope verdicts); no tests run, no commit (owner-directed) | - |
+| 22. Final Product QA and Convergence | 4/4 tickets | Agent-complete — acceptance pending (owner visual pass, five-role matrix, full suites, milestone close); build verified exit 0, no suites run, no commit (owner-directed) | - |

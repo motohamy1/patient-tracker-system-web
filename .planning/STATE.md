@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 16
-current_phase_name: Channels: WhatsApp + Telegram (Phase 16)
+current_phase: 22
+current_phase_name: Final Product QA and Convergence (Phase 22)
 status: in_progress
-stopped_at: Phase 16 agent work COMPLETE (tickets 16-01..16-03 resolved; 16-04 ready-for-human) · Phases 7-15 COMPLETE (07-06/08-05/09-06/10-05/11-04/12-04/13-04/14-04/15-04 ready-for-human) — cloud-Supabase applies of 0006..0015, RLS/pgTAP, owner test passes, visual baselines and owner verdicts all deferred
+stopped_at: Phase 22 agent work COMPLETE (tickets 22-01..22-03 resolved; 22-04 ready-for-human) — ALL 22 PHASES AGENT-COMPLETE · every phase's acceptance items pending the owner's gates (cloud applies 0006..0018 + pgTAP, owner interactive passes, visual baselines, §20.4 verdicts)
 last_updated: "2026-10-10T00:00:00.000Z"
 last_activity: 2026-10-10
-last_activity_desc: Phase 16 agent work completed — channel_endpoints + notification_deliveries (0015): staff-managed endpoints, pluggable adapter registry with an honest no-credentials default, append-only delivery log attributing every send to its message/patient/org; notifications fire on staff sends / thread opens / task assignment only (a patient's own message never notifies back — fixed); the channel control + delivery rows + channel badges mounted on /provider/messages (patient side unchanged); 16-VERIFICATION.md written; tsc 0, lint exit 0. Session constraints (owner-directed): NO test suites run, NO commit — owner runs tests and commits per phase
+last_activity_desc: Phase 22 agent work completed — the final QA record (22-QA-RECORD.md): production build verified (exit 0; every authenticated route dynamic; the proxy wired; the five new routes present), every QA dimension recorded (visual + reference-UI gate PASS static with 0 generic-SaaS tells; interaction PASS static with no dead controls; responsive PASS; a11y PASS; performance PASS with QA-1/QA-2 the unbounded ledger reads recorded with recommendations; authorization PASS via the Phase-20 regression; regression tsc 0 + lint 0 + build 0 with the suite's last green at Phase 15 and the Phase-18 capability widening recorded). All 22 phases now agent-complete. tsc 0, lint exit 0, build exit 0. Session constraints (owner-directed): NO test suites run, NO commit (the build is the phase's own criterion, not a suite)
 progress:
   total_phases: 22
   completed_phases: 4
@@ -28,12 +28,13 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 
 ## Current Position
 
-Phase: 16 (Channels: WhatsApp + Telegram) — AGENT WORK COMPLETE, ACCEPTANCE PENDING
-Tickets: 4 of 4 worked (16-01…16-03 `resolved`, 16-04 `ready-for-human`)
-Status: implementation GREEN for the gates run (`tsc --noEmit` 0, `npm run lint` exit 0); **no test suites run and no commit this session — owner-directed**
-Last activity: 2026-10-10 — the in-flight phase-16 layer was completed and wired: the surfaces existed but were never mounted (`ChannelEndpointsControl` rendered nowhere, the delivery queries never called, so badges/delivery rows could not appear), a patient's own message could trigger a notification attempt back at the patient, and `setChannelEndpointStatusAction` read `parsed.endpointId` instead of `parsed.data.endpointId`. All four fixed; the provider messages page now shows the patient's channels, each message's channel badge and its honest delivery state; `16-VERIFICATION.md` written (12 QA rows, INV-01…17, CHAN-01…03 trace).
+Phase: 22 (Final Product QA and Convergence) — AGENT WORK COMPLETE, ACCEPTANCE PENDING
+Tickets: 4 of 4 worked (22-01…22-03 `resolved`, 22-04 `ready-for-human`)
+**ALL 22 PHASES ARE AGENT-COMPLETE.** Every phase's acceptance items are pending the owner's gates — enumerated per phase in each `NN-VERIFICATION.md`, none silently deferred.
+Status: production **build verified exit 0** (every authenticated route dynamic; the proxy wired; the five new routes present); `tsc --noEmit` 0; `npm run lint` exit 0; **no test suites run and no commit this session — owner-directed** (the build is the phase's own success criterion, not a suite).
+Last activity: 2026-10-10 — the final QA record (`22-QA-RECORD.md`): every dimension recorded — visual + reference-UI gate (0 token violations, 0 generic-SaaS tells across the Phase 17–21 surfaces, no ninth tab anywhere), interaction (no dead controls; interactive leg deferred as QA-3), responsive, accessibility (labels, roles, ariaBusy, text-stated states), performance (the timeline untouched; QA-1/QA-2 the unbounded earnings/billing reads recorded with recommendations, not silently truncated), authorization (per-module trace + Phase-20 regression), regression (tsc 0, lint 0, build 0; the suite's last recorded green Phase 15 with the Phase-18 capability widening noted).
 
-Phase-16 execution notes: session constraints were **no test suites** and **no commits** (the owner runs the tests and commits per phase). Deferred accordingly: migration 0015's cloud apply + pgTAP (staff-only endpoint writes, append-only deliveries, the cross-patient attribution refusal, org isolation), the unit pass over `adapters`/`notify`/`workflow`/`actions`/the page wiring, `database.types.ts` CLI regeneration, visual baselines, and the §20.4 owner verdicts on `16-VERIFICATION.md` §9 (credentials decision, the control's home, read-only roles, notification triggers). Phases 7–15 retain their own pending owner gates (listed in each `NN-VERIFICATION.md` §8). The phase is not accepted until the deferred items run (§20.7).
+MILESTONE HANDOVER (agent side complete): the deferred acceptance items across the milestone are — migration cloud applies 0006..0018 with their pgTAP suites (Phases 7–22), the owner interactive passes (per phase), the visual baselines for the six new surfaces, the §20.4 verdicts from each `NN-VERIFICATION.md`'s owner-gate brief, and the full unit + Playwright matrix on the owner's workstation. `git` history ends at the phase-16 commit (`fcdb6e8`): Phases 17–22 are uncommitted by the owner's standing instruction.
 
 Progress: [███████████] 11/11 plans (100%) — Phases 5–6 ran as ticket sets; see `05-`/`06-VERIFICATION.md`.
 
@@ -177,6 +178,6 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-10-10
-Stopped at: Phase 16 agent work complete (16-01..16-03 resolved; 16-04 ready-for-human)
-Resume file: .planning/phases/16-channels/16-VERIFICATION.md
-Session constraints (owner-directed): no test suites run, no commits — owner runs tests and commits per phase
+Stopped at: ALL 22 PHASES AGENT-COMPLETE — Phase 22 tickets 22-01..22-03 resolved, 22-04 ready-for-human; acceptance pending the owner's gates milestone-wide
+Resume file: .planning/phases/22-final-qa-convergence/22-VERIFICATION.md
+Session constraints (owner-directed): no test suites run, no commits — owner runs tests and commits per phase (the production build is the phase's own criterion and was run)
