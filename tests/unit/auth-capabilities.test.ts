@@ -21,6 +21,7 @@ import {
   CAN_RETRIEVE_AUDIT,
   CAN_REVIEW_AI,
   CAN_MESSAGE,
+  CAN_MANAGE_BILLING,
   CAN_SCHEDULE,
   CAN_SUBMIT_OBSERVATION,
   CAN_VIEW_GENETICS,
@@ -41,14 +42,18 @@ const ALL_ROLES = ROLES as readonly Role[];
 // admin_owner-only audit policy. CAN_REVIEW_AI was added in Phase 11
 // (AI-02): it mirrors migration 0010's ai_insights UPDATE policy at the role
 // level (provider_doctor + nurse) so the review controls and the data layer
-// can never disagree. The exact-set assertion is updated so the deliberate
-// widening stays visible rather than silently drifting.
+// can never disagree. CAN_MANAGE_BILLING was added in Phase 18 (PAY-01/03):
+// it mirrors migration 0017's invoice/payment write policies at the role
+// level (provider_doctor + receptionist + admin_owner) — the nurse never
+// writes a ledger row, and the patient structurally cannot (AUTH-07). The
+// exact-set assertion is updated so the deliberate widening stays visible
+// rather than silently drifting.
 const expected: Record<Role, readonly Capability[]> = {
-  provider_doctor: [CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS, CAN_REVIEW_AI, CAN_MESSAGE],
+  provider_doctor: [CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS, CAN_REVIEW_AI, CAN_MESSAGE, CAN_MANAGE_BILLING],
   nurse: [CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS, CAN_REVIEW_AI, CAN_MESSAGE],
-  receptionist: [CAN_SCHEDULE, CAN_MANAGE_PATIENTS],
+  receptionist: [CAN_SCHEDULE, CAN_MANAGE_PATIENTS, CAN_MANAGE_BILLING],
   patient: [CAN_SUBMIT_OBSERVATION],
-  admin_owner: [CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS],
+  admin_owner: [CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS, CAN_MANAGE_BILLING],
 };
 
 describe('roles — byte-identical to migration 0001 (D-09)', () => {

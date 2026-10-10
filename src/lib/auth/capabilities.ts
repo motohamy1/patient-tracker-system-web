@@ -38,6 +38,7 @@ const CAN_CERTIFIED = [
   'CAN_VIEW_GENETICS',
   'CAN_REVIEW_AI',
   'CAN_MESSAGE',
+  'CAN_MANAGE_BILLING',
 ] as const;
 
 export const CAN_AUTHOR_CLINICAL: Capability = 'CAN_AUTHOR_CLINICAL';
@@ -63,10 +64,17 @@ export const CAN_VIEW_GENETICS: Capability = 'CAN_VIEW_GENETICS';
 // itself stays with provider_doctor (CAN_AUTHOR_CLINICAL).
 export const CAN_REVIEW_AI: Capability = 'CAN_REVIEW_AI';
 // Phase 15 (COMM-01..03): messaging through the unified conversation model.
-// Mirrors migration 0014's conversations write policy byte-for-byte at the
-// role level (provider_doctor + nurse): it gates the composer and the
+// Mirrors migration 0014's conversations write policy byte-for-byte at the role
+// level (provider_doctor + nurse): it gates the composer and the
 // thread-opening controls so the UI and the data layer cannot disagree.
 export const CAN_MESSAGE: Capability = 'CAN_MESSAGE';
+// Phase 18 (PAY-01/03): billing. Mirrors migration 0017's invoice/payment
+// write policies byte-for-byte at the role level (provider_doctor +
+// receptionist + admin_owner): billing is front-desk and owner work — the
+// nurse never writes a ledger row, and the patient never does either. It
+// gates the issue/void/record controls so the UI and the data layer cannot
+// disagree; the RLS policies remain the enforcement.
+export const CAN_MANAGE_BILLING: Capability = 'CAN_MANAGE_BILLING';
 
 // The D- assignments, once and forever:
 //   provider_doctor  -> CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE,
@@ -82,12 +90,17 @@ export const CAN_MESSAGE: Capability = 'CAN_MESSAGE';
 // (D-01) and every staff role manages the folder workspace; the patient set
 // above stays observation-only so AUTH-07's structural claim holds verbatim.
 // Migration 0005's patients policies mirror this role list byte-for-byte.
+//   - CAN_REVIEW_AI is the UI mirror of 0010's ai_insights UPDATE policy.
+//   - CAN_MESSAGE is the UI mirror of 0014's conversations write policy.
+//   - CAN_MANAGE_BILLING (Phase 18) is the UI mirror of 0017's invoice and
+//     payment write policies: provider_doctor + receptionist + admin_owner.
+//     The nurse never holds it and the patient structurally cannot (AUTH-07).
 export const ROLE_CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {
-  provider_doctor: new Set([CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS, CAN_REVIEW_AI, CAN_MESSAGE]),
+  provider_doctor: new Set([CAN_AUTHOR_CLINICAL, CAN_ENTER_VITALS, CAN_SCHEDULE, CAN_MANAGE_MEMBERSHIP, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS, CAN_REVIEW_AI, CAN_MESSAGE, CAN_MANAGE_BILLING]),
   nurse: new Set([CAN_ENTER_VITALS, CAN_MANAGE_PATIENTS, CAN_REVIEW_AI, CAN_MESSAGE]),
-  receptionist: new Set([CAN_SCHEDULE, CAN_MANAGE_PATIENTS]),
+  receptionist: new Set([CAN_SCHEDULE, CAN_MANAGE_PATIENTS, CAN_MANAGE_BILLING]),
   patient: new Set([CAN_SUBMIT_OBSERVATION]),
-  admin_owner: new Set([CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS]),
+  admin_owner: new Set([CAN_MANAGE_MEMBERSHIP, CAN_RETRIEVE_AUDIT, CAN_MANAGE_PATIENTS, CAN_VIEW_GENETICS, CAN_MANAGE_BILLING]),
 };
 
 // The ONLY spelling valid in product code (plans 03-04/05): a capability check
