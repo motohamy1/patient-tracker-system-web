@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 15
-current_phase_name: Communication (Phase 15)
+current_phase: 16
+current_phase_name: Channels: WhatsApp + Telegram (Phase 16)
 status: in_progress
-stopped_at: Phase 15 agent work COMPLETE (tickets 15-01..15-03 resolved; 15-04 ready-for-human) · Phases 7-14 COMPLETE (07-06/08-05/09-06/10-05/11-04/12-04/13-04/14-04 ready-for-human) — cloud-Supabase applies of 0006..0014, RLS/pgTAP, storage smoke test, owner test pass, visual baselines and owner verdicts all deferred
-last_updated: "2026-10-09T23:10:00.000Z"
-last_activity: 2026-10-09
-last_activity_desc: Phase 15 shipped via Matt's to-tickets + implement skills — conversations + conversation_messages (0014): the unified abstraction with the channel seam (in_app/whatsapp/telegram), session re-derived senders, one open conversation per patient, append-only log, CAN_MESSAGE capability mirror; one send action for both sides, find-or-create open, derived (never stored) unread; /provider/messages profile surface + the folder card's Message-patient entry + the patient Home's real Communication region; §6's 8-tab navigation untouched; 15-VERIFICATION.md written; tsc 0, 473/473, lint 0, build exit 0
+stopped_at: Phase 16 agent work COMPLETE (tickets 16-01..16-03 resolved; 16-04 ready-for-human) · Phases 7-15 COMPLETE (07-06/08-05/09-06/10-05/11-04/12-04/13-04/14-04/15-04 ready-for-human) — cloud-Supabase applies of 0006..0015, RLS/pgTAP, owner test passes, visual baselines and owner verdicts all deferred
+last_updated: "2026-10-10T00:00:00.000Z"
+last_activity: 2026-10-10
+last_activity_desc: Phase 16 agent work completed — channel_endpoints + notification_deliveries (0015): staff-managed endpoints, pluggable adapter registry with an honest no-credentials default, append-only delivery log attributing every send to its message/patient/org; notifications fire on staff sends / thread opens / task assignment only (a patient's own message never notifies back — fixed); the channel control + delivery rows + channel badges mounted on /provider/messages (patient side unchanged); 16-VERIFICATION.md written; tsc 0, lint exit 0. Session constraints (owner-directed): NO test suites run, NO commit — owner runs tests and commits per phase
 progress:
   total_phases: 22
   completed_phases: 4
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-10-06)
 
 ## Current Position
 
-Phase: 06 (D3 Clinical Timeline) — AGENT WORK COMPLETE, ACCEPTANCE PENDING
-Tickets: 7 of 7 worked (06-01…06-06 `resolved`, 06-07 `ready-for-human`)
-Status: implementation GREEN (473/473 existing suite, `tsc --noEmit` 0, `npm run lint` 0 violations, `npm run build` exit 0)
-Last activity: 2026-10-09 — executed via Matt's `to-tickets` + `implement` skills (ticket files under `.planning/phases/06-d3-clinical-timeline/issues/`, NOT GSD plan waves); `06-VERIFICATION.md` written with all 12 QA rows (8–10 now applicable), INV-01…17 and the TL-01…09/UX-04/05 trace.
+Phase: 16 (Channels: WhatsApp + Telegram) — AGENT WORK COMPLETE, ACCEPTANCE PENDING
+Tickets: 4 of 4 worked (16-01…16-03 `resolved`, 16-04 `ready-for-human`)
+Status: implementation GREEN for the gates run (`tsc --noEmit` 0, `npm run lint` exit 0); **no test suites run and no commit this session — owner-directed**
+Last activity: 2026-10-10 — the in-flight phase-16 layer was completed and wired: the surfaces existed but were never mounted (`ChannelEndpointsControl` rendered nowhere, the delivery queries never called, so badges/delivery rows could not appear), a patient's own message could trigger a notification attempt back at the patient, and `setChannelEndpointStatusAction` read `parsed.endpointId` instead of `parsed.data.endpointId`. All four fixed; the provider messages page now shows the patient's channels, each message's channel badge and its honest delivery state; `16-VERIFICATION.md` written (12 QA rows, INV-01…17, CHAN-01…03 trace).
 
-Phase-6 execution notes: the session constraints were **no Docker / no heavy process** and **no new tests** (the owner runs the test pass per step). Deferred accordingly: the unit proofs for 06-03…06-07, the measured perf assertion on the 4 000-event generator, visual-baseline regeneration and the screenshot legs of QA rows 2/4/5/8/9/10/11, and the §20.4 owner verdicts on `06-VERIFICATION.md` §7 (detail-card scrim, scrubber track tone, year labels, branch dormancy, filter-chip dormancy, svg `role="group"`). Three pre-existing test assertions were updated because a deliberate feature contradicted them (listed in `06-VERIFICATION.md` §5). The phase is not accepted until the deferred items run (§20.7).
+Phase-16 execution notes: session constraints were **no test suites** and **no commits** (the owner runs the tests and commits per phase). Deferred accordingly: migration 0015's cloud apply + pgTAP (staff-only endpoint writes, append-only deliveries, the cross-patient attribution refusal, org isolation), the unit pass over `adapters`/`notify`/`workflow`/`actions`/the page wiring, `database.types.ts` CLI regeneration, visual baselines, and the §20.4 owner verdicts on `16-VERIFICATION.md` §9 (credentials decision, the control's home, read-only roles, notification triggers). Phases 7–15 retain their own pending owner gates (listed in each `NN-VERIFICATION.md` §8). The phase is not accepted until the deferred items run (§20.7).
 
 Progress: [███████████] 11/11 plans (100%) — Phases 5–6 ran as ticket sets; see `05-`/`06-VERIFICATION.md`.
 
@@ -176,6 +176,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-07T22:24:15.941Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-provider-home-patient-folder-workspace/04-CONTEXT.md
+Last session: 2026-10-10
+Stopped at: Phase 16 agent work complete (16-01..16-03 resolved; 16-04 ready-for-human)
+Resume file: .planning/phases/16-channels/16-VERIFICATION.md
+Session constraints (owner-directed): no test suites run, no commits — owner runs tests and commits per phase

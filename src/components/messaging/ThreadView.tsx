@@ -11,17 +11,25 @@ import { EmptyState } from '@/components/primitives/EmptyState';
 import { Surface } from '@/components/primitives';
 import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { MessageComposer } from '@/components/messaging/MessageComposer';
-import { SENDER_KIND_LABELS } from '@/lib/messaging/status';
-import type { ConversationMessageRecord } from '@/lib/messaging/status';
+import { SENDER_KIND_LABELS, MESSAGE_CHANNEL_LABELS, type ConversationMessageRecord } from '@/lib/messaging/status';
+import {
+  DELIVERY_STATUS_LABELS,
+  DELIVERY_STATUS_TOKEN,
+  type NotificationDeliveryRecord,
+} from '@/lib/channels/status';
+import { Pill } from '@/components/primitives/Pill';
 
 export function ThreadView({
   conversationId,
   messages,
   viewer,
+  deliveries = [],
 }: {
   conversationId: string;
   messages: readonly ConversationMessageRecord[];
   viewer: 'staff' | 'patient';
+  /** The conversation's delivery rows (staff viewers see the honest state). */
+  deliveries?: readonly NotificationDeliveryRecord[];
 }) {
   return (
     <Surface variant="surface" className="flex flex-col gap-md">
@@ -40,6 +48,7 @@ export function ThreadView({
             const mine =
               (viewer === 'staff' && message.senderKind === 'staff') ||
               (viewer === 'patient' && message.senderKind === 'patient');
+            const messageDeliveries = deliveries.filter((d) => d.messageId === message.id);
             return (
               <li
                 key={message.id}
@@ -54,6 +63,27 @@ export function ThreadView({
                   }`}
                 >
                   {message.body}
+                </span>
+                <span className="flex flex-wrap items-center gap-xs">
+                  {message.channel !== 'in_app' ? (
+                    <Pill tone="neutral" label={MESSAGE_CHANNEL_LABELS[message.channel]} />
+                  ) : null}
+                  {messageDeliveries.map((delivery) => (
+                    <span key={delivery.id} className="flex flex-wrap items-center gap-xs">
+                      <Pill
+                        tone={DELIVERY_STATUS_TOKEN[delivery.status]}
+                        label={`${MESSAGE_CHANNEL_LABELS[delivery.channel]}: ${DELIVERY_STATUS_LABELS[delivery.status]}`}
+                      />
+                      {delivery.reason !== null ? (
+                        <span className="text-label leading-label text-text-secondary">{delivery.reason}</span>
+                      ) : null}
+                      {delivery.providerReference !== null ? (
+                        <span className="text-label leading-label text-text-secondary tabular-nums">
+                          ref {delivery.providerReference}
+                        </span>
+                      ) : null}
+                    </span>
+                  ))}
                 </span>
               </li>
             );

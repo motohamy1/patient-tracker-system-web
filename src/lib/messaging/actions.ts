@@ -1,5 +1,5 @@
 // src/lib/messaging/actions.ts — the unified send/close actions (Phase 15,
-// COMM-01..03; AUTH-05/07).
+// COMM-01..03; Phase 16 wires the channel workflow, CHAN-01/02).
 //
 // ONE send action serves both sides of the conversation: the session decides
 // the sender, and migration 0014's guard re-derives it again server-side — a
@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/server';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_MESSAGE, CAN_SUBMIT_OBSERVATION, runsCapability } from '@/lib/auth/capabilities';
 import { closeConversationSchema, sendMessageSchema, startConversationSchema } from '@/lib/messaging/schemas';
+import { notifyForMessage } from '@/lib/channels/workflow';
 
 export type MessagingActionResult =
   | { ok: true; messageId?: string; conversationId?: string }
@@ -53,6 +54,20 @@ export async function sendMessageAction(input: unknown): Promise<MessagingAction
     .single();
 
   if (error || !data) return { ok: false, kind: 'error' };
+
+  // Phase 16 (CHAN-01/02): the thread's message notifies the patient's active
+  // channels; the in-app message is recorded either way, and each delivery
+  // attempt is logged with its honest status. Only the care team triggers
+  // notifications — a patient's own message never notifies back at them.
+  if (isStaff && provider.kind === 'signed-in') {
+    await notifyForMessage(
+      provider.orgId,
+      data.conversation_id as string,
+      data.id as string,
+      data.patient_id as string,
+      parsed.data.body,
+    ).catch(() => undefined);
+  }
 
   revalidateMessaging(data.patient_id as string);
   return { ok: true, messageId: data.id as string, conversationId: data.conversation_id as string };
@@ -107,6 +122,14 @@ export async function startConversationAction(input: unknown): Promise<Messaging
     .select('id')
     .single();
   if (messageError || !message) return { ok: false, kind: 'error' };
+
+  await notifyForMessage(
+    resolution.orgId,
+    conversationId,
+    message.id as string,
+    parsed.data.patientId,
+    parsed.data.body,
+  ).catch(() => undefined);
 
   revalidateMessaging(parsed.data.patientId);
   return { ok: true, messageId: message.id as string, conversationId };

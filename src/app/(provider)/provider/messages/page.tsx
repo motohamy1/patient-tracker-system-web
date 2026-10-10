@@ -17,9 +17,12 @@ import { EmptyState } from '@/components/primitives/EmptyState';
 import { StateVariant } from '@/components/state/StateVariant';
 import { ConversationList } from '@/components/messaging/ConversationList';
 import { ThreadView } from '@/components/messaging/ThreadView';
+import { ChannelEndpointsControl } from '@/components/channels/ChannelEndpointsControl';
 import { CAN_MESSAGE, runsCapability } from '@/lib/auth/capabilities';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { listConversationMessages, listConversations } from '@/lib/messaging/queries';
+import { listChannelEndpoints, listDeliveryRecordsForConversation } from '@/lib/channels/queries';
+import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { conversationIdSchema } from '@/lib/messaging/schemas';
 
 export const dynamic = 'force-dynamic';
@@ -64,6 +67,24 @@ export default async function ProviderMessagesPage({
   const selectedMessages =
     selected !== undefined ? (messagesByConversation.get(selected.id) ?? []) : [];
 
+  // Phase 16 (16-03): the channel layer made visible — the patient's
+  // endpoints (staff-managed) and the honest delivery log for this thread.
+  // Both are org-scoped reads; a failure shows quietly rather than blanking
+  // the conversation.
+  let endpoints: Awaited<ReturnType<typeof listChannelEndpoints>> = [];
+  let deliveries: Awaited<ReturnType<typeof listDeliveryRecordsForConversation>> = [];
+  let channelsFailed = false;
+  if (selected !== undefined) {
+    try {
+      [endpoints, deliveries] = await Promise.all([
+        listChannelEndpoints(resolution.orgId, selected.patientId),
+        listDeliveryRecordsForConversation(resolution.orgId, selected.id),
+      ]);
+    } catch {
+      channelsFailed = true;
+    }
+  }
+
   const canMessage = runsCapability(resolution.role, CAN_MESSAGE);
 
   return (
@@ -92,11 +113,25 @@ export default async function ProviderMessagesPage({
               />
 
               {selected !== undefined ? (
-                <ThreadView
-                  conversationId={selected.id}
-                  messages={selectedMessages}
-                  viewer="staff"
-                />
+                <div className="flex flex-col gap-lg">
+                  <ChannelEndpointsControl
+                    patientId={selected.patientId}
+                    endpoints={endpoints}
+                    insetFill={INSET_FILL}
+                    canManage={canMessage}
+                  />
+                  <ThreadView
+                    conversationId={selected.id}
+                    messages={selectedMessages}
+                    viewer="staff"
+                    deliveries={deliveries}
+                  />
+                  {channelsFailed ? (
+                    <p role="alert" className="text-label leading-label text-text-secondary">
+                      Channel details couldn’t be loaded just now. The conversation itself is up to date.
+                    </p>
+                  ) : null}
+                </div>
               ) : parsedThread.success ? (
                 <EmptyState
                   icon={Lock}

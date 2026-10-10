@@ -432,7 +432,10 @@ Plans:
 
 Plans:
 
-- [ ] 16-01: TBD
+- [x] 16-01: channel endpoints, adapters and the delivery record — resolved
+- [x] 16-02: notification workflows through the unified model — resolved
+- [x] 16-03: channel surfaces (endpoints, badges, delivery state) — resolved
+- [ ] 16-04: phase-proof — ready-for-human (cloud apply + pgTAP + owner pass + visual baselines)
 
 ### Phase 17: Telehealth
 
@@ -568,7 +571,7 @@ Phases execute in numeric order: 1 → 2 → 3 → … → 22
 | 13. Patient Home | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner patient-account pass, visual baselines, §8 verdicts) |  |
 | 14. Care Tasks / Adherence | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner two-role pass, visual baselines, §8 verdicts) |  |
 | 15. Communication | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner two-role pass, visual baselines, §9 verdicts) |  |
-| 16. WhatsApp + Telegram | 0/TBD | Not started | - |
+| 16. WhatsApp + Telegram | 4/4 tickets | Agent-complete — acceptance pending (cloud apply + pgTAP, owner test pass, visual baselines, §8 verdicts); no tests run, no commit (owner-directed) | - |
 | 17. Telehealth | 0/TBD | Not started | - |
 | 18. Payments | 0/TBD | Not started | - |
 | 19. Offline / Sync | 0/TBD | Not started | - |

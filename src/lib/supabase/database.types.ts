@@ -518,6 +518,54 @@ isOneToOne: false
     }
                    ]
                  }
+,"channel_endpoints": {
+                   Row: {
+                     "channel": string,"created_at": string,"created_by": string | null,"handle": string,"id": string,"org_id": string,"patient_id": string,"status": string,"updated_at": string,"updated_by": string | null
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "channel": string,"created_at"?: string,"created_by"?: string | null,"handle": string,"id"?: string,"org_id": string,"patient_id": string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                   }
+                   Update: {
+                     "channel"?: string,"created_at"?: string,"created_by"?: string | null,"handle"?: string,"id"?: string,"org_id"?: string,"patient_id"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "channel_endpoints_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                   ]
+                 }
+                ,"notification_deliveries": {
+                   Row: {
+                     "channel": string,"conversation_id": string,"created_at": string,"created_by": string | null,"handle": string,"id": string,"message_id": string,"org_id": string,"patient_id": string,"provider_reference": string | null,"reason": string | null,"status": string
+                   }
+                   ComputedFields: never
+                   Insert: {
+                     "channel": string,"conversation_id": string,"created_at"?: string,"created_by"?: string | null,"handle": string,"id"?: string,"message_id": string,"org_id": string,"patient_id": string,"provider_reference"?: string | null,"reason"?: string | null,"status": string
+                   }
+                   Update: {
+                     "channel"?: string,"conversation_id"?: string,"created_at"?: string,"created_by"?: string | null,"handle"?: string,"id"?: string,"message_id"?: string,"org_id"?: string,"patient_id"?: string,"provider_reference"?: string | null,"reason"?: string | null,"status"?: string
+                   }
+                   Relationships: [
+                     {
+      foreignKeyName: "notification_deliveries_message_id_fkey"
+      columns: ["message_id"]
+isOneToOne: false
+      referencedRelation: "conversation_messages"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notification_deliveries_patient_id_fkey"
+      columns: ["patient_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id"]
+    }
+                   ]
+                 }
            }
           Views: {
             [_ in never]: never

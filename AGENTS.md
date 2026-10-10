@@ -221,3 +221,19 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 > Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+
+<!-- agent-skills: hand-written; GSD regeneration must preserve this block -->
+
+## Agent skills
+
+### Issue tracker
+
+Local markdown under `.planning/phases/<phase>/issues/` — one file per ticket, never a combined file. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical roles; each label string equals its role name. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context. See `docs/agents/domain.md`.

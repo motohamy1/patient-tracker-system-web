@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/server';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_AUTHOR_CLINICAL, CAN_SUBMIT_OBSERVATION, runsCapability } from '@/lib/auth/capabilities';
 import { getPatientForCurrentUser } from '@/lib/patient/queries';
+import { postTaskMessageAndNotify } from '@/lib/channels/workflow';
 import {
   assignCareTaskSchema,
   careTaskTransitionSchema,
@@ -64,6 +65,13 @@ export async function assignCareTaskAction(input: unknown): Promise<CareTaskActi
     .select('id, patient_id')
     .single();
   if (error || !data) return { ok: false, kind: 'error' };
+
+  // Phase 16 (CHAN-01/02): the assignment tells the patient through the
+  // unified conversation first, then their channels — one story, two
+  // transports. A channel failure never fails the assignment.
+  await postTaskMessageAndNotify(actor.orgId, data.patient_id as string, parsed.data.title).catch(
+    () => undefined,
+  );
 
   revalidateTaskSurfaces(data.patient_id);
   return { ok: true, taskId: data.id };
