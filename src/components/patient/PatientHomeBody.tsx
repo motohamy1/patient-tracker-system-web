@@ -15,6 +15,7 @@
 //
 // Server Component: no hook, no client directive.
 import { MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import { StateVariant } from '@/components/state/StateVariant';
 import { Surface } from '@/components/primitives';
@@ -27,6 +28,7 @@ import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { listVisits, type VisitRecord } from '@/lib/visits/queries';
 import { listMedications, type MedicationRecord } from '@/lib/medications/queries';
 import { listLabResults, type LabResultRecord } from '@/lib/labs/queries';
+import { ownActiveConsultationVisitIds } from '@/lib/telehealth/queries';
 import {
   getPatientForCurrentUser,
   listPatientDocuments,
@@ -152,6 +154,16 @@ export async function PatientHomeBody() {
     careTaskState = null;
   }
 
+  // Phase 17: the patient's own in-progress consultations, so the
+  // Appointments region can point at the join surface (marker only — the
+  // session itself lives on /patient/consultation).
+  let liveConsultationVisitIds: Set<string> = new Set();
+  try {
+    liveConsultationVisitIds = await ownActiveConsultationVisitIds(patient.orgId, patient.id);
+  } catch {
+    liveConsultationVisitIds = new Set();
+  }
+
   // The patient's own conversation (the unified model, Phase 15): resolved
   // from the session, never the URL. A closed or absent thread shows the
   // honest empty region.
@@ -259,16 +271,29 @@ export async function PatientHomeBody() {
             quiet('No upcoming appointments are booked.')
           ) : (
             <ul className="flex flex-col gap-sm">
-              {upcoming.slice(0, 6).map((visit) => (
-                <li key={visit.id} className="flex flex-wrap items-baseline justify-between gap-sm">
-                  <span className="text-body leading-body text-text-primary">
-                    {visit.visitType ?? 'Appointment'}
-                  </span>
-                  <span className="text-label leading-label text-text-secondary tabular-nums">
-                    {formatDay(visit.scheduledAt)}
-                  </span>
-                </li>
-              ))}
+              {upcoming.slice(0, 6).map((visit) => {
+                const live = liveConsultationVisitIds.has(visit.id);
+                return (
+                  <li key={visit.id} className="flex flex-wrap items-baseline justify-between gap-sm">
+                    <span className="text-body leading-body text-text-primary">
+                      {visit.visitType ?? 'Appointment'}
+                    </span>
+                    <span className="flex items-center gap-sm">
+                      {live ? (
+                        <Link
+                          href="/patient/consultation"
+                          className="text-label leading-label text-text-primary hover:text-text-secondary"
+                        >
+                          Consultation running
+                        </Link>
+                      ) : null}
+                      <span className="text-label leading-label text-text-secondary tabular-nums">
+                        {formatDay(visit.scheduledAt)}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Region>

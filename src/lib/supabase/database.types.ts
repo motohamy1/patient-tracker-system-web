@@ -564,10 +564,91 @@ isOneToOne: false
       referencedRelation: "patients"
       referencedColumns: ["id"]
     }
-                   ]
-                 }
-           }
-          Views: {
+                    ]
+                  }
+                 ,"telehealth_sessions": {
+                    Row: {
+                      "cancellation_reason": string | null,"created_at": string,"created_by": string | null,"ended_at": string | null,"id": string,"join_token": string,"org_id": string,"patient_id": string,"started_at": string | null,"status": string,"transport": string,"transport_reference": string | null,"updated_at": string,"updated_by": string | null,"visit_id": string
+                    }
+                    ComputedFields: never
+                    Insert: {
+                      "cancellation_reason"?: string | null,"created_at"?: string,"created_by"?: string | null,"ended_at"?: string | null,"id"?: string,"join_token"?: string,"org_id": string,"patient_id": string,"started_at"?: string | null,"status"?: string,"transport"?: string,"transport_reference"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"visit_id": string
+                    }
+                    Update: {
+                      "cancellation_reason"?: string | null,"created_at"?: string,"created_by"?: string | null,"ended_at"?: string | null,"id"?: string,"join_token"?: string,"org_id"?: string,"patient_id"?: string,"started_at"?: string | null,"status"?: string,"transport"?: string,"transport_reference"?: string | null,"updated_at"?: string,"updated_by"?: string | null,"visit_id"?: string
+                    }
+                    Relationships: [
+                      {
+       foreignKeyName: "telehealth_sessions_patient_id_fkey"
+       columns: ["patient_id"]
+isOneToOne: false
+       referencedRelation: "patients"
+       referencedColumns: ["id"]
+     },{
+       foreignKeyName: "telehealth_sessions_visit_id_fkey"
+       columns: ["visit_id"]
+isOneToOne: false
+       referencedRelation: "visits"
+       referencedColumns: ["id"]
+     }
+                    ]
+                  }
+                 ,"invoices": {
+                    Row: {
+                      "amount_minor": number,"created_at": string,"created_by": string | null,"currency": string,"description": string,"id": string,"issued_at": string | null,"org_id": string,"patient_id": string,"status": string,"updated_at": string,"updated_by": string | null,"visit_id": string | null,"voided_at": string | null
+                    }
+                    ComputedFields: never
+                    Insert: {
+                      "amount_minor": number,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description": string,"id"?: string,"issued_at"?: string | null,"org_id": string,"patient_id": string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null,"visit_id"?: string | null,"voided_at"?: string | null
+                    }
+                    Update: {
+                      "amount_minor"?: number,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"id"?: string,"issued_at"?: string | null,"org_id"?: string,"patient_id"?: string,"status"?: string,"updated_at"?: string,"updated_by"?: string | null,"visit_id"?: string | null,"voided_at"?: string | null
+                    }
+                    Relationships: [
+                      {
+       foreignKeyName: "invoices_patient_id_fkey"
+       columns: ["patient_id"]
+isOneToOne: false
+       referencedRelation: "patients"
+       referencedColumns: ["id"]
+     },{
+       foreignKeyName: "invoices_visit_id_fkey"
+       columns: ["visit_id"]
+isOneToOne: false
+       referencedRelation: "visits"
+       referencedColumns: ["id"]
+     }
+                    ]
+                  }
+                 ,"payments": {
+                    Row: {
+                      "amount_minor": number,"created_at": string,"created_by": string | null,"currency": string,"id": string,"invoice_id": string,"org_id": string,"patient_id": string,"provider_reference": string | null,"reason": string | null,"status": string
+                    }
+                    ComputedFields: never
+                    Insert: {
+                      "amount_minor": number,"created_at"?: string,"created_by"?: string | null,"currency": string,"id"?: string,"invoice_id": string,"org_id": string,"patient_id": string,"provider_reference"?: string | null,"reason"?: string | null,"status": string
+                    }
+                    Update: {
+                      "amount_minor"?: number,"created_at"?: string,"created_by"?: string | null,"currency"?: string,"id"?: string,"invoice_id"?: string,"org_id"?: string,"patient_id"?: string,"provider_reference"?: string | null,"reason"?: string | null,"status"?: string
+                    }
+                    Relationships: [
+                      {
+       foreignKeyName: "payments_invoice_id_fkey"
+       columns: ["invoice_id"]
+isOneToOne: false
+       referencedRelation: "invoices"
+       referencedColumns: ["id"]
+     },{
+       foreignKeyName: "payments_patient_id_fkey"
+       columns: ["patient_id"]
+isOneToOne: false
+       referencedRelation: "patients"
+       referencedColumns: ["id"]
+     }
+                    ]
+                  }
+            }
+           Views: {
             [_ in never]: never
           }
           Functions: {
