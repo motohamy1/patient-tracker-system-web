@@ -23,6 +23,7 @@ import { MobileNav } from '@/components/shell/MobileNav';
 import { redirectForRole } from '@/lib/auth/redirect';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { OfflineSyncStrip } from '@/components/shell/OfflineSyncStrip';
+import { SyncWiring } from '@/components/sync/SyncWiring';
 
 const PATIENT_MOBILE_ITEMS = [{ value: 'home', label: 'Home', href: '/patient' }];
 
@@ -39,6 +40,9 @@ export default async function PatientLayout({ children }: { children: ReactNode 
         ariaLabel="Patient navigation"
       />
       <OfflineSyncStrip />
+      <div className="mx-auto w-full max-w-[64rem] px-lg pt-lg">
+        <SyncWiring />
+      </div>
       {children}
     </Surface>
   );

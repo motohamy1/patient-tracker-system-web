@@ -15,6 +15,7 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/primitives/Button';
 import { Overlay } from '@/components/overlays/Overlay';
 import { logObservationAction } from '@/lib/patient/actions';
+import { enqueueDraft, queueEntry } from '@/lib/sync/store';
 import {
   OBSERVATION_KINDS,
   OBSERVATION_KIND_LABELS,
@@ -53,17 +54,28 @@ export function QuickLogControl({ insetFill }: { insetFill: string }) {
     event.preventDefault();
     setPending(true);
     setError(null);
-    const result = await logObservationAction({
+    const payload = {
       kind,
       value,
       secondValue,
       unit: unit === '' ? undefined : unit,
       note,
       observedAt: observedAt === '' ? undefined : new Date(observedAt).toISOString(),
-    });
+    };
+    const result = await logObservationAction(payload);
     setPending(false);
     if (!result.ok) {
-      setError("That couldn't be logged. Check the values and try again.");
+      // Phase 19 (OFF-02): the send failed, so the measurement is held on
+      // THIS DEVICE and the copy says exactly that — it is never described
+      // as logged. The queue panel shows its state and retries it.
+      const draftId = enqueueDraft('observation', {
+        ...payload,
+        label: `${OBSERVATION_KIND_LABELS[kind as (typeof OBSERVATION_KINDS)[number]]} entry`,
+      });
+      queueEntry(draftId);
+      setError(
+        "That couldn't be logged, so it's held on this device. It is not in your record yet — you can try sending it again below.",
+      );
       return;
     }
     setOpen(false);
