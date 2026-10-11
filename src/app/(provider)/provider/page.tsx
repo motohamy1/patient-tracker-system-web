@@ -34,9 +34,13 @@ import { FolderGrid } from '@/components/patients/FolderGrid';
 import { NewPatientControl } from '@/components/patients/NewPatientControl';
 import { ProviderSearchControl } from '@/components/patients/ProviderSearchControl';
 import { RetrievalControls } from '@/components/patients/RetrievalControls';
+import { TodaySchedulePanel } from '@/components/schedule/TodaySchedulePanel';
+import { CriticalAlertsPanel } from '@/components/alerts/CriticalAlertsPanel';
 import { CAN_MANAGE_MEMBERSHIP, CAN_MESSAGE, runsCapability } from '@/lib/auth/capabilities';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { listPatients } from '@/lib/patients/queries';
+import { listDaySchedule } from '@/lib/schedule/queries';
+import { listCriticalAlerts } from '@/lib/alerts/queries';
 import { listPatientsQuerySchema, type ListPatientsQueryInput } from '@/lib/patients/schemas';
 
 export const dynamic = 'force-dynamic';
@@ -99,45 +103,85 @@ export default async function ProviderHomePage({
   // migration 0014's write policy; the action re-checks it anyway.
   const canMessage = runsCapability(resolution.role, CAN_MESSAGE);
 
+  // D-28 dashboard panels (the reference's three-column composition): the
+  // day's schedule and the org's critical alerts. Each degrades on its own —
+  // a failed read shows that panel's honest empty line, never a blank.
+  const day = new Date().toISOString().slice(0, 10);
+  let schedule: Awaited<ReturnType<typeof listDaySchedule>> = [];
+  try {
+    schedule = await listDaySchedule(resolution.orgId, day);
+  } catch {
+    schedule = [];
+  }
+  let alerts: Awaited<ReturnType<typeof listCriticalAlerts>> = [];
+  try {
+    alerts = await listCriticalAlerts(resolution.orgId);
+  } catch {
+    alerts = [];
+  }
+
   return (
     <Surface variant="canvas" className="flex flex-1 flex-col bg-canvas p-lg">
-      <div className="mx-auto flex w-full max-w-[80rem] flex-col gap-xl">
-        {/* The retrieval control row sits ABOVE the grid (D-12). */}
-        <div className="flex flex-col gap-md">
-          <RetrievalControls
-            filter={query.filter}
-            q={query.q}
-            day={query.day}
-            count={rows.length}
-            total={total}
-            hasMore={hasMore}
-            insetFill={INSET_FILL}
-          />
-          {/* Mobile placements (04-UI-SPEC §4.4/§4.5): the Phase-2 top bar
-              keeps its own `max-md:hidden` controls, so the body row repeats
-              the search and the CTA below the 768px band edge. */}
+      <div className="mx-auto flex w-full max-w-[104rem] flex-col gap-lg">
+        {/* Mobile placements (04-UI-SPEC §4.4/§4.5): the Phase-2 top bar
+            keeps its own `max-md:hidden` controls, so the body row repeats
+            the search and the CTA below the 768px band edge. */}
+        <div className="flex flex-col gap-md md:hidden">
           <ProviderSearchControl
             inputId="provider-search-body"
             filter={query.filter}
             day={query.day}
             insetFill={INSET_FILL}
-            className="md:hidden"
           />
-          <NewPatientControl insetFill={INSET_FILL} className="w-full md:hidden" />
+          <NewPatientControl insetFill={INSET_FILL} className="w-full" />
         </div>
 
-        <FolderGrid
-          rows={rows}
-          hasMore={hasMore}
-          filter={query.filter}
-          q={query.q}
-          day={query.day}
-          shown={query.shown}
-          limit={query.limit}
-          canInvite={canInvite}
-          canMessage={canMessage}
-          emptyAction={<NewPatientControl insetFill={INSET_FILL} variant="secondary" />}
-        />
+        {/* The reference's three-column dashboard (D-28): schedule left,
+            profiles center, alerts right — stacked in one column below the
+            1280px band edge with the profiles first (order-*). */}
+        <div className="flex flex-col gap-lg xl:grid xl:grid-cols-[minmax(0,17rem)_minmax(0,1fr)_minmax(0,19rem)] xl:items-start">
+          <div className="order-2 xl:order-1">
+            <TodaySchedulePanel rows={schedule} />
+          </div>
+
+          {/* The Patient Profiles panel: one white rounded surface holds the
+              retrieval controls and the folder grid, so the grid reads as
+              profiles inside a composed panel instead of loose boxes
+              floating on the canvas. */}
+          <Surface variant="surface" className="order-1 flex flex-col gap-lg rounded-xl xl:order-2">
+            <div className="flex flex-wrap items-center justify-between gap-md">
+              <h1 className="text-heading font-semibold leading-heading text-text-primary">Patient Profiles</h1>
+            </div>
+
+            {/* The retrieval control row sits ABOVE the grid (D-12). */}
+            <RetrievalControls
+              filter={query.filter}
+              q={query.q}
+              day={query.day}
+              count={rows.length}
+              total={total}
+              hasMore={hasMore}
+              insetFill={INSET_FILL}
+            />
+
+            <FolderGrid
+              rows={rows}
+              hasMore={hasMore}
+              filter={query.filter}
+              q={query.q}
+              day={query.day}
+              shown={query.shown}
+              limit={query.limit}
+              canInvite={canInvite}
+              canMessage={canMessage}
+              emptyAction={<NewPatientControl insetFill={INSET_FILL} variant="secondary" />}
+            />
+          </Surface>
+
+          <div className="order-3">
+            <CriticalAlertsPanel rows={alerts} />
+          </div>
+        </div>
       </div>
     </Surface>
   );

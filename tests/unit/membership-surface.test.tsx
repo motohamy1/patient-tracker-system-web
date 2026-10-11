@@ -2,7 +2,8 @@
 // (D-01..D-04; 03-UI-SPEC §8.2/§8.3/§Copywriting).
 //
 // Static render idiom of tests/unit/auth-forms.test.tsx: react-dom/server +
-// parsed DOM, Supabase mocked at the module boundary, server-only and
+// parsed DOM, the Neon data layer mocked at the module boundary (`getSql()` is
+// a tagged-template spy, the session seam a plain fn), server-only and
 // next/navigation mocked, motion/react mocked to the no-op button. Asserted:
 // denial and valid branches' exact strings, the no-leak sweep (no org name or
 // status tint on the deny branch), force-dynamic presence, the one-action
@@ -15,31 +16,26 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const harness = vi.hoisted(() => ({
-  rpc: undefined as ((fn: string, args: unknown) => Promise<{ data: unknown; error: unknown }>) | undefined,
-  claims: undefined as { claims: { sub: string } } | null | undefined,
+  user: undefined as { id: string; email: string } | null | undefined,
   memberships: undefined as Array<{ org_id: string; role: string; created_at: string }> | undefined,
-  org: undefined as { name: string } | null | undefined,
-  claimsError: null as { message: string } | null,
+  invite: null as { organization: string; role: string } | null,
+  inviteError: null as { message: string } | null,
+  sql: vi.fn(),
+  getSessionUser: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: async () => ({
-    rpc: async (fn: string, args: unknown) =>
-      harness.rpc ? harness.rpc(fn, args) : { data: null, error: null },
-    auth: {
-      getClaims: async () => ({ data: harness.claims, error: harness.claimsError }),
-    },
-    from: () => ({
-      select: () => {
-        const b: Record<string, unknown> = {};
-        b.eq = () => b;
-        b.order = async () => ({ data: harness.memberships, error: null });
-        b.maybeSingle = async () => ({ data: harness.org ?? null, error: null });
-        return b;
-      },
-    }),
-  }),
+vi.mock('@/lib/db/neon', () => ({ getSql: () => harness.sql }));
+vi.mock('@/lib/auth/session', () => ({ getSessionUser: harness.getSessionUser }));
+// Managed Auth is never reached in these render paths; the stub only keeps
+// @neondatabase/auth (and its `next/headers` edge) out of the module graph.
+vi.mock('@/lib/auth/server', () => ({
+  auth: {
+    signUp: { email: vi.fn() },
+    signIn: { email: vi.fn() },
+    requestPasswordReset: vi.fn(),
+    resetPassword: vi.fn(),
+  },
 }));
 
 vi.mock('next/navigation', () => ({
@@ -73,18 +69,26 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-  harness.rpc = undefined;
-  harness.claims = undefined;
+  harness.user = undefined;
   harness.memberships = undefined;
-  harness.org = undefined;
-  harness.claimsError = null;
+  harness.invite = null;
+  harness.inviteError = null;
+  harness.getSessionUser.mockReset().mockImplementation(async () => harness.user ?? null);
+  harness.sql.mockReset().mockImplementation(async (strings: TemplateStringsArray) => {
+    const text = strings.join('?');
+    if (text.includes('preview_invite')) {
+      if (harness.inviteError) throw harness.inviteError;
+      return harness.invite ? [{ payload: harness.invite }] : [];
+    }
+    return harness.memberships ?? [];
+  });
 });
 
 describe('/provider/onboarding/create-org', () => {
   it('renders the exact heading, label and action copy', async () => {
-    harness.claims = { claims: { sub: '11111111-1111-4111-8111-111111111111' } };
+    harness.user = { id: '11111111-1111-4111-8111-111111111111', email: 'owner@example.com' };
     harness.memberships = [];
-    const pageModule = await import('@/app/(provider)/provider/onboarding/create-org/page');
+    const pageModule = await import('@/app/(onboarding)/provider/onboarding/create-org/page');
     const element = await pageModule.default({
       searchParams: Promise.resolve({}),
     });
@@ -95,11 +99,11 @@ describe('/provider/onboarding/create-org', () => {
   });
 
   it('redirects a signed-in member to their own workspace (renders null post-redirect)', async () => {
-    harness.claims = { claims: { sub: '11111111-1111-4111-8111-111111111111' } };
+    harness.user = { id: '11111111-1111-4111-8111-111111111111', email: 'owner@example.com' };
     harness.memberships = [
       { org_id: 'org-1', role: 'admin_owner', created_at: '2026-10-07T00:00:00Z' },
     ];
-    const pageModule = await import('@/app/(provider)/provider/onboarding/create-org/page');
+    const pageModule = await import('@/app/(onboarding)/provider/onboarding/create-org/page');
     const element = await pageModule.default({
       searchParams: Promise.resolve({}),
     });
@@ -107,9 +111,9 @@ describe('/provider/onboarding/create-org', () => {
   });
 
   it('keeps the unaffiliated path rendering the form', async () => {
-    harness.claims = { claims: { sub: '11111111-1111-4111-8111-111111111111' } };
+    harness.user = { id: '11111111-1111-4111-8111-111111111111', email: 'owner@example.com' };
     harness.memberships = [];
-    const pageModule = await import('@/app/(provider)/provider/onboarding/create-org/page');
+    const pageModule = await import('@/app/(onboarding)/provider/onboarding/create-org/page');
     const element = await pageModule.default({
       searchParams: Promise.resolve({}),
     });
@@ -117,13 +121,13 @@ describe('/provider/onboarding/create-org', () => {
   });
 
   it('is a Server Component and force-dynamic', () => {
-    const source = pageSource(['src/app/(provider)/provider/onboarding/create-org/page.tsx']);
+    const source = pageSource(['src/app/(onboarding)/provider/onboarding/create-org/page.tsx']);
     expect(source.includes("'use client'")).toBe(false);
     expect(source).toContain("dynamic = 'force-dynamic'");
   });
 
   it('guards the unaffiliated-only path in source', () => {
-    const source = pageSource(['src/app/(provider)/provider/onboarding/create-org/page.tsx']);
+    const source = pageSource(['src/app/(onboarding)/provider/onboarding/create-org/page.tsx']);
     expect(source).toContain("resolution.kind === 'unauthenticated'");
     expect(source).toContain("resolution.kind === 'signed-in'");
   });
@@ -196,7 +200,7 @@ describe('members surface', () => {
 
 describe('/invite/[token] — the denial branch', () => {
   it('renders the exact constant copy for an unknown token, with no org name span', async () => {
-    harness.rpc = async () => ({ data: null, error: { message: 'invite_invalid' } });
+    harness.invite = null; // preview_invite returns no payload
     const element = await invitePage.default({
       params: Promise.resolve({ token: 'a'.repeat(43) }),
     });
@@ -207,9 +211,7 @@ describe('/invite/[token] — the denial branch', () => {
   });
 
   it('renders the same constant copy when the DB call fails (transient outage leaks nothing)', async () => {
-    harness.rpc = async () => {
-      throw new Error('connection refused');
-    };
+    harness.inviteError = { message: 'connection refused' };
     const element = await invitePage.default({
       params: Promise.resolve({ token: 'b'.repeat(43) }),
     });
@@ -219,16 +221,11 @@ describe('/invite/[token] — the denial branch', () => {
   });
 
   it('denies a hostile token string without any DB call', async () => {
-    let called = false;
-    harness.rpc = async () => {
-      called = true;
-      return { data: null, error: null };
-    };
     const element = await invitePage.default({
       params: Promise.resolve({ token: '../../etc/passwd' }),
     });
     const doc = parse(element as ReactElement);
-    expect(called).toBe(false);
+    expect(harness.sql).not.toHaveBeenCalled();
     expect(doc.body.textContent).toContain('This invite is no longer valid.');
   });
 
@@ -241,10 +238,7 @@ describe('/invite/[token] — the denial branch', () => {
 
 describe('/invite/[token] — the valid branch', () => {
   it('renders the exact join sentence with org name and role', async () => {
-    harness.rpc = async () => ({
-      data: { organization: 'Acme Practice', role: 'patient' },
-      error: null,
-    });
+    harness.invite = { organization: 'Acme Practice', role: 'patient' };
     const element = await invitePage.default({
       params: Promise.resolve({ token: 'c'.repeat(43) }),
     });

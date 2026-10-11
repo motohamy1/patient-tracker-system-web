@@ -1,4 +1,4 @@
-// /invite/[token] — the public signup-then-join surface (D-02/D-03/D-04, 03-UI-SPEC §8.2).
+// src/app/(auth)/invite/[token]/page.tsx — the public signup-then-join surface (D-02/D-03/D-04).
 //
 // Renders with no session: the (auth) group is bare and the read path never
 // requires a session — an unauthenticated device follows the link, sees the
@@ -6,17 +6,15 @@
 //
 // Display lookup discipline: the server helper formats the raw token (pure
 // assertion — hostile strings never reach the DB) and calls the
-// security-definer preview_invite RPC, which returns ONLY the org name and
-// role for the one sentence; a format miss, empty visa, or a transient DB
-// failure ALL render the SAME constant denial grammar, so nothing about
-// token existence or validity is ever implied. Email-confirmation re-entry:
-// the redeem action's emailRedirectTo lands the confirm endpoint back on
-// this same token path.
+// security-definer preview_invite function, which returns ONLY the org name
+// and role for the one sentence; a format miss, empty result, or a transient
+// DB failure ALL render the SAME constant denial grammar, so nothing about
+// token existence or validity is ever implied.
 import { Surface } from '@/components/primitives';
 import { INSET_FILL } from '@/components/primitives/CompactControl';
 import { EmptyState } from '@/components/primitives/EmptyState';
 import { assertValidInviteToken } from '@/lib/auth/invite';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
 import { InviteSignupForm } from './invite-signup-form';
 
 export const dynamic = 'force-dynamic';
@@ -27,11 +25,12 @@ export const INVITE_DENIAL_BODY = 'Ask your organization owner to send a new one
 async function previewInvite(rawToken: string): Promise<{ organization: string; role: string } | null> {
   if (!assertValidInviteToken(rawToken)) return null;
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase.rpc('preview_invite', { p_raw_token: rawToken });
-    if (error || !data) return null;
-    const payload = data as { organization?: string; role?: string };
-    if (!payload.organization || !payload.role) return null;
+    const sql = getSql();
+    const rows = (await sql`
+      select public.preview_invite(${rawToken}) as payload
+    `) as unknown as { payload: { organization?: string; role?: string } | null }[];
+    const payload = rows[0]?.payload;
+    if (!payload?.organization || !payload?.role) return null;
     return { organization: payload.organization, role: payload.role };
   } catch {
     return null;

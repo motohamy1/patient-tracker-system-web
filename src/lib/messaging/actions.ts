@@ -2,13 +2,16 @@
 // COMM-01..03; Phase 16 wires the channel workflow, CHAN-01/02).
 //
 // ONE send action serves both sides of the conversation: the session decides
-// the sender, and migration 0014's guard re-derives it again server-side — a
-// payload can never claim to be the care team or the patient. Messages are
-// append-only: nothing here edits, deletes, or marks anything read.
+// the sender, and the ported schema's guard re-derives it again server-side
+// from `app.user_id` — a payload can never claim to be the care team or the
+// patient. Messages are append-only: nothing here edits, deletes, or marks
+// anything read. Writes run inside withAppUser so the guards see the actor.
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
+import { withAppUser } from '@/lib/db/client';
+import { getSessionUser } from '@/lib/auth/session';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_MESSAGE, CAN_SUBMIT_OBSERVATION, runsCapability } from '@/lib/auth/capabilities';
 import { closeConversationSchema, sendMessageSchema, startConversationSchema } from '@/lib/messaging/schemas';
@@ -42,18 +45,31 @@ export async function sendMessageAction(input: unknown): Promise<MessagingAction
     runsCapability(patientResolution.role, CAN_SUBMIT_OBSERVATION);
   if (!isStaff && !isPatient) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('conversation_messages')
-    .insert({
-      conversation_id: parsed.data.conversationId,
-      body: parsed.data.body,
-      ...(parsed.data.channel !== undefined ? { channel: parsed.data.channel } : {}),
-    })
-    .select('id, conversation_id, patient_id')
-    .single();
+  const user = await getSessionUser();
+  if (!user) return { ok: false, kind: 'forbidden' };
 
-  if (error || !data) return { ok: false, kind: 'error' };
+  const channel = parsed.data.channel;
+  let inserted: { id: string; conversation_id: string; patient_id: string } | null = null;
+  try {
+    inserted = await withAppUser(user.id, async (tx) => {
+      const { rows } = await tx.query<{ id: string; conversation_id: string; patient_id: string }>(
+        channel !== undefined
+          ? `insert into public.conversation_messages (conversation_id, body, channel)
+             values ($1, $2, $3)
+             returning id, conversation_id, patient_id`
+          : `insert into public.conversation_messages (conversation_id, body)
+             values ($1, $2)
+             returning id, conversation_id, patient_id`,
+        channel !== undefined
+          ? [parsed.data.conversationId, parsed.data.body, channel]
+          : [parsed.data.conversationId, parsed.data.body],
+      );
+      return rows[0] ?? null;
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (inserted === null) return { ok: false, kind: 'error' };
 
   // Phase 16 (CHAN-01/02): the thread's message notifies the patient's active
   // channels; the in-app message is recorded either way, and each delivery
@@ -62,15 +78,15 @@ export async function sendMessageAction(input: unknown): Promise<MessagingAction
   if (isStaff && provider.kind === 'signed-in') {
     await notifyForMessage(
       provider.orgId,
-      data.conversation_id as string,
-      data.id as string,
-      data.patient_id as string,
+      inserted.conversation_id,
+      inserted.id,
+      inserted.patient_id,
       parsed.data.body,
     ).catch(() => undefined);
   }
 
-  revalidateMessaging(data.patient_id as string);
-  return { ok: true, messageId: data.id as string, conversationId: data.conversation_id as string };
+  revalidateMessaging(inserted.patient_id);
+  return { ok: true, messageId: inserted.id, conversationId: inserted.conversation_id };
 }
 
 /**
@@ -86,53 +102,78 @@ export async function startConversationAction(input: unknown): Promise<Messaging
   if (resolution.kind !== 'signed-in') return { ok: false, kind: 'forbidden' };
   if (!runsCapability(resolution.role, CAN_MESSAGE)) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('id', parsed.data.patientId)
-    .eq('org_id', resolution.orgId)
-    .maybeSingle();
-  if (patientError) return { ok: false, kind: 'error' };
-  if (!patient) return { ok: false, kind: 'not-found' };
+  const user = await getSessionUser();
+  if (!user) return { ok: false, kind: 'forbidden' };
+
+  const sql = getSql();
+
+  let patient: { id: string } | null = null;
+  try {
+    const rows = (await sql`
+      select id from public.patients
+      where id = ${parsed.data.patientId} and org_id = ${resolution.orgId}
+    `) as unknown as { id: string }[];
+    patient = rows[0] ?? null;
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (patient === null) return { ok: false, kind: 'not-found' };
 
   // Find the open conversation, or create it (the guard opens it as `open`).
-  const { data: existing } = await supabase
-    .from('conversations')
-    .select('id')
-    .eq('org_id', resolution.orgId)
-    .eq('patient_id', parsed.data.patientId)
-    .eq('status', 'open')
-    .maybeSingle();
-
-  let conversationId = existing?.id as string | undefined;
-  if (conversationId === undefined) {
-    const { data: created, error: createError } = await supabase
-      .from('conversations')
-      .insert({ org_id: resolution.orgId, patient_id: parsed.data.patientId })
-      .select('id')
-      .single();
-    if (createError || !created) return { ok: false, kind: 'error' };
-    conversationId = created.id as string;
+  let existing: { id: string } | null = null;
+  try {
+    const rows = (await sql`
+      select id from public.conversations
+      where org_id = ${resolution.orgId}
+        and patient_id = ${parsed.data.patientId}
+        and status = 'open'
+    `) as unknown as { id: string }[];
+    existing = rows[0] ?? null;
+  } catch {
+    existing = null;
   }
 
-  const { data: message, error: messageError } = await supabase
-    .from('conversation_messages')
-    .insert({ conversation_id: conversationId, body: parsed.data.body })
-    .select('id')
-    .single();
-  if (messageError || !message) return { ok: false, kind: 'error' };
+  let conversationId: string | null = existing !== null ? existing.id : null;
+  if (conversationId === null) {
+    try {
+      conversationId = await withAppUser(user.id, async (tx) => {
+        const { rows } = await tx.query<{ id: string }>(
+          `insert into public.conversations (org_id, patient_id) values ($1, $2) returning id`,
+          [resolution.orgId, parsed.data.patientId],
+        );
+        return rows[0]?.id ?? null;
+      });
+    } catch {
+      return { ok: false, kind: 'error' };
+    }
+    if (conversationId === null) return { ok: false, kind: 'error' };
+  }
+  const targetConversationId = conversationId;
+
+  let message: { id: string } | null = null;
+  try {
+    message = await withAppUser(user.id, async (tx) => {
+      const { rows } = await tx.query<{ id: string }>(
+        `insert into public.conversation_messages (conversation_id, body) values ($1, $2) returning id`,
+        [targetConversationId, parsed.data.body],
+      );
+      return rows[0] ?? null;
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (message === null) return { ok: false, kind: 'error' };
 
   await notifyForMessage(
     resolution.orgId,
-    conversationId,
-    message.id as string,
+    targetConversationId,
+    message.id,
     parsed.data.patientId,
     parsed.data.body,
   ).catch(() => undefined);
 
   revalidateMessaging(parsed.data.patientId);
-  return { ok: true, messageId: message.id as string, conversationId };
+  return { ok: true, messageId: message.id, conversationId: targetConversationId };
 }
 
 /** Close a thread; the message log is kept (the history is the record). */
@@ -144,17 +185,25 @@ export async function closeConversationAction(input: unknown): Promise<Messaging
   if (resolution.kind !== 'signed-in') return { ok: false, kind: 'forbidden' };
   if (!runsCapability(resolution.role, CAN_MESSAGE)) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('conversations')
-    .update({ status: 'closed' })
-    .eq('id', parsed.data.conversationId)
-    .eq('org_id', resolution.orgId)
-    .select('id, patient_id')
-    .maybeSingle();
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
+  const user = await getSessionUser();
+  if (!user) return { ok: false, kind: 'forbidden' };
 
-  revalidateMessaging(data.patient_id as string);
-  return { ok: true, conversationId: data.id as string };
+  let updated: { id: string; patient_id: string } | null = null;
+  try {
+    updated = await withAppUser(user.id, async (tx) => {
+      const { rows } = await tx.query<{ id: string; patient_id: string }>(
+        `update public.conversations set status = 'closed'
+         where id = $1 and org_id = $2
+         returning id, patient_id`,
+        [parsed.data.conversationId, resolution.orgId],
+      );
+      return rows[0] ?? null;
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (updated === null) return { ok: false, kind: 'not-found' };
+
+  revalidateMessaging(updated.patient_id);
+  return { ok: true, conversationId: updated.id };
 }

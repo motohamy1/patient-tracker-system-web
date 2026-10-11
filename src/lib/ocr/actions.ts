@@ -1,8 +1,11 @@
 // src/lib/ocr/actions.ts — the prescription pipeline's server actions
 // (Phase 12, OCR-01..04; AUTH-05).
 //
-// Four actions, four pipeline stages, one rule: NOTHING becomes clinical truth
-// through this file without a clinician's explicit confirmation.
+// Five actions, the pipeline's stages plus the presigned upload seam. One rule:
+// NOTHING becomes clinical truth through this file without a clinician's
+// explicit confirmation.
+//   0. createPrescriptionUploadAction — mints a presigned PUT so the browser
+//                                      never holds storage credentials
 //   1. uploadPrescriptionAction   — preprocessing + storage + the work item
 //   2. requestExtractionAction    — provider extraction + analysis (payload)
 //   3. rejectExtractionAction     — a recorded decision, never a deletion
@@ -11,11 +14,16 @@
 //                                   with its extracted origin preserved (§23)
 //
 // Every action re-checks CAN_AUTHOR_CLINICAL server-side; the UI gating is a
-// courtesy, never the boundary (§3.1/§12).
+// courtesy, never the boundary (§3.1/§12). RLS is inert on the single-owner
+// Lakebase Postgres connection, so every read carries an explicit `org_id`
+// predicate and every write runs under `withAppUser` (the triggers read
+// `public.app_uid()` for provenance and role).
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
+import { withAppUser } from '@/lib/db/client';
+import { getSessionUser } from '@/lib/auth/session';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_AUTHOR_CLINICAL, runsCapability, type Capability } from '@/lib/auth/capabilities';
 import { listMedications } from '@/lib/medications/queries';
@@ -23,10 +31,12 @@ import { getProvider } from '@/lib/ocr/provider';
 import { analyzeExtraction, parseExtractionPayload, preprocess } from '@/lib/ocr/pipeline';
 import {
   confirmExtractionSchema,
+  createPrescriptionUploadSchema,
   rejectExtractionSchema,
   requestExtractionSchema,
   uploadPrescriptionSchema,
 } from '@/lib/ocr/schemas';
+import { signedUploadUrl } from '@/lib/storage/documents';
 import { MEDICATION_FREQUENCIES, MEDICATION_ROUTES } from '@/lib/medications/status';
 
 export type OcrActionResult =
@@ -39,11 +49,20 @@ export type OcrActionResult =
     }
   | { ok: false; kind: 'invalid' | 'forbidden' | 'not-found' | 'error' };
 
+const MIME_EXTENSIONS: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
+
 async function requireAuthor() {
   const resolution = await resolveWorkspaceRole('provider');
   if (resolution.kind !== 'signed-in') return null;
   if (!runsCapability(resolution.role, CAN_AUTHOR_CLINICAL)) return null;
-  return resolution;
+  const user = await getSessionUser();
+  if (!user) return null;
+  return { ...resolution, uid: user.id };
 }
 
 function revalidateExtractionSurfaces(patientId: string, extractionId?: string) {
@@ -54,11 +73,58 @@ function revalidateExtractionSurfaces(patientId: string, extractionId?: string) 
 }
 
 /**
+ * Stage 0 — the presigned upload seam. The browser cannot hold storage
+ * credentials and a File cannot ride a server action safely (body-size limit),
+ * so the server mints a time-boxed PUT URL for THIS org/patient path; the
+ * client PUTs the object, then calls uploadPrescriptionAction with the same
+ * field names. The path is server-derived, never client-supplied.
+ */
+export async function createPrescriptionUploadAction(
+  input: unknown,
+): Promise<
+  | { ok: true; storagePath: string; uploadUrl: string }
+  | { ok: false; kind: 'invalid' | 'forbidden' | 'not-found' | 'error' }
+> {
+  const parsed = createPrescriptionUploadSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, kind: 'invalid' };
+
+  const actor = await requireAuthor();
+  if (!actor) return { ok: false, kind: 'forbidden' };
+
+  const checked = preprocess(parsed.data.mimeType, parsed.data.sizeBytes);
+  if (!checked.ok) return { ok: false, kind: 'invalid' };
+
+  let patients: { id: string }[];
+  try {
+    const sql = getSql();
+    patients = (await sql`
+      select id from public.patients
+      where id = ${parsed.data.patientId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string }[];
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (patients.length === 0) return { ok: false, kind: 'not-found' };
+
+  const filenameExtension = /\.([A-Za-z0-9]{1,8})$/.exec(parsed.data.filename)?.[1]?.toLowerCase();
+  const extension = MIME_EXTENSIONS[parsed.data.mimeType] ?? filenameExtension ?? 'bin';
+  const storagePath = `${actor.orgId}/${parsed.data.patientId}/${crypto.randomUUID()}.${extension}`;
+
+  try {
+    const uploadUrl = await signedUploadUrl(storagePath, parsed.data.mimeType);
+    return { ok: true, storagePath, uploadUrl };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+}
+
+/**
  * Stage 1 — upload. The browser writes the object to the private bucket
- * (RLS-scoped, staff-only) and hands us the path; this action validates the
- * path belongs to THIS org/patient, runs preprocessing, and creates the
- * document row + the extraction work item in one step. A failure at any point
- * leaves no orphan row.
+ * (org/patient path convention, staff-only) and hands us the path; this action
+ * validates the path belongs to THIS org/patient, runs preprocessing, and
+ * creates the document row + the extraction work item in one step. A failure at
+ * any point leaves no orphan row.
  */
 export async function uploadPrescriptionAction(input: unknown): Promise<OcrActionResult> {
   const parsed = uploadPrescriptionSchema.safeParse(input);
@@ -67,8 +133,8 @@ export async function uploadPrescriptionAction(input: unknown): Promise<OcrActio
   const actor = await requireAuthor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  // The path must be exactly <org>/<patient>/… — the storage policies read the
-  // org from the path, so a foreign path is a policy violation waiting to
+  // The path must be exactly <org>/<patient>/… — the storage convention reads
+  // the org from the path, so a foreign path is a scope violation waiting to
   // happen even before the row exists.
   const prefix = `${actor.orgId}/${parsed.data.patientId}/`;
   if (!parsed.data.storagePath.startsWith(prefix)) return { ok: false, kind: 'forbidden' };
@@ -76,44 +142,49 @@ export async function uploadPrescriptionAction(input: unknown): Promise<OcrActio
   const checked = preprocess(parsed.data.mimeType, parsed.data.sizeBytes);
   if (!checked.ok) return { ok: false, kind: 'invalid' };
 
-  const supabase = await createClient();
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('id', parsed.data.patientId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
-  if (patientError) return { ok: false, kind: 'error' };
-  if (!patient) return { ok: false, kind: 'not-found' };
+  try {
+    const sql = getSql();
+    const patients = (await sql`
+      select id from public.patients
+      where id = ${parsed.data.patientId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string }[];
+    if (patients.length === 0) return { ok: false, kind: 'not-found' };
 
-  const { data: document, error: documentError } = await supabase
-    .from('documents')
-    .insert({
-      org_id: actor.orgId,
-      patient_id: parsed.data.patientId,
-      kind: 'prescription',
-      storage_path: parsed.data.storagePath,
-      filename: parsed.data.filename,
-      mime_type: parsed.data.mimeType,
-      size_bytes: parsed.data.sizeBytes,
-    })
-    .select('id')
-    .single();
-  if (documentError || !document) return { ok: false, kind: 'error' };
+    // One transaction: the document row and the extraction work item land
+    // together, so a failure at any point leaves no orphan row.
+    const extractionId = await withAppUser(actor.uid, async (tx) => {
+      const document = await tx.query<{ id: string }>(
+        `insert into public.documents (org_id, patient_id, kind, storage_path, filename, mime_type, size_bytes)
+         values ($1, $2, 'prescription', $3, $4, $5, $6)
+         returning id`,
+        [
+          actor.orgId,
+          parsed.data.patientId,
+          parsed.data.storagePath,
+          parsed.data.filename,
+          parsed.data.mimeType,
+          parsed.data.sizeBytes,
+        ],
+      );
+      const documentId = document.rows[0]?.id;
+      if (documentId === undefined) return undefined;
 
-  const { data: extraction, error: extractionError } = await supabase
-    .from('ocr_extractions')
-    .insert({
-      org_id: actor.orgId,
-      patient_id: parsed.data.patientId,
-      document_id: document.id,
-    })
-    .select('id')
-    .single();
-  if (extractionError || !extraction) return { ok: false, kind: 'error' };
+      const extraction = await tx.query<{ id: string }>(
+        `insert into public.ocr_extractions (org_id, patient_id, document_id)
+         values ($1, $2, $3)
+         returning id`,
+        [actor.orgId, parsed.data.patientId, documentId],
+      );
+      return extraction.rows[0]?.id;
+    });
+    if (extractionId === undefined) return { ok: false, kind: 'error' };
 
-  revalidateExtractionSurfaces(parsed.data.patientId);
-  return { ok: true, extractionId: extraction.id };
+    revalidateExtractionSurfaces(parsed.data.patientId);
+    return { ok: true, extractionId };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }
 
 /**
@@ -129,52 +200,72 @@ export async function requestExtractionAction(input: unknown): Promise<OcrAction
   const actor = await requireAuthor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: extraction, error: extractionError } = await supabase
-    .from('ocr_extractions')
-    .select('id, patient_id, status, document_id, documents(storage_path, mime_type)')
-    .eq('org_id', actor.orgId)
-    .eq('id', parsed.data.extractionId)
-    .maybeSingle();
-  if (extractionError) return { ok: false, kind: 'error' };
-  if (!extraction) return { ok: false, kind: 'not-found' };
+  type ExtractionRow = {
+    id: string;
+    patient_id: string;
+    status: string;
+    document_id: string;
+    document_storage_path: string | null;
+    document_mime_type: string | null;
+  };
+
+  let extraction: ExtractionRow;
+  try {
+    const sql = getSql();
+    const rows = (await sql`
+      select e.id, e.patient_id, e.status, e.document_id,
+             d.storage_path as document_storage_path, d.mime_type as document_mime_type
+      from public.ocr_extractions e
+      left join public.documents d on d.id = e.document_id
+      where e.org_id = ${actor.orgId} and e.id = ${parsed.data.extractionId}
+      limit 1
+    `) as unknown as ExtractionRow[];
+    const found = rows[0];
+    if (!found) return { ok: false, kind: 'not-found' };
+    extraction = found;
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+
   if (extraction.status !== 'awaiting_extraction') return { ok: false, kind: 'invalid' };
+  if (extraction.document_storage_path === null) return { ok: false, kind: 'not-found' };
 
-  const document = extraction.documents as { storage_path: string; mime_type: string | null } | null;
-  if (document === null) return { ok: false, kind: 'not-found' };
+  try {
+    // Real candidates only: the patient's own medication list.
+    const medications = await listMedications(actor.orgId, extraction.patient_id);
 
-  // Real candidates only: the patient's own medication list.
-  const medications = await listMedications(actor.orgId, extraction.patient_id as string);
+    const provider = getProvider();
+    const result = await provider.extract({
+      documentId: extraction.document_id,
+      storagePath: extraction.document_storage_path,
+      mimeType: extraction.document_mime_type,
+    });
 
-  const provider = getProvider();
-  const result = await provider.extract({
-    documentId: extraction.document_id as string,
-    storagePath: document.storage_path,
-    mimeType: document.mime_type,
-  });
+    const { payload, unclearKeys } = analyzeExtraction({
+      providerResult: result,
+      existingMedicationNames: medications.map((medication) => medication.name),
+    });
 
-  const { payload, unclearKeys } = analyzeExtraction({
-    providerResult: result,
-    existingMedicationNames: medications.map((medication) => medication.name),
-  });
-
-  const { error: updateError } = await supabase
-    .from('ocr_extractions')
-    .update({
-      status: 'extracted',
+    const storedPayload = {
       provider: payload.provider,
-      payload: {
-        provider: payload.provider,
-        fields: payload.fields.map((field) => ({ ...field, candidates: [...field.candidates] })),
-        ...(payload.reason !== undefined ? { reason: payload.reason } : {}),
-      },
-    })
-    .eq('id', parsed.data.extractionId)
-    .eq('org_id', actor.orgId);
-  if (updateError) return { ok: false, kind: 'error' };
+      fields: payload.fields.map((field) => ({ ...field, candidates: [...field.candidates] })),
+      ...(payload.reason !== undefined ? { reason: payload.reason } : {}),
+    };
 
-  revalidateExtractionSurfaces(extraction.patient_id as string, parsed.data.extractionId);
-  return { ok: true, extractionId: parsed.data.extractionId, unclearKeys, reason: result.reason };
+    await withAppUser(actor.uid, async (tx) => {
+      await tx.query(
+        `update public.ocr_extractions
+         set status = 'extracted', provider = $1, payload = $2::jsonb
+         where id = $3 and org_id = $4`,
+        [payload.provider, JSON.stringify(storedPayload), parsed.data.extractionId, actor.orgId],
+      );
+    });
+
+    revalidateExtractionSurfaces(extraction.patient_id, parsed.data.extractionId);
+    return { ok: true, extractionId: parsed.data.extractionId, unclearKeys, reason: result.reason };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }
 
 /**
@@ -188,19 +279,24 @@ export async function rejectExtractionAction(input: unknown): Promise<OcrActionR
   const actor = await requireAuthor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('ocr_extractions')
-    .update({ status: 'rejected', rejection_reason: parsed.data.reason })
-    .eq('id', parsed.data.extractionId)
-    .eq('org_id', actor.orgId)
-    .select('id, patient_id')
-    .maybeSingle();
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
+  try {
+    const updated = await withAppUser(actor.uid, async (tx) => {
+      const { rows } = await tx.query<{ id: string; patient_id: string }>(
+        `update public.ocr_extractions
+         set status = 'rejected', rejection_reason = $1
+         where id = $2 and org_id = $3
+         returning id, patient_id`,
+        [parsed.data.reason, parsed.data.extractionId, actor.orgId],
+      );
+      return rows[0] ?? null;
+    });
+    if (!updated) return { ok: false, kind: 'not-found' };
 
-  revalidateExtractionSurfaces(data.patient_id, parsed.data.extractionId);
-  return { ok: true, extractionId: data.id };
+    revalidateExtractionSurfaces(updated.patient_id, parsed.data.extractionId);
+    return { ok: true, extractionId: updated.id };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }
 
 /**
@@ -220,15 +316,21 @@ export async function confirmExtractionAction(input: unknown): Promise<OcrAction
   const actor = await requireAuthor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: extraction, error: extractionError } = await supabase
-    .from('ocr_extractions')
-    .select('id, patient_id, status')
-    .eq('org_id', actor.orgId)
-    .eq('id', parsed.data.extractionId)
-    .maybeSingle();
-  if (extractionError) return { ok: false, kind: 'error' };
-  if (!extraction) return { ok: false, kind: 'not-found' };
+  let extraction: { id: string; patient_id: string; status: string };
+  try {
+    const sql = getSql();
+    const rows = (await sql`
+      select id, patient_id, status from public.ocr_extractions
+      where org_id = ${actor.orgId} and id = ${parsed.data.extractionId}
+      limit 1
+    `) as unknown as { id: string; patient_id: string; status: string }[];
+    const found = rows[0];
+    if (!found) return { ok: false, kind: 'not-found' };
+    extraction = found;
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+
   // Only an extracted (never-yet-verified) job may be confirmed; the DB's
   // transition guard is the second enforcement.
   if (extraction.status !== 'extracted') return { ok: false, kind: 'invalid' };
@@ -251,28 +353,38 @@ export async function confirmExtractionAction(input: unknown): Promise<OcrAction
   const doseAmount = doseMatch !== null ? Number(doseMatch[1]) : null;
   const doseUnit = doseMatch !== null ? (doseMatch[2] ?? null) : null;
 
-  const { data: medicationId, error: medicationError } = await supabase.rpc('record_extracted_medication', {
-    p_org_id: actor.orgId,
-    p_patient_id: extraction.patient_id as string,
-    p_name: parsed.data.fields.medication_name,
-    p_dose_amount: doseAmount,
-    p_dose_unit: doseUnit,
-    p_frequency: frequency !== undefined && frequency !== '' ? frequency : null,
-    p_route: route !== undefined && route !== '' ? route : null,
-    p_started_at: null,
-  });
-  if (medicationError || typeof medicationId !== 'string') return { ok: false, kind: 'error' };
+  try {
+    const medicationId = await withAppUser(actor.uid, async (tx) => {
+      const { rows } = await tx.query<{ payload: string | null }>(
+        `select public.record_extracted_medication($1, $2, $3, $4, $5, $6, $7, $8) as payload`,
+        [
+          actor.orgId,
+          extraction.patient_id,
+          parsed.data.fields.medication_name,
+          doseAmount,
+          doseUnit,
+          frequency !== undefined && frequency !== '' ? frequency : null,
+          route !== undefined && route !== '' ? route : null,
+          null,
+        ],
+      );
+      return rows[0]?.payload ?? null;
+    });
+    if (typeof medicationId !== 'string') return { ok: false, kind: 'error' };
 
-  const { error: verifyError } = await supabase
-    .from('ocr_extractions')
-    .update({ status: 'verified' })
-    .eq('id', parsed.data.extractionId)
-    .eq('org_id', actor.orgId);
-  if (verifyError) return { ok: false, kind: 'error' };
+    await withAppUser(actor.uid, async (tx) => {
+      await tx.query(
+        `update public.ocr_extractions set status = 'verified' where id = $1 and org_id = $2`,
+        [parsed.data.extractionId, actor.orgId],
+      );
+    });
 
-  revalidateExtractionSurfaces(extraction.patient_id as string, parsed.data.extractionId);
-  revalidatePath(`/provider/patients/${extraction.patient_id}/overview`);
-  return { ok: true, medicationId, extractionId: parsed.data.extractionId };
+    revalidateExtractionSurfaces(extraction.patient_id, parsed.data.extractionId);
+    revalidatePath(`/provider/patients/${extraction.patient_id}/overview`);
+    return { ok: true, medicationId, extractionId: parsed.data.extractionId };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }
 
 /** Capability re-export for the surfaces (the UI mirror, never the boundary). */

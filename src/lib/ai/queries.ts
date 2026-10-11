@@ -1,8 +1,10 @@
-// src/lib/ai/queries.ts — RLS-scoped AI insight reads (Phase 11, AI-02).
+// src/lib/ai/queries.ts — org-scoped AI insight reads (Phase 11, AI-02).
 //
-// Migration 0010's SELECT policy restricts rows to the org's four staff roles;
-// this module adds no visibility logic of its own (the 0009 discipline).
-import { createClient } from '@/lib/supabase/server';
+// RLS is inert on the single-owner Neon connection, so the explicit
+// `org_id = $1` predicate (plus the patient pin) is the visibility boundary —
+// the same org-staff restriction 0010's SELECT policy expressed. Callers run
+// only on staff surfaces; this module adds no visibility logic of its own.
+import { getSql } from '@/lib/db/neon';
 import type {
   AiInsightRecord,
   InsightEvidenceRef,
@@ -47,18 +49,15 @@ export async function listAiInsights(
   orgId: string,
   patientId: string,
 ): Promise<AiInsightRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('ai_insights')
-    .select(
-      'id, org_id, patient_id, kind, title, body, evidence, window, provenance, verification, review_state, reviewed_by, reviewed_at, created_at, updated_at',
-    )
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId);
-
-  if (error) throw new Error(`listAiInsights failed: ${error.message}`);
-  const rows =
-    (data ?? []) as Array<{
+  const sql = getSql();
+  // `window` is a reserved word: quote it, as the baseline DDL does.
+  const rows = (await sql`
+    select id, org_id, patient_id, kind, title, body, evidence, "window", provenance,
+           verification, review_state, reviewed_by, reviewed_at, created_at, updated_at
+    from public.ai_insights
+    where org_id = ${orgId} and patient_id = ${patientId}
+    order by created_at desc, id desc
+  `) as unknown as Array<{
       id: string;
       org_id: string;
       patient_id: string;

@@ -1,5 +1,9 @@
 // src/lib/channels/queries.ts — the channel read layer (Phase 16, CHAN-03).
-import { createClient } from '@/lib/supabase/server';
+//
+// RLS is inert on the single-owner Neon connection: each SELECT carries an
+// explicit `org_id` scope (plus the patient/conversation pin the caller
+// already supplies), which is the whole visibility boundary here.
+import { getSql } from '@/lib/db/neon';
 import type {
   ChannelName,
   NotificationDeliveryRecord,
@@ -13,24 +17,21 @@ export async function listChannelEndpoints(
   orgId: string,
   patientId: string,
 ): Promise<ChannelEndpointRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('channel_endpoints')
-    .select('id, patient_id, channel, handle, status')
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId)
-    .order('created_at', { ascending: false })
-    .order('id', { ascending: false });
-  if (error) throw new Error(`listChannelEndpoints failed: ${error.message}`);
-  return (
-    (data ?? []) as Array<{
-      id: string;
-      patient_id: string;
-      channel: ChannelName;
-      handle: string;
-      status: EndpointStatus;
-    }>
-  ).map((row) => ({
+  const sql = getSql();
+  const rows = (await sql`
+    select id, patient_id, channel, handle, status
+    from public.channel_endpoints
+    where org_id = ${orgId} and patient_id = ${patientId}
+    order by created_at desc, id desc
+  `) as unknown as Array<{
+    id: string;
+    patient_id: string;
+    channel: ChannelName;
+    handle: string;
+    status: EndpointStatus;
+  }>;
+
+  return rows.map((row) => ({
     id: row.id,
     patientId: row.patient_id,
     channel: row.channel,
@@ -44,28 +45,25 @@ export async function listDeliveryRecordsForConversation(
   orgId: string,
   conversationId: string,
 ): Promise<NotificationDeliveryRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('notification_deliveries')
-    .select('id, conversation_id, message_id, channel, handle, status, provider_reference, reason, created_at')
-    .eq('org_id', orgId)
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
-    .order('id', { ascending: true });
-  if (error) throw new Error(`listDeliveryRecordsForConversation failed: ${error.message}`);
-  return (
-    (data ?? []) as Array<{
-      id: string;
-      conversation_id: string;
-      message_id: string;
-      channel: ChannelName;
-      handle: string;
-      status: DeliveryStatus;
-      provider_reference: string | null;
-      reason: string | null;
-      created_at: string;
-    }>
-  ).map((row) => ({
+  const sql = getSql();
+  const rows = (await sql`
+    select id, conversation_id, message_id, channel, handle, status, provider_reference, reason, created_at
+    from public.notification_deliveries
+    where org_id = ${orgId} and conversation_id = ${conversationId}
+    order by created_at asc, id asc
+  `) as unknown as Array<{
+    id: string;
+    conversation_id: string;
+    message_id: string;
+    channel: ChannelName;
+    handle: string;
+    status: DeliveryStatus;
+    provider_reference: string | null;
+    reason: string | null;
+    created_at: string;
+  }>;
+
+  return rows.map((row) => ({
     id: row.id,
     conversationId: row.conversation_id,
     messageId: row.message_id,

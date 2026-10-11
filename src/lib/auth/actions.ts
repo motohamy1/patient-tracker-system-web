@@ -1,36 +1,29 @@
-// src/lib/auth/actions.ts — the credential server actions (D-05, AUTH-01).
+// src/lib/auth/actions.ts — the credential server actions (D-05, Managed Neon Auth).
 //
 // Four actions, each parsing its arguments with the Zod schema in
 // src/lib/auth/schemas.ts FIRST — the runtime validation of untrusted input
-// per STACK.md — and only then calling Supabase Auth through the per-request
-// server client (src/lib/supabase/server.ts; cookies cross from the proxy
-// refresh). Identity is read through `getClaims()` where a mutation needs its
-// owner; the unverified session-cookie read is never used for authorization
-// anywhere (RESEARCH anti-pattern list).
+// per STACK.md — and only then calling Managed Auth (src/lib/auth/server.ts;
+// the session cookie is set through the /api/auth/[...all] handler).
+// Identity for mutations comes from the verified session (session.ts), never
+// an unverified read.
 //
 // No-leak contract (D-05, 03-UI-SPEC §8.1, RESEARCH Pitfall 4): the result
 // payload carries only a neutral failure kind — `credentials` for unknown
 // email AND wrong password (zero distinction), `unconfirmed` for a
-// not-yet-verified email, `rate-limited` for Supabase send/request exhaustion
-// (never provider internals), `error` for anything else. Signup resolves an
+// not-yet-verified email, `rate-limited` for send/request exhaustion (never
+// provider internals), `error` for anything else. Signup resolves an
 // already-registered address to the SAME success shape as a fresh signup, so
 // no UI reveals existence; the reset request always resolves to the same
 // success shape regardless of account existence.
 //
-// The `next` parameter is the email link's landing path (the 03-05 invite flow
-// passes an invite path; the signup surface passes the login path).
-// `emailRedirectTo` is the FINAL destination, allowlisted in
-// supabase/config.toml and built from the request's own origin — the
-// confirmation/recovery templates in supabase/templates/ compose
-// `{{ .SiteURL }}/auth/confirm?token_hash=…&next={{ .RedirectTo }}` themselves,
-// so nesting another `/auth/confirm` hop inside `next` would double-verify and
-// fail. The schema rejects protocol-relative and absolute `next` targets
-// before anything is sent (RESEARCH Pitfall 3).
+// The `next` parameter is the post-verification landing path (the 03-05 invite
+// flow passes an invite path; the signup surface passes the login path). The
+// schema rejects protocol-relative and absolute `next` targets before anything
+// is sent (RESEARCH Pitfall 3).
 
 'use server';
 
-import { headers } from 'next/headers';
-import { createClient } from '@/lib/supabase/server';
+import { auth } from '@/lib/auth/server';
 import {
   type AuthActionResult,
   requestResetSchema,
@@ -39,25 +32,47 @@ import {
   updatePasswordSchema,
 } from '@/lib/auth/schemas';
 
-/** The provisioning target's site URL (supabase/config.toml site_url). */
-const ORIGIN_FALLBACK = 'http://127.0.0.1:3000';
+/** The callback URL for email verification / reset links. */
+const CALLBACK_FALLBACK = '/login';
 
-const CREDENTIALS_CODES = new Set(['invalid_credentials', 'user_not_found']);
-const RATE_LIMITED_CODES = new Set([
-  'over_request_rate_limit',
-  'over_email_send_rate_limit',
-  'over_sms_send_rate_limit',
-]);
+type AuthErrorLike = { error?: { code?: string; message?: string } | null; message?: string };
 
-async function appOrigin(): Promise<string> {
-  const headerList = await headers();
-  const host = headerList.get('host');
-  if (!host) return ORIGIN_FALLBACK;
+function errorCode(result: AuthErrorLike, thrown: unknown): string {
+  const code = result.error?.code ?? '';
+  const message = result.error?.message ?? (thrown instanceof Error ? thrown.message : '');
+  return `${code} ${message}`.toLowerCase();
+}
 
-  const forwardedProto = headerList.get('x-forwarded-proto')?.split(',')[0]?.trim();
-  const loopback = host.startsWith('localhost') || host.startsWith('127.');
-  const proto = forwardedProto ?? (loopback ? 'http' : 'https');
-  return `${proto}://${host}`;
+// Exact upstream codes only. A substring like 'invalid' or 'not_found' also
+// matches unrelated provider errors (e.g. `saml_idp_not_found`), which would
+// misclassify them as credentials — the sets below are the deliberate allowlist.
+const CREDENTIAL_CODES = [
+  'invalid_credentials',
+  'user_not_found',
+  'invalid_email_or_password',
+  'invalid_password',
+  'invalid email or password',
+];
+const UNCONFIRMED_CODES = ['email_not_verified', 'email_not_confirmed', 'unverified', 'not_verified'];
+const RATE_LIMIT_CODES = ['too_many_requests', 'over_request_rate_limit', 'over_email_send_rate_limit', 'rate_limit'];
+
+function failureOf(result: AuthErrorLike, thrown: unknown): AuthActionResult {
+  const haystack = errorCode(result, thrown);
+  if (CREDENTIAL_CODES.some((code) => haystack.includes(code))) {
+    return { ok: false, kind: 'credentials' };
+  }
+  if (UNCONFIRMED_CODES.some((code) => haystack.includes(code))) {
+    return { ok: false, kind: 'unconfirmed' };
+  }
+  if (RATE_LIMIT_CODES.some((code) => haystack.includes(code))) {
+    return { ok: false, kind: 'rate-limited' };
+  }
+  return { ok: false, kind: 'error' };
+}
+
+/** next must stay a safe in-app path; the open-redirect guard lives in the schema. */
+function callbackURL(next: string): string {
+  return next.startsWith('/') && !next.startsWith('//') ? next : CALLBACK_FALLBACK;
 }
 
 export async function signInAction(email: string, password: string): Promise<AuthActionResult> {
@@ -66,18 +81,16 @@ export async function signInAction(email: string, password: string): Promise<Aut
     return { ok: false, kind: 'error' };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: parsed.data.email,
-    password: parsed.data.password,
-  });
-
-  if (!error) return { ok: true };
-
-  if (error.code && CREDENTIALS_CODES.has(error.code)) return { ok: false, kind: 'credentials' };
-  if (error.code === 'email_not_confirmed') return { ok: false, kind: 'unconfirmed' };
-  if (error.code && RATE_LIMITED_CODES.has(error.code)) return { ok: false, kind: 'rate-limited' };
-  return { ok: false, kind: 'error' };
+  try {
+    const result = await auth.signIn.email({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
+    if (result.error) return failureOf(result, null);
+    return { ok: true };
+  } catch (error) {
+    return failureOf({}, error);
+  }
 }
 
 export async function signUpAction(
@@ -90,22 +103,23 @@ export async function signUpAction(
     return { ok: false, kind: 'error' };
   }
 
-  const origin = await appOrigin();
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    options: {
-      emailRedirectTo: `${origin}${parsed.data.next}`,
-    },
-  });
-
-  if (!error) return { ok: true };
-  if (error.code === 'user_already_exists' || error.code === 'email_exists') {
+  try {
+    const result = await auth.signUp.email({
+      name: parsed.data.email,
+      email: parsed.data.email,
+      password: parsed.data.password,
+      callbackURL: callbackURL(parsed.data.next),
+    });
+    // Already-registered address resolves to the same success shape (no-leak).
+    if (result.error) {
+      const haystack = errorCode(result, null);
+      if (haystack.includes('exists') || haystack.includes('already')) return { ok: true };
+      return failureOf(result, null);
+    }
     return { ok: true };
+  } catch (error) {
+    return failureOf({}, error);
   }
-  if (error.code && RATE_LIMITED_CODES.has(error.code)) return { ok: false, kind: 'rate-limited' };
-  return { ok: false, kind: 'error' };
 }
 
 export async function requestResetAction(email: string): Promise<AuthActionResult> {
@@ -114,38 +128,43 @@ export async function requestResetAction(email: string): Promise<AuthActionResul
     return { ok: false, kind: 'error' };
   }
 
-  const origin = await appOrigin();
-  const supabase = await createClient();
-
-  // resetPasswordForEmail is non-enumerating by contract (RESEARCH Pitfall 4):
-  // no UI distinction between a known and an unknown account may reach the
-  // caller, so the result is the fixed success shape regardless of the
-  // response (a rate-limited or failed send stays silent — same shape).
-  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${origin}/reset-password/update`,
-  });
-
-  void error;
+  // Non-enumerating by contract: the same success shape regardless of account
+  // existence or send outcome — a rate-limited or failed send stays silent.
+  try {
+    await auth.requestPasswordReset({
+      email: parsed.data.email,
+      redirectTo: '/reset-password/update',
+    });
+  } catch {
+    // Silent by design — no UI distinction may leak account existence.
+  }
   return { ok: true };
 }
 
-export async function updatePasswordAction(password: string): Promise<AuthActionResult> {
+/**
+ * Completes a password reset. `token` comes from the reset email link
+ * (Managed Auth redirects to /reset-password/update?token=…); the upstream
+ * reset-password endpoint takes the token as the authority, so no session is
+ * required.
+ */
+export async function updatePasswordAction(
+  password: string,
+  token: string,
+): Promise<AuthActionResult> {
   const parsed = updatePasswordSchema.safeParse({ password });
   if (!parsed.success) {
     return { ok: false, kind: 'error' };
   }
+  if (!token) return { ok: false, kind: 'credentials' };
 
-  const supabase = await createClient();
-
-  // getClaims verifies the recovery session before the mutation; an
-  // unauthenticated caller fails closed with the neutral credentials kind.
-  const { error: claimsError } = await supabase.auth.getClaims();
-  if (claimsError) return { ok: false, kind: 'credentials' };
-
-  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
-  if (!error) return { ok: true };
-
-  if (error.code && CREDENTIALS_CODES.has(error.code)) return { ok: false, kind: 'credentials' };
-  if (error.code && RATE_LIMITED_CODES.has(error.code)) return { ok: false, kind: 'rate-limited' };
-  return { ok: false, kind: 'error' };
+  try {
+    const result = await auth.resetPassword({
+      newPassword: parsed.data.password,
+      token,
+    });
+    if (result.error) return failureOf(result, null);
+    return { ok: true };
+  } catch (error) {
+    return failureOf({}, error);
+  }
 }

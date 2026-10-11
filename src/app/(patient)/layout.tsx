@@ -17,7 +17,6 @@
 //     §Security). RLS (migration 0002) is the enforcement layer; the redirect
 //     is UX, and nothing role-based crosses the RSC -> client boundary.
 import type { ReactNode } from 'react';
-import { Surface } from '@/components/primitives';
 import { PatientTopBar } from '@/components/shell/PatientTopBar';
 import { MobileNav } from '@/components/shell/MobileNav';
 import { redirectForRole } from '@/lib/auth/redirect';
@@ -32,7 +31,12 @@ export default async function PatientLayout({ children }: { children: ReactNode 
   redirectForRole('patient', resolution);
 
   return (
-    <Surface variant="canvas" className="flex min-h-screen flex-col bg-canvas">
+    // THE FRAME WRAP (2026-10-11, mirrors the provider layout): the `frame`
+    // field wraps the viewport (including the root-painted scrollbar gutter,
+    // globals.css), and the `canvas` workspace is one rounded (radius.xl)
+    // inset field — the patient-tracking-dashboard grammar in the light
+    // frame D-01 requires.
+    <div className="flex min-h-screen flex-col gap-lg bg-frame p-lg">
       <PatientTopBar />
       <MobileNav
         items={PATIENT_MOBILE_ITEMS}
@@ -40,10 +44,12 @@ export default async function PatientLayout({ children }: { children: ReactNode 
         ariaLabel="Patient navigation"
       />
       <OfflineSyncStrip />
-      <div className="mx-auto w-full max-w-[64rem] px-lg pt-lg">
-        <SyncWiring />
+      <div className="flex min-w-0 flex-1 flex-col rounded-xl bg-canvas">
+        <div className="mx-auto w-full max-w-[64rem] px-lg pt-lg">
+          <SyncWiring />
+        </div>
+        {children}
       </div>
-      {children}
-    </Surface>
+    </div>
   );
 }

@@ -24,6 +24,14 @@ export const uploadPrescriptionSchema = z.object({
   sizeBytes: MAX_UPLOAD_BYTES_SCHEMA,
 });
 
+/** The presigned-upload request: everything but the server-derived path. */
+export const createPrescriptionUploadSchema = z.object({
+  patientId: z.string().uuid(),
+  filename: z.string().trim().min(1).max(200),
+  mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']),
+  sizeBytes: MAX_UPLOAD_BYTES_SCHEMA,
+});
+
 /** The clinician's confirmed field values — the only path to persistence. */
 export const confirmExtractionSchema = z.object({
   extractionId: extractionIdSchema,

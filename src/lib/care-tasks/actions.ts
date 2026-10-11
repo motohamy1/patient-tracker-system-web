@@ -4,10 +4,18 @@
 // Three actions, three actors: the DOCTOR assigns and archives; the PATIENT
 // marks a task done. Adherence is never written as a score — it is derived
 // from the append-only completion log, and both surfaces read it the same way.
+//
+// Every write runs through withAppUser(user.id, …): the ported provenance and
+// guard triggers read `public.app_uid()` (created_by/updated_by, and the
+// completion guard's patient re-derivation), so the identity must be on the
+// session. Org scoping on the single-owner Neon connection is the explicit
+// `org_id` predicate, not RLS.
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
+import { withAppUser } from '@/lib/db/client';
+import { getSessionUser } from '@/lib/auth/session';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_AUTHOR_CLINICAL, CAN_SUBMIT_OBSERVATION, runsCapability } from '@/lib/auth/capabilities';
 import { getPatientForCurrentUser } from '@/lib/patient/queries';
@@ -23,10 +31,14 @@ export type CareTaskActionResult =
   | { ok: false; kind: 'invalid' | 'forbidden' | 'not-found' | 'error' };
 
 async function requireDoctor() {
-  const resolution = await resolveWorkspaceRole('provider');
+  const [resolution, user] = await Promise.all([
+    resolveWorkspaceRole('provider'),
+    getSessionUser(),
+  ]);
   if (resolution.kind !== 'signed-in') return null;
+  if (!user) return null;
   if (!runsCapability(resolution.role, CAN_AUTHOR_CLINICAL)) return null;
-  return resolution;
+  return { ...resolution, uid: user.id };
 }
 
 function revalidateTaskSurfaces(patientId: string) {
@@ -42,39 +54,53 @@ export async function assignCareTaskAction(input: unknown): Promise<CareTaskActi
   const actor = await requireDoctor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('id', parsed.data.patientId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
-  if (patientError) return { ok: false, kind: 'error' };
+  const sql = getSql();
+  let patient: { id: string } | undefined;
+  try {
+    const rows = (await sql`
+      select id from public.patients
+      where id = ${parsed.data.patientId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string }[];
+    patient = rows[0];
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
   if (!patient) return { ok: false, kind: 'not-found' };
 
-  const { data, error } = await supabase
-    .from('care_tasks')
-    .insert({
-      org_id: actor.orgId,
-      patient_id: parsed.data.patientId,
-      title: parsed.data.title,
-      detail: parsed.data.detail,
-      kind: parsed.data.kind,
-      ...(parsed.data.dueAt ? { due_at: parsed.data.dueAt } : {}),
-    })
-    .select('id, patient_id')
-    .single();
-  if (error || !data) return { ok: false, kind: 'error' };
+  let task: { id: string; patient_id: string } | undefined;
+  try {
+    task = await withAppUser(actor.uid, async (tx) => {
+      const { rows } = await tx.query<{ id: string; patient_id: string }>(
+        `insert into public.care_tasks (org_id, patient_id, title, detail, kind, due_at)
+         values ($1, $2, $3, $4, $5, $6)
+         returning id, patient_id`,
+        [
+          actor.orgId,
+          parsed.data.patientId,
+          parsed.data.title,
+          parsed.data.detail,
+          parsed.data.kind,
+          parsed.data.dueAt ?? null,
+        ],
+      );
+      return rows[0];
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+
+  if (!task) return { ok: false, kind: 'error' };
 
   // Phase 16 (CHAN-01/02): the assignment tells the patient through the
   // unified conversation first, then their channels — one story, two
   // transports. A channel failure never fails the assignment.
-  await postTaskMessageAndNotify(actor.orgId, data.patient_id as string, parsed.data.title).catch(
+  await postTaskMessageAndNotify(actor.orgId, task.patient_id, parsed.data.title).catch(
     () => undefined,
   );
 
-  revalidateTaskSurfaces(data.patient_id);
-  return { ok: true, taskId: data.id };
+  revalidateTaskSurfaces(task.patient_id);
+  return { ok: true, taskId: task.id };
 }
 
 /** Archive a task: it leaves the active list without erasing its history. */
@@ -85,25 +111,31 @@ export async function archiveCareTaskAction(input: unknown): Promise<CareTaskAct
   const actor = await requireDoctor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('care_tasks')
-    .update({ status: 'archived' })
-    .eq('id', parsed.data.taskId)
-    .eq('org_id', actor.orgId)
-    .select('id, patient_id')
-    .maybeSingle();
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
+  let task: { id: string; patient_id: string } | undefined;
+  try {
+    task = await withAppUser(actor.uid, async (tx) => {
+      const { rows } = await tx.query<{ id: string; patient_id: string }>(
+        `update public.care_tasks set status = 'archived'
+         where id = $1 and org_id = $2
+         returning id, patient_id`,
+        [parsed.data.taskId, actor.orgId],
+      );
+      return rows[0];
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 
-  revalidateTaskSurfaces(data.patient_id);
-  return { ok: true, taskId: data.id };
+  if (!task) return { ok: false, kind: 'not-found' };
+
+  revalidateTaskSurfaces(task.patient_id);
+  return { ok: true, taskId: task.id };
 }
 
 /**
  * The patient marks a task done. Requires the patient capability and resolves
  * the patient from the verified session; migration 0013's guard re-derives the
- * row's patient from `auth.uid()` and refuses a task that is not theirs or not
+ * row's patient from `app_uid()` and refuses a task that is not theirs or not
  * active. The stated `completed_at` is kept as the patient said it.
  */
 export async function completeCareTaskAction(input: unknown): Promise<CareTaskActionResult> {
@@ -114,23 +146,36 @@ export async function completeCareTaskAction(input: unknown): Promise<CareTaskAc
   if (resolution.kind !== 'signed-in') return { ok: false, kind: 'forbidden' };
   if (!runsCapability(resolution.role, CAN_SUBMIT_OBSERVATION)) return { ok: false, kind: 'forbidden' };
 
+  const user = await getSessionUser();
+  if (!user) return { ok: false, kind: 'forbidden' };
+
   const patient = await getPatientForCurrentUser();
   if (patient === null) return { ok: false, kind: 'not-found' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('care_task_completions')
-    .insert({
-      org_id: patient.orgId,
-      patient_id: patient.id,
-      task_id: parsed.data.taskId,
-      note: parsed.data.note,
-      ...(parsed.data.completedAt ? { completed_at: parsed.data.completedAt } : {}),
-    })
-    .select('id, patient_id')
-    .single();
-  if (error || !data) return { ok: false, kind: 'error' };
+  let completion: { id: string; patient_id: string } | undefined;
+  try {
+    completion = await withAppUser(user.id, async (tx) => {
+      const { rows } = await tx.query<{ id: string; patient_id: string }>(
+        `insert into public.care_task_completions
+           (org_id, patient_id, task_id, note, completed_at)
+         values ($1, $2, $3, $4, coalesce($5::timestamptz, now()))
+         returning id, patient_id`,
+        [
+          patient.orgId,
+          patient.id,
+          parsed.data.taskId,
+          parsed.data.note,
+          parsed.data.completedAt ?? null,
+        ],
+      );
+      return rows[0];
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 
-  revalidateTaskSurfaces(data.patient_id);
-  return { ok: true, completionId: data.id };
+  if (!completion) return { ok: false, kind: 'error' };
+
+  revalidateTaskSurfaces(completion.patient_id);
+  return { ok: true, completionId: completion.id };
 }

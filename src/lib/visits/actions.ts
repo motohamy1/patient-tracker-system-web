@@ -12,11 +12,14 @@
 // here cannot widen clinical authoring (§3.1/§12).
 //
 // TRIGGER-OWNED (migration 0006): created_by/updated_by/created_at/updated_at
-// are never written here.
+// are never written here — they come from `public.app_uid()`, so every write
+// runs through withAppUser(user.id, …) to make that identity available.
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
+import { withAppUser } from '@/lib/db/client';
+import { getSessionUser } from '@/lib/auth/session';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_AUTHOR_CLINICAL, CAN_SCHEDULE, runsCapability, type Capability } from '@/lib/auth/capabilities';
 import { createVisitSchema, saveVisitDocumentationSchema, visitIdSchema, visitStageSchema } from '@/lib/visits/schemas';
@@ -27,10 +30,14 @@ export type VisitActionResult =
   | { ok: false; kind: 'invalid' | 'forbidden' | 'error' | 'not-found' };
 
 async function requireStaff(capability: Capability) {
-  const resolution = await resolveWorkspaceRole('provider');
+  const [resolution, user] = await Promise.all([
+    resolveWorkspaceRole('provider'),
+    getSessionUser(),
+  ]);
   if (resolution.kind !== 'signed-in') return null;
+  if (!user) return null;
   if (!runsCapability(resolution.role, capability)) return null;
-  return resolution;
+  return { ...resolution, uid: user.id };
 }
 
 /** The workspace paths a visit change can affect. */
@@ -51,35 +58,47 @@ export async function createVisitAction(input: unknown): Promise<VisitActionResu
   // the payload says — and the DB guard refuses it too.
   const authorsClinical = runsCapability(actor.role, CAN_AUTHOR_CLINICAL);
 
-  const supabase = await createClient();
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('id', parsed.data.patientId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
-
-  if (patientError) return { ok: false, kind: 'error' };
+  const sql = getSql();
+  let patient: { id: string } | undefined;
+  try {
+    const rows = (await sql`
+      select id from public.patients
+      where id = ${parsed.data.patientId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string }[];
+    patient = rows[0];
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
   if (!patient) return { ok: false, kind: 'not-found' };
 
-  const { data, error } = await supabase
-    .from('visits')
-    .insert({
-      org_id: actor.orgId,
-      patient_id: parsed.data.patientId,
-      scheduled_at: parsed.data.scheduledAt,
-      visit_type: parsed.data.visitType,
-      location: parsed.data.location,
-      reason: authorsClinical ? parsed.data.reason : null,
-      // stage omitted → SQL default 'pre_visit' (0006)
-    })
-    .select('id')
-    .single();
+  let visitId: string | undefined;
+  try {
+    visitId = await withAppUser(actor.uid, async (tx) => {
+      const { rows } = await tx.query<{ id: string }>(
+        `insert into public.visits (org_id, patient_id, scheduled_at, visit_type, location, reason)
+         values ($1, $2, $3, $4, $5, $6)
+         returning id`,
+        [
+          actor.orgId,
+          parsed.data.patientId,
+          parsed.data.scheduledAt,
+          parsed.data.visitType,
+          parsed.data.location,
+          authorsClinical ? parsed.data.reason : null,
+          // stage omitted → SQL default 'pre_visit' (0006)
+        ],
+      );
+      return rows[0]?.id;
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 
-  if (error || !data) return { ok: false, kind: 'error' };
+  if (!visitId) return { ok: false, kind: 'error' };
 
   revalidateVisitSurfaces(parsed.data.patientId);
-  return { ok: true, visitId: data.id };
+  return { ok: true, visitId };
 }
 
 /**
@@ -98,33 +117,43 @@ export async function advanceVisitStageAction(
   const actor = await requireStaff(CAN_AUTHOR_CLINICAL);
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: current, error: readError } = await supabase
-    .from('visits')
-    .select('id, patient_id, stage')
-    .eq('id', idParsed.data)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
-
-  if (readError) return { ok: false, kind: 'error' };
+  const sql = getSql();
+  let current: { id: string; patient_id: string; stage: VisitStage } | undefined;
+  try {
+    const rows = (await sql`
+      select id, patient_id, stage from public.visits
+      where id = ${idParsed.data} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string; patient_id: string; stage: VisitStage }[];
+    current = rows[0];
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
   if (!current) return { ok: false, kind: 'not-found' };
 
-  if (nextStage(current.stage as VisitStage) !== stageParsed.data) {
+  if (nextStage(current.stage) !== stageParsed.data) {
     return { ok: false, kind: 'invalid' };
   }
 
-  const { data, error } = await supabase
-    .from('visits')
-    .update({ stage: stageParsed.data })
-    .eq('id', idParsed.data)
-    .select('id')
-    .maybeSingle();
+  let updatedId: string | undefined;
+  try {
+    updatedId = await withAppUser(actor.uid, async (tx) => {
+      const { rows } = await tx.query<{ id: string }>(
+        `update public.visits set stage = $1
+         where id = $2 and org_id = $3
+         returning id`,
+        [stageParsed.data, idParsed.data, actor.orgId],
+      );
+      return rows[0]?.id;
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
+  if (!updatedId) return { ok: false, kind: 'not-found' };
 
   revalidateVisitSurfaces(current.patient_id);
-  return { ok: true, visitId: data.id };
+  return { ok: true, visitId: updatedId };
 }
 
 /**
@@ -139,23 +168,31 @@ export async function saveVisitDocumentationAction(input: unknown): Promise<Visi
   const actor = await requireStaff(CAN_AUTHOR_CLINICAL);
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('visits')
-    .update({
-      reason: parsed.data.reason,
-      documentation: parsed.data.documentation,
-      follow_up: parsed.data.followUp,
-      follow_up_at: parsed.data.followUpAt,
-    })
-    .eq('id', parsed.data.visitId)
-    .eq('org_id', actor.orgId)
-    .select('id, patient_id')
-    .maybeSingle();
+  let updated: { id: string; patient_id: string } | undefined;
+  try {
+    updated = await withAppUser(actor.uid, async (tx) => {
+      const { rows } = await tx.query<{ id: string; patient_id: string }>(
+        `update public.visits
+            set reason = $1, documentation = $2, follow_up = $3, follow_up_at = $4
+          where id = $5 and org_id = $6
+          returning id, patient_id`,
+        [
+          parsed.data.reason,
+          parsed.data.documentation,
+          parsed.data.followUp,
+          parsed.data.followUpAt,
+          parsed.data.visitId,
+          actor.orgId,
+        ],
+      );
+      return rows[0];
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
+  if (!updated) return { ok: false, kind: 'not-found' };
 
-  revalidateVisitSurfaces(data.patient_id);
-  return { ok: true, visitId: data.id };
+  revalidateVisitSurfaces(updated.patient_id);
+  return { ok: true, visitId: updated.id };
 }

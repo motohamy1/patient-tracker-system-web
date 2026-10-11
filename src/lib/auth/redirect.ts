@@ -11,7 +11,10 @@
 // onboarding route are exported ONLY here (`redirect.ts` is the single owner of
 // these path spellings; callers import the constant). A route here exists on
 // the Phase-2 locked route map: /provider, /patient (02-UI-SPEC §6) and the
-// 03-05-created /provider/onboarding/create-org (D-01 inside (provider)).
+// 03-05-created /provider/onboarding/create-org (D-01). The onboarding route
+// lives in the chrome-free (onboarding) group, NOT in (provider): the (provider)
+// layout redirects an unaffiliated principal to this path, so housing the page
+// under that same layout made the redirect point at itself and loop.
 //
 // `redirectForRole` calls `redirect()` exactly once per request and returns
 // void; the (provider)/(patient) layouts are the only product call sites.

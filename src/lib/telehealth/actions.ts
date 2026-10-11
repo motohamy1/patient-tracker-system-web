@@ -2,14 +2,20 @@
 // ticket 17-02; TH-01/03).
 //
 // Start, complete, cancel — all doctor-only (CAN_AUTHOR_CLINICAL), all
-// re-deriving the org from the session and re-reading the visit under RLS.
+// re-deriving the org from the session and re-reading the visit with an
+// explicit org scope (RLS is inert on the single-owner Lakebase connection).
 // The visit stays the encounter of record: completing a telehealth
 // consultation writes the SAME documentation block an in-person visit uses
 // (TH-03) — there is one model, not two.
+//
+// Every write runs under `withAppUser`: the session/visit guards derive the
+// caller's role and the provenance/audit triggers read `public.app_uid()`.
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
+import { withAppUser } from '@/lib/db/client';
+import { getSessionUser } from '@/lib/auth/session';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_AUTHOR_CLINICAL, runsCapability } from '@/lib/auth/capabilities';
 import {
@@ -36,7 +42,9 @@ async function requireDoctor() {
   const resolution = await resolveWorkspaceRole('provider');
   if (resolution.kind !== 'signed-in') return null;
   if (!runsCapability(resolution.role, CAN_AUTHOR_CLINICAL)) return null;
-  return resolution;
+  const user = await getSessionUser();
+  if (!user) return null;
+  return { ...resolution, uid: user.id };
 }
 
 /**
@@ -51,70 +59,70 @@ export async function startConsultationAction(input: unknown): Promise<Telehealt
   const actor = await requireDoctor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: visit, error: visitError } = await supabase
-    .from('visits')
-    .select('id, patient_id, stage')
-    .eq('id', parsed.data.visitId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
+  try {
+    const sql = getSql();
+    const visitRows = (await sql`
+      select id, patient_id, stage from public.visits
+      where id = ${parsed.data.visitId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string; patient_id: string; stage: string }[];
+    const visit = visitRows[0] ?? null;
+    if (!visit) return { ok: false, kind: 'not-found' };
 
-  if (visitError) return { ok: false, kind: 'error' };
-  if (!visit) return { ok: false, kind: 'not-found' };
+    // Resume an active session rather than creating a second one.
+    const existingRows = (await sql`
+      select id, status from public.telehealth_sessions
+      where org_id = ${actor.orgId} and visit_id = ${parsed.data.visitId}
+        and status in ('scheduled', 'in_progress')
+      limit 1
+    `) as unknown as { id: string; status: string }[];
+    const existing = existingRows[0] ?? null;
 
-  // Resume an active session rather than creating a second one.
-  const { data: existing, error: existingError } = await supabase
-    .from('telehealth_sessions')
-    .select('id, status')
-    .eq('org_id', actor.orgId)
-    .eq('visit_id', parsed.data.visitId)
-    .in('status', ['scheduled', 'in_progress'])
-    .maybeSingle();
+    if (existing) {
+      // A scheduled-but-unstarted session moves to in_progress.
+      if (existing.status === 'scheduled') {
+        await withAppUser(actor.uid, async (tx) => {
+          await tx.query(
+            `update public.telehealth_sessions set status = 'in_progress' where id = $1 and org_id = $2`,
+            [existing.id, actor.orgId],
+          );
+        });
+      }
+    } else {
+      const createdId = await withAppUser(actor.uid, async (tx) => {
+        const { rows } = await tx.query<{ id: string }>(
+          `insert into public.telehealth_sessions (org_id, patient_id, visit_id)
+           values ($1, $2, $3)
+           returning id`,
+          [actor.orgId, visit.patient_id, parsed.data.visitId],
+        );
+        return rows[0]?.id;
+      });
+      if (createdId === undefined) return { ok: false, kind: 'error' };
 
-  if (existingError) return { ok: false, kind: 'error' };
-  if (existing) {
-    // A scheduled-but-unstarted session moves to in_progress.
-    if (existing.status === 'scheduled') {
-      const { error: advanceError } = await supabase
-        .from('telehealth_sessions')
-        .update({ status: 'in_progress' })
-        .eq('id', existing.id)
-        .eq('org_id', actor.orgId);
-      if (advanceError) return { ok: false, kind: 'error' };
+      await withAppUser(actor.uid, async (tx) => {
+        await tx.query(
+          `update public.telehealth_sessions set status = 'in_progress' where id = $1 and org_id = $2`,
+          [createdId, actor.orgId],
+        );
+      });
     }
-  } else {
-    const { data: created, error: createError } = await supabase
-      .from('telehealth_sessions')
-      .insert({
-        org_id: actor.orgId,
-        patient_id: visit.patient_id as string,
-        visit_id: parsed.data.visitId,
-        // status omitted → SQL default 'scheduled', then advanced below.
-      })
-      .select('id')
-      .single();
-    if (createError || !created) return { ok: false, kind: 'error' };
 
-    const { error: advanceError } = await supabase
-      .from('telehealth_sessions')
-      .update({ status: 'in_progress' })
-      .eq('id', created.id)
-      .eq('org_id', actor.orgId);
-    if (advanceError) return { ok: false, kind: 'error' };
+    // The appointment is now being held: the visit advances to During Visit.
+    if (visit.stage === 'pre_visit') {
+      await withAppUser(actor.uid, async (tx) => {
+        await tx.query(
+          `update public.visits set stage = 'during_visit' where id = $1 and org_id = $2`,
+          [parsed.data.visitId, actor.orgId],
+        );
+      });
+    }
+
+    revalidateConsultationSurfaces(visit.patient_id, parsed.data.visitId);
+    return { ok: true, visitId: parsed.data.visitId };
+  } catch {
+    return { ok: false, kind: 'error' };
   }
-
-  // The appointment is now being held: the visit advances to During Visit.
-  if ((visit.stage as string) === 'pre_visit') {
-    const { error: stageError } = await supabase
-      .from('visits')
-      .update({ stage: 'during_visit' })
-      .eq('id', parsed.data.visitId)
-      .eq('org_id', actor.orgId);
-    if (stageError) return { ok: false, kind: 'error' };
-  }
-
-  revalidateConsultationSurfaces(visit.patient_id as string, parsed.data.visitId);
-  return { ok: true, visitId: parsed.data.visitId };
 }
 
 /**
@@ -129,48 +137,47 @@ export async function completeConsultationAction(input: unknown): Promise<Telehe
   const actor = await requireDoctor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: visit, error: visitError } = await supabase
-    .from('visits')
-    .select('id, patient_id')
-    .eq('id', parsed.data.visitId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
+  try {
+    const sql = getSql();
+    const visitRows = (await sql`
+      select id, patient_id from public.visits
+      where id = ${parsed.data.visitId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string; patient_id: string }[];
+    const visit = visitRows[0] ?? null;
+    if (!visit) return { ok: false, kind: 'not-found' };
 
-  if (visitError) return { ok: false, kind: 'error' };
-  if (!visit) return { ok: false, kind: 'not-found' };
+    // The session must be in progress to complete — the guard re-checks.
+    await withAppUser(actor.uid, async (tx) => {
+      await tx.query(
+        `update public.telehealth_sessions set status = 'completed'
+         where org_id = $1 and visit_id = $2 and status = 'in_progress'`,
+        [actor.orgId, parsed.data.visitId],
+      );
+    });
 
-  // The session must be in progress to complete — the guard re-checks.
-  const { error: sessionError } = await supabase
-    .from('telehealth_sessions')
-    .update({ status: 'completed' })
-    .eq('org_id', actor.orgId)
-    .eq('visit_id', parsed.data.visitId)
-    .eq('status', 'in_progress')
-    .select('id')
-    .maybeSingle();
+    // The visit's clinical block — the same write an in-person visit makes.
+    await withAppUser(actor.uid, async (tx) => {
+      await tx.query(
+        `update public.visits
+         set reason = $1, documentation = $2, follow_up = $3, follow_up_at = $4, stage = 'after_visit'
+         where id = $5 and org_id = $6`,
+        [
+          parsed.data.reason ?? null,
+          parsed.data.documentation ?? null,
+          parsed.data.followUp ?? null,
+          parsed.data.followUpAt ?? null,
+          parsed.data.visitId,
+          actor.orgId,
+        ],
+      );
+    });
 
-  if (sessionError) return { ok: false, kind: 'error' };
-
-  // The visit's clinical block — the same write an in-person visit makes.
-  const { error: visitUpdateError } = await supabase
-    .from('visits')
-    .update({
-      reason: parsed.data.reason ?? null,
-      documentation: parsed.data.documentation ?? null,
-      follow_up: parsed.data.followUp ?? null,
-      follow_up_at: parsed.data.followUpAt ?? null,
-      stage: 'after_visit',
-    })
-    .eq('id', parsed.data.visitId)
-    .eq('org_id', actor.orgId)
-    .select('id')
-    .maybeSingle();
-
-  if (visitUpdateError) return { ok: false, kind: 'error' };
-
-  revalidateConsultationSurfaces(visit.patient_id as string, parsed.data.visitId);
-  return { ok: true, visitId: parsed.data.visitId };
+    revalidateConsultationSurfaces(visit.patient_id, parsed.data.visitId);
+    return { ok: true, visitId: parsed.data.visitId };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }
 
 /** Cancel a consultation; the appointment stays in the record with its reason. */
@@ -181,28 +188,28 @@ export async function cancelConsultationAction(input: unknown): Promise<Teleheal
   const actor = await requireDoctor();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: visit, error: visitError } = await supabase
-    .from('visits')
-    .select('id, patient_id')
-    .eq('id', parsed.data.visitId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
+  try {
+    const sql = getSql();
+    const visitRows = (await sql`
+      select id, patient_id from public.visits
+      where id = ${parsed.data.visitId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string; patient_id: string }[];
+    const visit = visitRows[0] ?? null;
+    if (!visit) return { ok: false, kind: 'not-found' };
 
-  if (visitError) return { ok: false, kind: 'error' };
-  if (!visit) return { ok: false, kind: 'not-found' };
+    await withAppUser(actor.uid, async (tx) => {
+      await tx.query(
+        `update public.telehealth_sessions
+         set status = 'cancelled', cancellation_reason = $1
+         where org_id = $2 and visit_id = $3 and status in ('scheduled', 'in_progress')`,
+        [parsed.data.reason, actor.orgId, parsed.data.visitId],
+      );
+    });
 
-  const { error } = await supabase
-    .from('telehealth_sessions')
-    .update({ status: 'cancelled', cancellation_reason: parsed.data.reason })
-    .eq('org_id', actor.orgId)
-    .eq('visit_id', parsed.data.visitId)
-    .in('status', ['scheduled', 'in_progress'])
-    .select('id')
-    .maybeSingle();
-
-  if (error) return { ok: false, kind: 'error' };
-
-  revalidateConsultationSurfaces(visit.patient_id as string, parsed.data.visitId);
-  return { ok: true, visitId: parsed.data.visitId };
+    revalidateConsultationSurfaces(visit.patient_id, parsed.data.visitId);
+    return { ok: true, visitId: parsed.data.visitId };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }

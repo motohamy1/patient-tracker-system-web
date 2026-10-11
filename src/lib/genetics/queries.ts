@@ -1,10 +1,12 @@
-// src/lib/genetics/queries.ts — RLS-scoped genetics reads (ALG-02/ALG-03).
+// src/lib/genetics/queries.ts — org-scoped genetics reads (ALG-02/ALG-03).
 //
-// This module performs NO visibility logic of its own: migration 0009's SELECT
-// policy restricts rows to provider_doctor/admin_owner. The page mirrors that
-// with CAN_VIEW_GENETICS ONLY so it can render a truthful denial instead of an
-// empty list; the enforcement stays in the database (§12).
-import { createClient } from '@/lib/supabase/server';
+// This module performs NO visibility logic of its own: the row-visibility rule
+// for genetics (provider_doctor/admin_owner, migration 0009's policy) is a
+// ported RLS policy and therefore inert on the single-owner Neon connection.
+// The page mirrors the rule with CAN_VIEW_GENETICS ONLY so it can render a
+// truthful denial instead of an empty list; the explicit `org_id` predicate
+// below is what actually scopes the rows read (§12).
+import { getSql } from '@/lib/db/neon';
 import type { ClinicalSource, VerificationState } from '@/lib/allergies/status';
 import type { GeneticKind, GeneticSignificance } from '@/lib/genetics/status';
 
@@ -22,47 +24,51 @@ export type GeneticFindingRecord = {
   documentName: string | null;
 };
 
+type GeneticFindingRow = {
+  id: string;
+  patient_id: string;
+  kind: GeneticKind;
+  gene: string | null;
+  variant: string | null;
+  interpretation: string | null;
+  significance: GeneticSignificance | null;
+  reported_at: string;
+  source: ClinicalSource;
+  verification: VerificationState;
+  document_filename: string | null;
+};
+
 export async function listGeneticFindings(
   orgId: string,
   patientId: string,
 ): Promise<GeneticFindingRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('genetics')
-    .select(
-      'id, patient_id, kind, gene, variant, interpretation, significance, reported_at, source, verification, documents(filename)',
-    )
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId)
-    .order('reported_at', { ascending: false })
-    .order('id', { ascending: false });
+  const sql = getSql();
+  try {
+    const rows = (await sql`
+      select g.id, g.patient_id, g.kind, g.gene, g.variant, g.interpretation, g.significance,
+             g.reported_at, g.source, g.verification, d.filename as document_filename
+      from public.genetics g
+      left join public.documents d on d.id = g.document_id and d.org_id = ${orgId}
+      where g.org_id = ${orgId} and g.patient_id = ${patientId}
+      order by g.reported_at desc, g.id desc
+    `) as unknown as GeneticFindingRow[];
 
-  if (error) throw new Error(`listGeneticFindings failed: ${error.message}`);
-  return (
-    (data ?? []) as Array<{
-      id: string;
-      patient_id: string;
-      kind: GeneticKind;
-      gene: string | null;
-      variant: string | null;
-      interpretation: string | null;
-      significance: GeneticSignificance | null;
-      reported_at: string;
-      source: ClinicalSource;
-      verification: VerificationState;
-      documents: { filename: string } | null;
-    }>
-  ).map((row) => ({
-    id: row.id,
-    patientId: row.patient_id,
-    kind: row.kind,
-    gene: row.gene,
-    variant: row.variant,
-    interpretation: row.interpretation,
-    significance: row.significance,
-    reportedAt: row.reported_at,
-    source: row.source,
-    verification: row.verification,
-    documentName: row.documents?.filename ?? null,
-  }));
+    return rows.map((row) => ({
+      id: row.id,
+      patientId: row.patient_id,
+      kind: row.kind,
+      gene: row.gene,
+      variant: row.variant,
+      interpretation: row.interpretation,
+      significance: row.significance,
+      reportedAt: row.reported_at,
+      source: row.source,
+      verification: row.verification,
+      documentName: row.document_filename ?? null,
+    }));
+  } catch (error) {
+    throw new Error(
+      `listGeneticFindings failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+    );
+  }
 }

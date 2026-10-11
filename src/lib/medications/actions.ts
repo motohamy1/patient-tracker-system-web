@@ -10,10 +10,18 @@
 // Illegal transitions are rejected BEFORE the write (MEDICATION_STATUS_
 // TRANSITIONS is the one table both the server and the UI consult), so an
 // invalid move is a typed `invalid` result, never a silent no-op.
+//
+// Writes run through withAppUser(): `touch_medication_provenance` reads
+// public.app_uid() for created_by/updated_by and `guard_medication_content`
+// resolves the caller's role for the same org from that same setting. Every
+// read carries an explicit `org_id` predicate — the Neon connection is
+// single-owner, so the ported RLS policies are inert.
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
+import { withAppUser } from '@/lib/db/client';
+import { getSessionUser } from '@/lib/auth/session';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_AUTHOR_CLINICAL, runsCapability, type Capability } from '@/lib/auth/capabilities';
 import {
@@ -27,11 +35,15 @@ export type MedicationActionResult =
   | { ok: true; medicationId?: string }
   | { ok: false; kind: 'invalid' | 'forbidden' | 'error' | 'not-found' };
 
+type TouchedMedicationRow = { id: string; patient_id: string };
+
 async function requireStaff(capability: Capability) {
+  const user = await getSessionUser();
+  if (!user) return null;
   const resolution = await resolveWorkspaceRole('provider');
   if (resolution.kind !== 'signed-in') return null;
   if (!runsCapability(resolution.role, capability)) return null;
-  return resolution;
+  return { orgId: resolution.orgId, userId: user.id };
 }
 
 function revalidateMedicationSurfaces(patientId: string) {
@@ -47,38 +59,45 @@ export async function startMedicationAction(input: unknown): Promise<MedicationA
   const actor = await requireStaff(CAN_AUTHOR_CLINICAL);
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('id', parsed.data.patientId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
+  try {
+    const sql = getSql();
+    const patients = (await sql`
+      select id from public.patients
+      where id = ${parsed.data.patientId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string }[];
+    if (patients.length === 0) return { ok: false, kind: 'not-found' };
 
-  if (patientError) return { ok: false, kind: 'error' };
-  if (!patient) return { ok: false, kind: 'not-found' };
+    // status omitted → SQL default 'active'; the trigger writes the
+    // `started` history row in the same statement. started_at defaults to
+    // now() when the caller did not state one.
+    const created = await withAppUser(actor.userId, async (tx) => {
+      const { rows } = await tx.query<{ id: string }>(
+        `insert into public.medications
+           (org_id, patient_id, name, dose_amount, dose_unit, frequency, route, started_at)
+         values ($1, $2, $3, $4, $5, $6, $7, coalesce($8, now()))
+         returning id`,
+        [
+          actor.orgId,
+          parsed.data.patientId,
+          parsed.data.name,
+          parsed.data.doseAmount,
+          parsed.data.doseUnit,
+          parsed.data.frequency,
+          parsed.data.route,
+          parsed.data.startedAt ?? null,
+        ],
+      );
+      return rows[0] ?? null;
+    });
 
-  const { data, error } = await supabase
-    .from('medications')
-    .insert({
-      org_id: actor.orgId,
-      patient_id: parsed.data.patientId,
-      name: parsed.data.name,
-      dose_amount: parsed.data.doseAmount,
-      dose_unit: parsed.data.doseUnit,
-      frequency: parsed.data.frequency,
-      route: parsed.data.route,
-      ...(parsed.data.startedAt ? { started_at: parsed.data.startedAt } : {}),
-      // status omitted → SQL default 'active'; the trigger writes the
-      // `started` history row in the same statement.
-    })
-    .select('id')
-    .single();
+    if (!created) return { ok: false, kind: 'error' };
 
-  if (error || !data) return { ok: false, kind: 'error' };
-
-  revalidateMedicationSurfaces(parsed.data.patientId);
-  return { ok: true, medicationId: data.id };
+    revalidateMedicationSurfaces(parsed.data.patientId);
+    return { ok: true, medicationId: created.id };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }
 
 /** Change the structured details of an existing medication (a `changed` event). */
@@ -89,26 +108,33 @@ export async function changeMedicationAction(input: unknown): Promise<Medication
   const actor = await requireStaff(CAN_AUTHOR_CLINICAL);
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('medications')
-    .update({
-      name: parsed.data.name,
-      dose_amount: parsed.data.doseAmount,
-      dose_unit: parsed.data.doseUnit,
-      frequency: parsed.data.frequency,
-      route: parsed.data.route,
-    })
-    .eq('id', parsed.data.medicationId)
-    .eq('org_id', actor.orgId)
-    .select('id, patient_id')
-    .maybeSingle();
+  try {
+    const updated = await withAppUser(actor.userId, async (tx) => {
+      const { rows } = await tx.query<TouchedMedicationRow>(
+        `update public.medications
+         set name = $1, dose_amount = $2, dose_unit = $3, frequency = $4, route = $5
+         where id = $6 and org_id = $7
+         returning id, patient_id`,
+        [
+          parsed.data.name,
+          parsed.data.doseAmount,
+          parsed.data.doseUnit,
+          parsed.data.frequency,
+          parsed.data.route,
+          parsed.data.medicationId,
+          actor.orgId,
+        ],
+      );
+      return rows[0] ?? null;
+    });
 
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
+    if (!updated) return { ok: false, kind: 'not-found' };
 
-  revalidateMedicationSurfaces(data.patient_id);
-  return { ok: true, medicationId: data.id };
+    revalidateMedicationSurfaces(updated.patient_id);
+    return { ok: true, medicationId: updated.id };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }
 
 /**
@@ -126,37 +152,49 @@ async function transition(
   const actor = await requireStaff(CAN_AUTHOR_CLINICAL);
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: current, error: readError } = await supabase
-    .from('medications')
-    .select('id, patient_id, status')
-    .eq('id', parsed.data.medicationId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
+  try {
+    const sql = getSql();
+    const current = (await sql`
+      select id, patient_id, status from public.medications
+      where id = ${parsed.data.medicationId} and org_id = ${actor.orgId}
+      limit 1
+    `) as unknown as { id: string; patient_id: string; status: MedicationStatus }[];
+    if (current.length === 0) return { ok: false, kind: 'not-found' };
+    if (!canTransition(current[0].status, to)) return { ok: false, kind: 'invalid' };
 
-  if (readError) return { ok: false, kind: 'error' };
-  if (!current) return { ok: false, kind: 'not-found' };
-  if (!canTransition(current.status as MedicationStatus, to)) return { ok: false, kind: 'invalid' };
+    const stamp = new Date().toISOString();
+    const updated = await withAppUser(actor.userId, async (tx) => {
+      const { rows } =
+        to === 'paused'
+          ? await tx.query<TouchedMedicationRow>(
+              `update public.medications set status = $1, paused_at = $2
+               where id = $3 and org_id = $4
+               returning id, patient_id`,
+              [to, stamp, parsed.data.medicationId, actor.orgId],
+            )
+          : to === 'stopped'
+            ? await tx.query<TouchedMedicationRow>(
+                `update public.medications set status = $1, stopped_at = $2
+                 where id = $3 and org_id = $4
+                 returning id, patient_id`,
+                [to, stamp, parsed.data.medicationId, actor.orgId],
+              )
+            : await tx.query<TouchedMedicationRow>(
+                `update public.medications set status = $1, paused_at = null, stopped_at = null
+                 where id = $2 and org_id = $3
+                 returning id, patient_id`,
+                [to, parsed.data.medicationId, actor.orgId],
+              );
+      return rows[0] ?? null;
+    });
 
-  const timestamps =
-    to === 'paused'
-      ? { paused_at: new Date().toISOString() }
-      : to === 'stopped'
-        ? { stopped_at: new Date().toISOString() }
-        : { paused_at: null, stopped_at: null };
+    if (!updated) return { ok: false, kind: 'not-found' };
 
-  const { data, error } = await supabase
-    .from('medications')
-    .update({ status: to, ...timestamps })
-    .eq('id', parsed.data.medicationId)
-    .select('id, patient_id')
-    .maybeSingle();
-
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
-
-  revalidateMedicationSurfaces(data.patient_id);
-  return { ok: true, medicationId: data.id };
+    revalidateMedicationSurfaces(updated.patient_id);
+    return { ok: true, medicationId: updated.id };
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
 }
 
 export async function pauseMedicationAction(input: unknown): Promise<MedicationActionResult> {

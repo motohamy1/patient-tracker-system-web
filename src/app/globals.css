@@ -13,6 +13,13 @@
     font-family: var(--font-inter), system-ui, sans-serif;
     /* The overlay's scroll lock must never shift layout by the scrollbar width. */
     scrollbar-gutter: stable;
+    /* The reserved `stable` gutter sits OUTSIDE the app field, so it paints
+       from the propagated root background. Painting it `frame` makes the
+       gutter read as the frame's right edge — the frame then wraps the
+       viewport continuously (reference: patient-tracking-dashboard) and the
+       top bar's `frame` band is never visibly cut off before the window
+       edge. The workspace surfaces own the `canvas` field themselves. */
+    background-color: var(--color-frame);
   }
 
   body {

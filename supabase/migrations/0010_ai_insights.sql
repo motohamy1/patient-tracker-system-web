@@ -40,8 +40,8 @@ create table public.ai_insights (
   evidence jsonb not null check (jsonb_typeof(evidence) = 'array' and jsonb_array_length(evidence) > 0),
   -- The period the insight covers ({from, to} ISO strings); null for
   -- point-in-time findings.
-  window jsonb check (window is null or (jsonb_typeof(window) = 'object'
-    and window ? 'from' and window ? 'to')),
+  "window" jsonb check ("window" is null or (jsonb_typeof("window") = 'object'
+    and "window" ? 'from' and "window" ? 'to')),
   provenance text not null default 'system-derived'
     check (provenance in ('system-derived', 'ai-generated')),
   -- §23: AI output defaults to ai-extracted so it can never render
@@ -116,7 +116,7 @@ begin
     or new.title <> old.title
     or new.body <> old.body
     or new.evidence is distinct from old.evidence
-    or new.window is distinct from old.window
+    or new."window" is distinct from old."window"
     or new.provenance <> old.provenance
     or new.patient_id <> old.patient_id
     or new.org_id <> old.org_id
@@ -153,7 +153,7 @@ alter table public.ai_insights enable row level security;
 
 revoke all on public.ai_insights from anon, authenticated, service_role;
 grant select on public.ai_insights to authenticated;
-grant insert (org_id, patient_id, kind, title, body, evidence, window, provenance)
+grant insert (org_id, patient_id, kind, title, body, evidence, "window", provenance)
   on public.ai_insights to authenticated;
 grant update (review_state, verification, reviewed_by, reviewed_at)
   on public.ai_insights to authenticated;

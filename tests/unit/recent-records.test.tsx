@@ -3,39 +3,21 @@
 //
 // Two layers in one file: the PURE composer (activity.ts — merge, order,
 // cap, honesty rules) and the card's rendered copy/geometry. The invitation
-// query gets the same chainable-builder harness as patient-record-query so
-// its PostgREST contract (org scope, patient scope, order, limit) is asserted
-// rather than trusted.
+// query gets the same Neon tagged-template harness as patient-record-query so
+// its SQL contract (org scope, patient scope, order, limit) is asserted rather
+// than trusted.
 import { describe, expect, it, vi, beforeAll } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 const h = vi.hoisted(() => ({
-  calls: [] as Array<[string, ...unknown[]]>,
-  data: [] as unknown[],
-  error: null as { message: string } | null,
+  sql: vi.fn(),
+  rows: [] as unknown[],
+  error: null as { message?: string; code?: string } | null,
 }));
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: async () => {
-    const record =
-      (name: string) =>
-      (...args: unknown[]): unknown => {
-        h.calls.push([name, ...args]);
-        return chain;
-      };
-    const chain: Record<string, unknown> = {};
-    for (const op of ['select', 'eq', 'order']) {
-      chain[op] = record(op);
-    }
-    chain.limit = (n: number) => {
-      h.calls.push(['limit', n]);
-      return Promise.resolve({ data: h.data, error: h.error });
-    };
-    return { from: () => chain };
-  },
-}));
+vi.mock('@/lib/db/neon', () => ({ getSql: () => h.sql }));
 
 import { composeRecentEvents, RECENT_ACTIVITY_LIMIT } from '@/lib/patients/activity';
 import { listPatientInvitations, SupabasePermissionError } from '@/lib/patients/queries';
@@ -57,7 +39,10 @@ function render(events: ActivityEvent[]): Document {
 }
 
 beforeAll(() => {
-  h.calls.length = 0;
+  h.sql.mockImplementation(async () => {
+    if (h.error) throw h.error;
+    return h.rows;
+  });
 });
 
 describe('composeRecentEvents — real patient-scoped facts only (§27, D-18)', () => {
@@ -106,23 +91,23 @@ describe('composeRecentEvents — real patient-scoped facts only (§27, D-18)', 
 
 describe('listPatientInvitations — org-scoped, patient-scoped, bounded', () => {
   it('selects the three columns, filters org then patient, orders desc, limits 5', async () => {
-    h.calls.length = 0;
     h.error = null;
-    h.data = [];
+    h.rows = [];
     await listPatientInvitations(ORG, PATIENT_ID);
 
-    expect(h.calls).toEqual([
-      ['select', 'id, created_at, redeemed_at'],
-      ['eq', 'org_id', ORG],
-      ['eq', 'patient_id', PATIENT_ID],
-      ['order', 'created_at', { ascending: false }],
-      ['limit', 5],
-    ]);
+    const [strings, ...values] = h.sql.mock.calls.at(-1) as [TemplateStringsArray, ...unknown[]];
+    const text = strings.join('?');
+    expect(text).toContain('id, created_at, redeemed_at');
+    expect(text).toContain('from public.invitations');
+    expect(text).toContain('org_id =');
+    expect(text).toContain('patient_id =');
+    expect(text).toContain('order by created_at desc');
+    expect(text).toContain('limit 5');
+    expect(values).toEqual([ORG, PATIENT_ID]);
   });
 
   it('maps rows to camelCase invite rows', async () => {
-    h.calls.length = 0;
-    h.data = [
+    h.rows = [
       { id: 'i1', created_at: '2026-09-01T10:00:00Z', redeemed_at: null },
       { id: 'i2', created_at: '2025-06-01T10:00:00Z', redeemed_at: '2025-06-02T12:00:00Z' },
     ];
@@ -134,7 +119,6 @@ describe('listPatientInvitations — org-scoped, patient-scoped, bounded', () =>
   });
 
   it('throws a privilege-classified error on a permission failure', async () => {
-    h.calls.length = 0;
     h.error = { message: 'permission denied' };
     await expect(listPatientInvitations(ORG, PATIENT_ID)).rejects.toBeInstanceOf(
       SupabasePermissionError,

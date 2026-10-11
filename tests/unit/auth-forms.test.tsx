@@ -39,6 +39,19 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+// The form components import the 'use server' action modules; stub the Managed
+// Auth seam so @neondatabase/auth (and its `next/headers` edge) never enters
+// the jsdom module graph. These tests render presentation states only — no
+// action runs — so the stub is never exercised.
+vi.mock('@/lib/auth/server', () => ({
+  auth: {
+    signIn: { email: vi.fn() },
+    signUp: { email: vi.fn() },
+    requestPasswordReset: vi.fn(),
+    resetPassword: vi.fn(),
+  },
+}));
+
 function parse(element: ReactElement): Document {
   return new DOMParser().parseFromString(renderToStaticMarkup(element), 'text/html');
 }
@@ -293,8 +306,14 @@ describe('/reset-password/request + /reset-password/update — reset surfaces', 
     expect(outcome.body.textContent).toContain('a reset link is on the way.');
   });
 
-  it('renders the update surface with both fields and the Set new password action', () => {
-    const doc = parse(createElement(updatePage.default));
+  it('renders the update surface with both fields and the Set new password action', async () => {
+    // The page is an async Server Component that reads the recovery token from
+    // searchParams (Managed Neon Auth reset flow), so it is invoked and awaited
+    // before the static render.
+    const element = await updatePage.default({
+      searchParams: Promise.resolve({ token: 'recovery-token' }),
+    });
+    const doc = parse(element as ReactElement);
     expect(doc.querySelector('h1')?.textContent).toBe('Set a new password');
     const labels = Array.from(doc.querySelectorAll('label')).map((l) => l.textContent);
     expect(labels).toEqual(['New password', 'Confirm password']);

@@ -1,13 +1,14 @@
 // src/lib/medications/queries.ts — the Phase-8 server-side medication layer.
 //
-// RLS (migration 0007) enforces org scoping; the explicit `.eq('org_id', …)`
-// is defense in depth, not the authorization boundary (0005 discipline).
+// Org scoping is app-layer: the Neon connection is single-owner, so migration
+// 0007's RLS policies are inert documentation and the explicit `org_id`
+// predicate on every read below is the boundary (0005 discipline).
 //
 // TWO reads, two stories (MED-02): `listMedications` returns the CURRENT state
 // the tab renders; `listMedicationEvents` returns the HISTORY the timeline
 // projects. The timeline never reads the current row, so a state edit cannot
 // rewrite history.
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
 import type {
   MedicationEventKind,
   MedicationFrequency,
@@ -50,9 +51,6 @@ export type MedicationEventRecord = {
   detail: unknown;
 };
 
-const MEDICATION_COLUMNS =
-  'id, patient_id, name, dose_amount, dose_unit, frequency, route, status, started_at, paused_at, stopped_at, rxnorm_code, source, verification, created_at, updated_at';
-
 type MedicationRow = {
   id: string;
   patient_id: string;
@@ -70,6 +68,17 @@ type MedicationRow = {
   verification: MedicationVerification;
   created_at: string;
   updated_at: string;
+};
+
+type MedicationEventRow = {
+  id: string;
+  medication_id: string;
+  kind: MedicationEventKind;
+  at: string;
+  detail: unknown;
+  medication_name: string | null;
+  medication_source: MedicationSource | null;
+  medication_verification: MedicationVerification | null;
 };
 
 function mapMedication(row: MedicationRow): MedicationRecord {
@@ -98,17 +107,22 @@ export async function listMedications(
   orgId: string,
   patientId: string,
 ): Promise<MedicationRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('medications')
-    .select(MEDICATION_COLUMNS)
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId)
-    .order('started_at', { ascending: false })
-    .order('id', { ascending: false });
+  const sql = getSql();
+  try {
+    const rows = (await sql`
+      select id, patient_id, name, dose_amount, dose_unit, frequency, route, status,
+             started_at, paused_at, stopped_at, rxnorm_code, source, verification, created_at, updated_at
+      from public.medications
+      where org_id = ${orgId} and patient_id = ${patientId}
+      order by started_at desc, id desc
+    `) as unknown as MedicationRow[];
 
-  if (error) throw new Error(`listMedications failed: ${error.message}`);
-  return ((data ?? []) as MedicationRow[]).map(mapMedication);
+    return rows.map(mapMedication);
+  } catch (error) {
+    throw new Error(
+      `listMedications failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+    );
+  }
 }
 
 /**
@@ -120,34 +134,30 @@ export async function listMedicationEvents(
   orgId: string,
   patientId: string,
 ): Promise<MedicationEventRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('medication_events')
-    .select('id, medication_id, kind, at, detail, medications(name, source, verification)')
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId)
-    .order('at', { ascending: false })
-    .order('id', { ascending: false });
+  const sql = getSql();
+  try {
+    const rows = (await sql`
+      select e.id, e.medication_id, e.kind, e.at, e.detail,
+             m.name as medication_name, m.source as medication_source, m.verification as medication_verification
+      from public.medication_events e
+      left join public.medications m on m.id = e.medication_id and m.org_id = ${orgId}
+      where e.org_id = ${orgId} and e.patient_id = ${patientId}
+      order by e.at desc, e.id desc
+    `) as unknown as MedicationEventRow[];
 
-  if (error) throw new Error(`listMedicationEvents failed: ${error.message}`);
-
-  return (
-    (data ?? []) as Array<{
-      id: string;
-      medication_id: string;
-      kind: MedicationEventKind;
-      at: string;
-      detail: unknown;
-      medications: { name: string; source: MedicationSource; verification: MedicationVerification } | null;
-    }>
-  ).map((row) => ({
-    id: row.id,
-    medicationId: row.medication_id,
-    medicationName: row.medications?.name ?? null,
-    medicationSource: row.medications?.source ?? null,
-    medicationVerification: row.medications?.verification ?? null,
-    kind: row.kind,
-    at: row.at,
-    detail: row.detail,
-  }));
+    return rows.map((row) => ({
+      id: row.id,
+      medicationId: row.medication_id,
+      medicationName: row.medication_name ?? null,
+      medicationSource: row.medication_source ?? null,
+      medicationVerification: row.medication_verification ?? null,
+      kind: row.kind,
+      at: row.at,
+      detail: row.detail,
+    }));
+  } catch (error) {
+    throw new Error(
+      `listMedicationEvents failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+    );
+  }
 }

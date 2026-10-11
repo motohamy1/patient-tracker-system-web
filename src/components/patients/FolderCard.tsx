@@ -4,15 +4,17 @@
 // Server Component: no client directive, no hook, no client state. The only
 // client island on the card is the three-dot quick-actions trigger.
 //
-// Anatomy, top to bottom (§4.2):
-//   1. folder tab silhouette — a `surface`-filled notch protruding from the
-//      top edge with `radius.sm` on its outer corners, pure CSS, no new
-//      shadow (the "premium digital clinical folder" signature, §5);
+// Anatomy, top to bottom (§4.2, composed to the D-28 re-sampled tokens):
+//   1. folder tab silhouette — a `surfaceMuted` band across the card's top
+//      edge, drawn INSIDE the silhouette (never protruding past the card's
+//      rounded lip, which read as a hard cut in the reference comparison);
 //   2. header row — `surfaceMuted` initials disc + name (Heading, 600) with
 //      the MRN beneath in Label `textSecondary`, plus room reserved at the
 //      trailing edge for the quick-actions button;
-//   3. status line — full-width 2px (`h-0.5`) line in the D-10 token;
-//   4. the `Pill` + identity line ("42 · F", tabular-nums, minimal age/sex);
+//   3. status line — full-width 4px (`h-1`) line in the D-10 token, with the
+//      `Pill` riding its center (the reference's composition: the line runs
+//      behind the pill and the pill's own fill masks it);
+//   4. the identity line ("42 · F", tabular-nums, minimal age/sex);
 //   5. footer — "Last activity" Label `textSecondary` + the absolute date
 //      (`tabular-nums`, pattern 7: never "N days ago") and at most one 16px
 //      contextual indicator (the unlinked-account glyph, which is what
@@ -20,9 +22,10 @@
 //
 // D-10 status encoding appears in EXACTLY two places per card: the status
 // line and the `Pill`'s leading dot. The name, body and background are never
-// tinted. The card carries NO border (INV-15/INV-16): separation is
-// `shadow-raised` + `radius.lg` on `Surface variant="surface"`, floating on
-// `canvas`.
+// tinted. The card carries NO border (INV-15/INV-16): it is a white
+// `surfaceRaised` fill with `shadow-raised` and a 24px radius, floating on
+// the gray canvas — the reference separates by fill and shadow, never by a
+// drawn edge (D-28).
 //
 // Minimization (PROV-03, §3.3): the card prints name, MRN, age/sex, status
 // and the absolute last-activity date. Phone and DOB are never printed — they
@@ -71,19 +74,23 @@ export function FolderCard({ patient, canInvite = false, canMessage = false }: F
 
   return (
     <div className="relative">
-      {/* Folder tab silhouette: same `surface` fill, radius.sm outer corners. */}
-      <span
-        aria-hidden="true"
-        className="absolute -top-3 left-lg h-3 w-16 rounded-t-sm bg-surface"
-      />
       <a href={href} className="block">
-        <Surface variant="surface">
-          <div className="flex flex-col gap-md">
+        {/* The reference's card: a white fill with the soft raised shadow on a
+            16/24px radius, no perimeter edge of any kind (INV-15/16). */}
+        <Surface variant="surfaceRaised" className="relative overflow-hidden">
+          {/* Folder tab silhouette — a short tab at the card's top-left,
+              clipped by the card's own rounded lip (never protruding past the
+              edge with a hard cut, the D-28 reference comparison). */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-6 top-0 h-3 w-20 rounded-t-xl bg-surface-muted"
+          />
+          <div className="flex flex-col gap-lg pt-lg">
             {/* Header row — reserves the trailing 44px trigger strip. */}
             <div className="flex items-start gap-md pr-12">
               <span
                 aria-hidden="true"
-                className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-surface-muted text-label leading-label text-text-primary"
+                className="flex size-10 shrink-0 items-center justify-center rounded-pill bg-surface-muted text-body leading-body font-semibold text-text-primary"
               >
                 {initialsOf(patient)}
               </span>
@@ -97,18 +104,20 @@ export function FolderCard({ patient, canInvite = false, canMessage = false }: F
               </span>
             </div>
 
-            {/* Status line — one of the two tinted places on the card. */}
-            <span
-              aria-hidden="true"
-              className={`h-0.5 w-full rounded-pill bg-${token}`}
-            />
+            {/* Status line with the Pill riding its center — the reference's
+                composition: the line runs behind the pill, the pill masks it
+                with its own fill, and both carry the same D-10 tone. */}
+            <div className="relative flex items-center justify-center">
+              <span
+                aria-hidden="true"
+                className={`absolute inset-x-0 h-1 rounded-pill bg-${token}`}
+              />
+              <Pill tone={token} label={statusLabel} className="relative" />
+            </div>
 
-            {/* The Pill is the second tinted place; identity stays untinted. */}
+            {/* The identity stays untinted; the pill above is the second
+                tinted place on the card (D-10). */}
             <div className="flex flex-wrap items-center gap-md">
-              <Pill tone={token} label={statusLabel} />
-              {/* data-testid: the visual harness masks this fragment — age is
-                  computed from dob at render time and changes on birthdays
-                  (04-05 / 03-08 masking precedent). */}
               <span
                 data-testid="folder-identity"
                 className="text-label leading-label text-text-primary tabular-nums"

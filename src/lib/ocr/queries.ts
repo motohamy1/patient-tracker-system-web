@@ -1,9 +1,11 @@
-// src/lib/ocr/queries.ts — RLS-scoped extraction reads (Phase 12, OCR-01).
+// src/lib/ocr/queries.ts — org-scoped extraction reads (Phase 12, OCR-01).
 //
-// Migration 0011's SELECT policy restricts rows to the org's four staff roles;
-// this module adds no visibility logic of its own (the 0009 discipline). The
-// document filename rides the FK so the intake list reads truthfully.
-import { createClient } from '@/lib/supabase/server';
+// RLS is inert on the single-owner Lakebase Postgres connection, so every read
+// carries an explicit `org_id` predicate (the 0009 discipline); this module adds
+// no visibility logic of its own. The document filename rides the FK so the
+// intake list reads truthfully.
+import { getSql } from '@/lib/db/neon';
+import { signedDocumentUrl as requestSignedDocumentUrl } from '@/lib/storage/documents';
 import type {
   ExtractionPayload,
   ExtractionStatus,
@@ -12,9 +14,6 @@ import type {
 
 export type { OcrExtractionRecord };
 import { isExtractionPayload } from '@/lib/ocr/provider';
-
-const SELECT_COLUMNS =
-  'id, org_id, patient_id, document_id, status, payload, provider, rejection_reason, source, verification, verified_by, verified_at, created_at, updated_at, documents(filename, storage_path)';
 
 type ExtractionRow = {
   id: string;
@@ -31,7 +30,8 @@ type ExtractionRow = {
   verified_at: string | null;
   created_at: string;
   updated_at: string;
-  documents: { filename: string; storage_path: string } | null;
+  document_filename: string | null;
+  document_storage_path: string | null;
 };
 
 function mapRow(row: ExtractionRow): OcrExtractionRecord {
@@ -40,8 +40,8 @@ function mapRow(row: ExtractionRow): OcrExtractionRecord {
     orgId: row.org_id,
     patientId: row.patient_id,
     documentId: row.document_id,
-    storagePath: row.documents?.storage_path ?? null,
-    documentName: row.documents?.filename ?? null,
+    storagePath: row.document_storage_path,
+    documentName: row.document_filename,
     status: row.status,
     provider: row.provider,
     payload: isExtractionPayload(row.payload) ? row.payload : null,
@@ -60,48 +60,63 @@ export async function listOcrExtractions(
   orgId: string,
   patientId: string,
 ): Promise<OcrExtractionRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('ocr_extractions')
-    .select(SELECT_COLUMNS)
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId)
-    .order('created_at', { ascending: false })
-    .order('id', { ascending: false });
-
-  if (error) throw new Error(`listOcrExtractions failed: ${error.message}`);
-  return ((data ?? []) as ExtractionRow[]).map(mapRow);
+  let rows: ExtractionRow[];
+  try {
+    const sql = getSql();
+    rows = (await sql`
+      select e.id, e.org_id, e.patient_id, e.document_id, e.status, e.payload, e.provider,
+             e.rejection_reason, e.source, e.verification, e.verified_by, e.verified_at,
+             e.created_at, e.updated_at,
+             d.filename as document_filename, d.storage_path as document_storage_path
+      from public.ocr_extractions e
+      left join public.documents d on d.id = e.document_id
+      where e.org_id = ${orgId} and e.patient_id = ${patientId}
+      order by e.created_at desc, e.id desc
+    `) as unknown as ExtractionRow[];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`listOcrExtractions failed: ${message}`);
+  }
+  return rows.map(mapRow);
 }
 
-/** One extraction, org-scoped; null when RLS hides it (no-leak denial). */
+/** One extraction, org-scoped; null when the org scope hides it (no-leak denial). */
 export async function getOcrExtraction(
   orgId: string,
   extractionId: string,
 ): Promise<OcrExtractionRecord | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('ocr_extractions')
-    .select(SELECT_COLUMNS)
-    .eq('org_id', orgId)
-    .eq('id', extractionId)
-    .maybeSingle();
-
-  if (error) throw new Error(`getOcrExtraction failed: ${error.message}`);
-  return data ? mapRow(data as ExtractionRow) : null;
+  let rows: ExtractionRow[];
+  try {
+    const sql = getSql();
+    rows = (await sql`
+      select e.id, e.org_id, e.patient_id, e.document_id, e.status, e.payload, e.provider,
+             e.rejection_reason, e.source, e.verification, e.verified_by, e.verified_at,
+             e.created_at, e.updated_at,
+             d.filename as document_filename, d.storage_path as document_storage_path
+      from public.ocr_extractions e
+      left join public.documents d on d.id = e.document_id
+      where e.org_id = ${orgId} and e.id = ${extractionId}
+      limit 1
+    `) as unknown as ExtractionRow[];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`getOcrExtraction failed: ${message}`);
+  }
+  return rows[0] ? mapRow(rows[0]) : null;
 }
 
 /**
  * A short-lived signed URL for the original image (the clinician's reference
- * of record during verification, §11). The storage policies gate who may read
- * it; this helper only mints the URL.
+ * of record during verification, §11). Access is enforced in app code (the
+ * org/patient path guard + workspace resolution); the object store only mints
+ * the time-boxed URL.
  */
 export async function signedDocumentUrl(storagePath: string, expiresInSeconds = 300): Promise<string | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from('patient-documents')
-    .createSignedUrl(storagePath, expiresInSeconds);
-  if (error || !data) return null;
-  return data.signedUrl;
+  try {
+    return await requestSignedDocumentUrl(storagePath, expiresInSeconds);
+  } catch {
+    return null;
+  }
 }
 
 /** The payload type re-export for the surface. */

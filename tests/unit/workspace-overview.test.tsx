@@ -2,10 +2,11 @@
 // (WSP-01, WSP-02; AUTH-03; UX-01/UX-02; ASVS V5 / T-02-52).
 //
 // Static idiom of tests/unit/provider-home-page.test.tsx: `server-only`,
-// `@/lib/supabase/server`, `@/lib/auth/workspace`, `@/lib/patients/queries`
-// and `motion/react` mocked at their factories, so the test proves PLUMBING
-// and COPY, not SQL. The page is invoked directly (await of the async
-// component) and rendered with `renderToStaticMarkup`.
+// `@/lib/auth/session` (the module graph's identity seam, stubbed so the
+// Managed Auth edge stays out of jsdom), `@/lib/auth/workspace`,
+// `@/lib/patients/queries` and `motion/react` mocked at their factories, so
+// the test proves PLUMBING and COPY, not SQL. The page is invoked directly
+// (await of the async component) and rendered with `renderToStaticMarkup`.
 //
 // Asserted:
 //   WSP-01  the eight slugs, their labels and their DOM order are exactly the
@@ -35,7 +36,10 @@ const queries = vi.hoisted(() => ({
 const workspace = vi.hoisted(() => ({ resolveWorkspaceRole: vi.fn() }));
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/supabase/server', () => ({ createClient: async () => ({}) }));
+// The identity seam is stubbed so `@neondatabase/auth` (and its `next/headers`
+// edge) never enters the jsdom module graph; the resolution itself is mocked
+// separately below.
+vi.mock('@/lib/auth/session', () => ({ getSessionUser: vi.fn() }));
 vi.mock('@/lib/patients/queries', () => ({
   getPatient: queries.getPatient,
   listPatients: queries.listPatients,

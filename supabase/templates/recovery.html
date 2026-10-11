@@ -1,4 +1,0 @@
-<!-- Supabase Auth password-recovery email (local template).
-     PKCE SSR shape per 03-RESEARCH.md Pattern 5 / docs:guides/auth/passwords §PKCE Step 1:
-     TokenHash + app-owned /auth/confirm endpoint; type=recovery routes to verifyOtp. -->
-<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next={{ .RedirectTo }}">Reset your password</a>

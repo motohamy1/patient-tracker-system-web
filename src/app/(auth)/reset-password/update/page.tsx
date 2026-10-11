@@ -13,7 +13,15 @@ import { UpdateForm } from './update-form';
 const GHOST_LINK_CLASSES =
   'inline-flex w-fit items-center justify-center gap-xs rounded-pill px-md min-h-11 md:min-h-8 text-body font-semibold leading-body text-text-primary';
 
-export default function ResetPasswordUpdatePage() {
+export default async function ResetPasswordUpdatePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const rawToken = params.token;
+  const token = typeof rawToken === 'string' ? rawToken : '';
+
   return (
     <Surface
       variant="canvas"
@@ -23,7 +31,7 @@ export default function ResetPasswordUpdatePage() {
         <h1 className="text-heading font-semibold leading-heading text-text-primary">
           Set a new password
         </h1>
-        <UpdateForm insetFill={INSET_FILL} />
+        <UpdateForm insetFill={INSET_FILL} token={token} />
         <a href="/login" className={GHOST_LINK_CLASSES}>
           Back to sign in
         </a>

@@ -237,3 +237,24 @@ Five canonical roles; each label string equals its role name. See `docs/agents/t
 ### Domain docs
 
 Single-context. See `docs/agents/domain.md`.
+
+## Verification discipline (owner rule)
+
+**Do not run verification loops by default.** A "verification loop" means any
+cycle of running the app, taking screenshots, signing in through a browser,
+re-checking rendered output against a reference, and iterating on what you
+see. These loops strand the session when the environment breaks underneath
+them (an in-flight auth migration, a dead dev server, missing credentials)
+and the session stops instead of returning.
+
+**The default is static verification only:** `tsc --noEmit`, the repo's lint
+script, and reading the diff. Then hand back.
+
+**Run a live verification loop ONLY when** the owner explicitly asks for it,
+or you offer it and the owner accepts. A single production `npm run build`
+for a phase that mandates it is not a loop; iterating on screenshots is.
+
+If a verification loop you were told to run breaks on the environment
+(a broken login, a missing seed, a parallel change in the tree), stop
+immediately, report the blocker in one short message, and hand back — do
+not try to fix the environment to continue the loop.

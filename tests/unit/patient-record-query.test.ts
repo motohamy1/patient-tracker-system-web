@@ -1,40 +1,22 @@
 // tests/unit/patient-record-query.test.ts — the getPatient contract
 // (Phase-5 T-01, WSP-02, AUTH-03, ASVS V5 / T-02-52).
 //
-// Same harness idiom as tests/unit/patient-queries.test.ts: the Supabase
-// server client is mocked at the module boundary with a chainable fake that
-// RECORDS every chained call, then the exact PostgREST contract is asserted —
-// one select of the record columns, org scope first (defense in depth over
-// RLS), the id bound as a predicate (never interpolated), a maybeSingle
-// terminal, the row mapping, and the null/not-found and error branches.
+// Same harness idiom as tests/unit/patient-queries.test.ts: the Neon helper
+// is mocked at the module boundary and every tagged-template call is recorded,
+// then the SQL contract is asserted — one select of the record columns, org
+// scope first (defense in depth over the inert RLS policies), the id bound as
+// a parameter (never interpolated), a `limit 1` terminal, the row mapping, and
+// the null/not-found and privilege-classified error branches.
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
-  calls: [] as Array<[string, ...unknown[]]>,
-  single: null as unknown,
-  error: null as { message: string } | null,
+  sql: vi.fn(),
+  rows: [] as unknown[],
+  error: null as { message?: string; code?: string } | null,
 }));
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: async () => {
-    const record =
-      (name: string) =>
-      (...args: unknown[]): unknown => {
-        h.calls.push([name, ...args]);
-        return chain;
-      };
-    const chain: Record<string, unknown> = {};
-    for (const op of ['select', 'eq']) {
-      chain[op] = record(op);
-    }
-    chain.maybeSingle = () => {
-      h.calls.push(['maybeSingle']);
-      return Promise.resolve({ data: h.single, error: h.error });
-    };
-    return { from: () => chain };
-  },
-}));
+vi.mock('@/lib/db/neon', () => ({ getSql: () => h.sql }));
 
 import { getPatient, SupabasePermissionError } from '@/lib/patients/queries';
 
@@ -56,34 +38,34 @@ const ROW = {
 };
 
 beforeAll(() => {
-  h.calls.length = 0;
-  h.error = null;
+  h.sql.mockImplementation(async () => {
+    if (h.error) throw h.error;
+    return h.rows;
+  });
 });
 
 describe('getPatient — one patient, org-scoped, id bound', () => {
-  it('selects the record columns and filters org then id as bound predicates', async () => {
-    h.calls.length = 0;
+  it('selects the record columns and filters org then id as bound parameters', async () => {
     h.error = null;
-    h.single = null;
+    h.rows = [];
     await getPatient(ORG, PATIENT_ID);
 
-    const select = h.calls.find((c) => c[0] === 'select');
-    expect(select).toBeDefined();
-    expect(String(select?.[1])).toContain('created_at');
-    expect(String(select?.[1])).toContain('updated_at');
-    expect(String(select?.[1])).toContain('last_activity_at');
-
-    const eqs = h.calls.filter((c) => c[0] === 'eq');
-    expect(eqs).toEqual([
-      ['eq', 'org_id', ORG],
-      ['eq', 'id', PATIENT_ID],
-    ]);
-    expect(h.calls.map((c) => c[0])).toEqual(['select', 'eq', 'eq', 'maybeSingle']);
+    const [strings, ...values] = h.sql.mock.calls.at(-1) as [TemplateStringsArray, ...unknown[]];
+    const text = strings.join('?');
+    expect(text).toContain('created_at');
+    expect(text).toContain('updated_at');
+    expect(text).toContain('last_activity_at');
+    expect(text).toContain('from public.patients');
+    expect(text).toContain('org_id =');
+    expect(text).toContain('id =');
+    expect(text).toContain('limit 1');
+    // org scope first, then the id — both bound, never interpolated (T-02-52)
+    expect(values).toEqual([ORG, PATIENT_ID]);
+    expect(text).not.toContain(PATIENT_ID);
   });
 
   it('maps the row to a PatientRecord (D-10 fields untouched)', async () => {
-    h.calls.length = 0;
-    h.single = ROW;
+    h.rows = [ROW];
     const record = await getPatient(ORG, PATIENT_ID);
 
     expect(record).not.toBeNull();
@@ -103,16 +85,14 @@ describe('getPatient — one patient, org-scoped, id bound', () => {
     expect(typeof record?.age).toBe('number');
   });
 
-  it('returns null when RLS filters the row away (another org reads nothing)', async () => {
-    h.calls.length = 0;
-    h.single = null;
+  it('returns null when the org predicate filters the row away (another org reads nothing)', async () => {
+    h.rows = [];
     const record = await getPatient(ORG, PATIENT_ID);
     expect(record).toBeNull();
   });
 
   it('classifies a permission failure so the caller can render denial (not "connection")', async () => {
-    h.calls.length = 0;
-    h.single = null;
+    h.rows = [];
     h.error = { message: 'permission denied' };
     await expect(getPatient(ORG, PATIENT_ID)).rejects.toBeInstanceOf(SupabasePermissionError);
     await expect(getPatient(ORG, PATIENT_ID)).rejects.toThrow(
@@ -122,8 +102,7 @@ describe('getPatient — one patient, org-scoped, id bound', () => {
   });
 
   it('keeps a non-privilege failure a plain error', async () => {
-    h.calls.length = 0;
-    h.single = null;
+    h.rows = [];
     h.error = { message: 'connection reset' };
     await expect(getPatient(ORG, PATIENT_ID)).rejects.toThrow(
       'getPatient failed: connection reset',

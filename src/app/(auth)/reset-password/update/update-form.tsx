@@ -154,7 +154,7 @@ export function UpdateFormPresentation({
   );
 }
 
-export function UpdateForm({ insetFill }: { insetFill: string }) {
+export function UpdateForm({ insetFill, token }: { insetFill: string; token: string }) {
   const router = useRouter();
   const lastAttemptRef = useRef<Attempt | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -196,7 +196,7 @@ export function UpdateForm({ insetFill }: { insetFill: string }) {
     setErrors({});
     setPending(true);
     startTransition(async () => {
-      const result = await updatePasswordAction(validPassword);
+      const result = await updatePasswordAction(validPassword, token);
       setPending(false);
       if (result.ok) {
         router.replace(LOGIN_PATH);

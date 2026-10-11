@@ -3,10 +3,10 @@
 // §4.7). Deterministic file accounting: this file owns the PAGE and its
 // loading/error siblings; the grid owns its own file.
 //
-// Harness: membership-surface idiom — `server-only`, `@/lib/supabase/server`,
-// `next/navigation` and `motion/react` mocked, plus the Phase-4 query module
-// (listPatients) and workspace resolver mocked at their factories so the test
-// proves PLUMBING, not SQL.
+// Harness: membership-surface idiom — `server-only`, `next/navigation` and
+// `motion/react` mocked, plus the Phase-4 query module (listPatients) and
+// workspace resolver mocked at their factories so the test proves PLUMBING,
+// not SQL.
 //
 // Asserted: URL searchParams reach listPatients unchanged (q / filter / d /
 // shown / limit, arrays normalized to their first entry), the control row
@@ -31,7 +31,6 @@ const actions = vi.hoisted(() => ({
 }));
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/supabase/server', () => ({ createClient: async () => ({}) }));
 vi.mock('@/lib/patients/queries', () => queries);
 vi.mock('@/lib/auth/workspace', () => workspace);
 vi.mock('@/lib/patients/actions', () => actions);
@@ -194,19 +193,24 @@ describe('/provider — the control row and the grid (04-UI-SPEC §4.1/§4.3)', 
 
   it('places the mobile search and the mobile CTA in the body control row', async () => {
     const { doc } = await renderPage({});
-    expect(doc!.getElementById('provider-search-body')).not.toBeNull();
+    const search = doc!.getElementById('provider-search-body');
+    expect(search).not.toBeNull();
     const cta = Array.from(doc!.querySelectorAll('button')).find(
       (button) => button.textContent === 'Add new patient',
     );
     expect(cta).toBeDefined();
     expect(cta?.getAttribute('class') ?? '').toContain('bg-accent-soft');
-    expect(cta?.getAttribute('class') ?? '').toContain('md:hidden');
+    // both live inside the body row, which is the mobile-only placement
+    const mobileRow = search?.closest('[class~="md:hidden"]') ?? null;
+    expect(mobileRow).not.toBeNull();
+    expect(mobileRow?.contains(cta!)).toBe(true);
   });
 
   it('wires the All-empty branch to a real Add new patient trigger', async () => {
     queries.listPatients.mockResolvedValue({ rows: [], hasMore: false, total: 0 });
     const { doc } = await renderPage({});
-    expect(doc!.querySelector('h2')?.textContent).toBe('No patients yet');
+    const headings = Array.from(doc!.querySelectorAll('h2')).map((h2) => h2.textContent);
+    expect(headings).toContain('No patients yet');
     const triggers = Array.from(doc!.querySelectorAll('button')).filter(
       (button) => button.textContent === 'Add new patient',
     );

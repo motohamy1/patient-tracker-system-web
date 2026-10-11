@@ -2,13 +2,16 @@
 // (Phase 16, ticket 16-03; CHAN-03).
 //
 // Endpoints are contact data about the patient, managed by staff (doctor +
-// nurse, mirroring 0015's write policy); no patient write path exists here.
-// The capability check runs before any write; the guards re-derive the
-// org/patient from the session.
+// nurse, mirroring the guard in the ported schema); no patient write path
+// exists here. The capability check runs before any write; the DB guard
+// re-derives org/patient integrity from `app.user_id`, so every write runs
+// inside withAppUser.
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
+import { withAppUser } from '@/lib/db/client';
+import { getSessionUser } from '@/lib/auth/session';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_MESSAGE, runsCapability } from '@/lib/auth/capabilities';
 import { CHANNEL_NAMES } from '@/lib/channels/status';
@@ -22,7 +25,9 @@ async function requireCareTeam() {
   const resolution = await resolveWorkspaceRole('provider');
   if (resolution.kind !== 'signed-in') return null;
   if (!runsCapability(resolution.role, CAN_MESSAGE)) return null;
-  return resolution;
+  const user = await getSessionUser();
+  if (!user) return null;
+  return { orgId: resolution.orgId, userId: user.id };
 }
 
 function revalidateChannelSurfaces(patientId: string) {
@@ -39,51 +44,74 @@ export async function saveChannelEndpointAction(input: unknown): Promise<Channel
   const actor = await requireCareTeam();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('id', parsed.data.patientId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
-  if (patientError) return { ok: false, kind: 'error' };
-  if (!patient) return { ok: false, kind: 'not-found' };
+  const sql = getSql();
+
+  let patient: { id: string } | null = null;
+  try {
+    const rows = (await sql`
+      select id from public.patients
+      where id = ${parsed.data.patientId} and org_id = ${actor.orgId}
+    `) as unknown as { id: string }[];
+    patient = rows[0] ?? null;
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (patient === null) return { ok: false, kind: 'not-found' };
 
   // One endpoint per channel per patient: a handle change replaces the row.
-  const { data: existing } = await supabase
-    .from('channel_endpoints')
-    .select('id')
-    .eq('org_id', actor.orgId)
-    .eq('patient_id', parsed.data.patientId)
-    .eq('channel', parsed.data.channel)
-    .maybeSingle();
-
-  if (existing !== null) {
-    const { error } = await supabase
-      .from('channel_endpoints')
-      .update({ handle: parsed.data.handle, status: parsed.data.status ?? 'active' })
-      .eq('id', existing.id)
-      .eq('org_id', actor.orgId);
-    if (error) return { ok: false, kind: 'error' };
-    revalidateChannelSurfaces(parsed.data.patientId);
-    return { ok: true, endpointId: existing.id as string };
+  let existing: { id: string } | null = null;
+  try {
+    const rows = (await sql`
+      select id from public.channel_endpoints
+      where org_id = ${actor.orgId}
+        and patient_id = ${parsed.data.patientId}
+        and channel = ${parsed.data.channel}
+    `) as unknown as { id: string }[];
+    existing = rows[0] ?? null;
+  } catch {
+    existing = null;
   }
 
-  const { data, error } = await supabase
-    .from('channel_endpoints')
-    .insert({
-      org_id: actor.orgId,
-      patient_id: parsed.data.patientId,
-      channel: parsed.data.channel,
-      handle: parsed.data.handle,
-      ...(parsed.data.status !== undefined ? { status: parsed.data.status } : {}),
-    })
-    .select('id')
-    .single();
-  if (error || !data) return { ok: false, kind: 'error' };
+  if (existing !== null) {
+    const endpointId = existing.id;
+    try {
+      await withAppUser(actor.userId, async (tx) => {
+        await tx.query(
+          `update public.channel_endpoints set handle = $1, status = $2 where id = $3 and org_id = $4`,
+          [parsed.data.handle, parsed.data.status ?? 'active', endpointId, actor.orgId],
+        );
+      });
+    } catch {
+      return { ok: false, kind: 'error' };
+    }
+    revalidateChannelSurfaces(parsed.data.patientId);
+    return { ok: true, endpointId };
+  }
+
+  let endpointId: string | null = null;
+  try {
+    endpointId = await withAppUser(actor.userId, async (tx) => {
+      const { rows } = await tx.query<{ id: string }>(
+        `insert into public.channel_endpoints (org_id, patient_id, channel, handle, status)
+         values ($1, $2, $3, $4, $5)
+         returning id`,
+        [
+          actor.orgId,
+          parsed.data.patientId,
+          parsed.data.channel,
+          parsed.data.handle,
+          parsed.data.status ?? 'active',
+        ],
+      );
+      return rows[0]?.id ?? null;
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (endpointId === null) return { ok: false, kind: 'error' };
 
   revalidateChannelSurfaces(parsed.data.patientId);
-  return { ok: true, endpointId: data.id as string };
+  return { ok: true, endpointId };
 }
 
 /** Activate or deactivate an endpoint (the delivery workflow reads ACTIVE only). */
@@ -94,17 +122,22 @@ export async function setChannelEndpointStatusAction(input: unknown): Promise<Ch
   const actor = await requireCareTeam();
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('channel_endpoints')
-    .update({ status: parsed.data.status })
-      .eq('id', parsed.data.endpointId)
-    .eq('org_id', actor.orgId)
-    .select('id, patient_id')
-    .maybeSingle();
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
+  let updated: { id: string; patient_id: string } | null = null;
+  try {
+    updated = await withAppUser(actor.userId, async (tx) => {
+      const { rows } = await tx.query<{ id: string; patient_id: string }>(
+        `update public.channel_endpoints set status = $1
+         where id = $2 and org_id = $3
+         returning id, patient_id`,
+        [parsed.data.status, parsed.data.endpointId, actor.orgId],
+      );
+      return rows[0] ?? null;
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (updated === null) return { ok: false, kind: 'not-found' };
 
-  revalidateChannelSurfaces(data.patient_id as string);
-  return { ok: true, endpointId: data.id as string };
+  revalidateChannelSurfaces(updated.patient_id);
+  return { ok: true, endpointId: updated.id };
 }

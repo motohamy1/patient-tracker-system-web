@@ -49,7 +49,7 @@ describe('AdminAuditPage guard ordering (D-15, source assertion)', () => {
       'utf8',
     );
     const guardIdx = source.indexOf('CAN_RETRIEVE_AUDIT');
-    const fetchIdx = source.indexOf(".from('audit_log')");
+    const fetchIdx = source.indexOf('from public.audit_log');
     expect(guardIdx).toBeGreaterThan(-1);
     expect(fetchIdx).toBeGreaterThan(-1);
     expect(guardIdx).toBeLessThan(fetchIdx);

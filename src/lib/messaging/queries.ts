@@ -1,6 +1,10 @@
-// src/lib/messaging/queries.ts — the conversation read layer (Phase 15;
-// 0014's self-or-staff SELECT policies).
-import { createClient } from '@/lib/supabase/server';
+// src/lib/messaging/queries.ts — the conversation read layer (Phase 15).
+//
+// RLS is inert on the single-owner Neon connection, so every SELECT carries
+// an explicit `org_id` predicate — the boundary 0014's self-or-staff SELECT
+// policies used to express. The patient surface is scoped further by the
+// patient/conversation id its caller already resolved.
+import { getSql } from '@/lib/db/neon';
 import type {
   ConversationMessageRecord,
   ConversationRecord,
@@ -9,16 +13,14 @@ import type {
 } from '@/lib/messaging/status';
 import { unreadForStaff } from '@/lib/messaging/unread';
 
-const CONVERSATION_COLUMNS =
-  'id, org_id, patient_id, status, updated_at, patients(first_name, last_name)';
-
 type ConversationRow = {
   id: string;
   org_id: string;
   patient_id: string;
   status: 'open' | 'closed';
   updated_at: string;
-  patients: { first_name: string; last_name: string } | null;
+  first_name: string | null;
+  last_name: string | null;
 };
 
 function mapConversation(row: ConversationRow): ConversationRecord {
@@ -26,7 +28,10 @@ function mapConversation(row: ConversationRow): ConversationRecord {
     id: row.id,
     orgId: row.org_id,
     patientId: row.patient_id,
-    patientName: row.patients !== null ? `${row.patients.first_name} ${row.patients.last_name}` : 'Patient',
+    patientName:
+      row.first_name !== null && row.last_name !== null
+        ? `${row.first_name} ${row.last_name}`
+        : 'Patient',
     status: row.status,
     updatedAt: row.updated_at,
   };
@@ -56,32 +61,33 @@ function mapMessage(row: MessageRow): ConversationMessageRecord {
 
 /** The org's conversations (staff surface), most recently active first. */
 export async function listConversations(orgId: string): Promise<ConversationRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('conversations')
-    .select(CONVERSATION_COLUMNS)
-    .eq('org_id', orgId)
-    .order('updated_at', { ascending: false })
-    .order('id', { ascending: false });
+  const sql = getSql();
+  const rows = (await sql`
+    select c.id, c.org_id, c.patient_id, c.status, c.updated_at, p.first_name, p.last_name
+    from public.conversations c
+    left join public.patients p on p.id = c.patient_id
+    where c.org_id = ${orgId}
+    order by c.updated_at desc, c.id desc
+  `) as unknown as ConversationRow[];
 
-  if (error) throw new Error(`listConversations failed: ${error.message}`);
-  return ((data ?? []) as ConversationRow[]).map(mapConversation);
+  return rows.map(mapConversation);
 }
 
-/** One conversation, org-scoped; null when RLS hides it. */
+/** One conversation, org-scoped; null when it does not exist in this org. */
 export async function getConversation(
   orgId: string,
   conversationId: string,
 ): Promise<ConversationRecord | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('conversations')
-    .select(CONVERSATION_COLUMNS)
-    .eq('org_id', orgId)
-    .eq('id', conversationId)
-    .maybeSingle();
-  if (error) throw new Error(`getConversation failed: ${error.message}`);
-  return data ? mapConversation(data as ConversationRow) : null;
+  const sql = getSql();
+  const rows = (await sql`
+    select c.id, c.org_id, c.patient_id, c.status, c.updated_at, p.first_name, p.last_name
+    from public.conversations c
+    left join public.patients p on p.id = c.patient_id
+    where c.org_id = ${orgId} and c.id = ${conversationId}
+  `) as unknown as ConversationRow[];
+
+  const row = rows[0] ?? null;
+  return row !== null ? mapConversation(row) : null;
 }
 
 /** The patient's own open conversation, or null (patient surface). */
@@ -89,16 +95,16 @@ export async function getOwnConversation(
   orgId: string,
   patientId: string,
 ): Promise<ConversationRecord | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('conversations')
-    .select(CONVERSATION_COLUMNS)
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId)
-    .eq('status', 'open')
-    .maybeSingle();
-  if (error) throw new Error(`getOwnConversation failed: ${error.message}`);
-  return data ? mapConversation(data as ConversationRow) : null;
+  const sql = getSql();
+  const rows = (await sql`
+    select c.id, c.org_id, c.patient_id, c.status, c.updated_at, p.first_name, p.last_name
+    from public.conversations c
+    left join public.patients p on p.id = c.patient_id
+    where c.org_id = ${orgId} and c.patient_id = ${patientId} and c.status = 'open'
+  `) as unknown as ConversationRow[];
+
+  const row = rows[0] ?? null;
+  return row !== null ? mapConversation(row) : null;
 }
 
 /** A conversation's messages, chronological. */
@@ -106,17 +112,15 @@ export async function listConversationMessages(
   orgId: string,
   conversationId: string,
 ): Promise<ConversationMessageRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('conversation_messages')
-    .select('id, conversation_id, sender_kind, sender_user_id, channel, body, created_at')
-    .eq('org_id', orgId)
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
-    .order('id', { ascending: true });
+  const sql = getSql();
+  const rows = (await sql`
+    select id, conversation_id, sender_kind, sender_user_id, channel, body, created_at
+    from public.conversation_messages
+    where org_id = ${orgId} and conversation_id = ${conversationId}
+    order by created_at asc, id asc
+  `) as unknown as MessageRow[];
 
-  if (error) throw new Error(`listConversationMessages failed: ${error.message}`);
-  return ((data ?? []) as MessageRow[]).map(mapMessage);
+  return rows.map(mapMessage);
 }
 
 /** The unread counts for the staff thread list (derived, never stored). */
@@ -126,20 +130,17 @@ export async function unreadCountsForConversations(
 ): Promise<Map<string, number>> {
   const counts = new Map<string, number>();
   if (conversations.length === 0) return counts;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('conversation_messages')
-    .select('id, conversation_id, sender_kind, created_at')
-    .eq('org_id', orgId)
-    .in(
-      'conversation_id',
-      conversations.map((conversation) => conversation.id),
-    )
-    .order('created_at', { ascending: true });
-  if (error) throw new Error(`unreadCountsForConversations failed: ${error.message}`);
+  const sql = getSql();
+  const rows = (await sql`
+    select id, conversation_id, sender_kind, created_at
+    from public.conversation_messages
+    where org_id = ${orgId}
+      and conversation_id = any(${conversations.map((conversation) => conversation.id)})
+    order by created_at asc
+  `) as unknown as Array<{ conversation_id: string; sender_kind: SenderKind; created_at: string }>;
 
   const grouped = new Map<string, Array<{ senderKind: SenderKind; createdAt: string }>>();
-  for (const row of (data ?? []) as Array<{ conversation_id: string; sender_kind: SenderKind; created_at: string }>) {
+  for (const row of rows) {
     const list = grouped.get(row.conversation_id);
     if (list) list.push({ senderKind: row.sender_kind, createdAt: row.created_at });
     else grouped.set(row.conversation_id, [{ senderKind: row.sender_kind, createdAt: row.created_at }]);

@@ -18,7 +18,14 @@ const inter = Inter({
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body>{children}</body>
+      {/*
+        suppressHydrationWarning on <body> is deliberate and load-bearing:
+        browser extensions (Grammarly injects data-gr-ext-installed /
+        data-new-gr-c-s-check-loaded, zoom extensions inject a body style) mutate
+        <body> BEFORE React hydrates. React only reports that element's attribute
+        diff, and it applies one level deep — child mismatches still surface.
+      */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

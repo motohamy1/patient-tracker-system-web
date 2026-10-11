@@ -3,22 +3,22 @@
 // PrescriptionIntakeControl — the upload entry to the §11 pipeline (Phase 12,
 // ticket 12-03).
 //
-// The browser writes the image straight to the private `patient-documents`
-// bucket under `<org>/<patient>/<uuid>` (the storage policies authorize staff
-// writes and read the org from the path), then the server action validates the
-// path, runs preprocessing, and creates the document + extraction work item.
-// The control then navigates to the intake route where the clinician verifies
-// against the original image.
+// The browser never writes to storage directly and never constructs the object
+// path: `createPrescriptionUploadAction` resolves the caller's org + patient
+// server-side and returns a `<org>/<patient>/<uuid>` path plus a time-boxed
+// put URL; the browser PUTs the bytes to that URL, then the server action
+// validates the path, runs preprocessing, and creates the document +
+// extraction work item. The control then navigates to the intake route where
+// the clinician verifies against the original image.
 //
-// The component never decides anything: the action re-checks the capability
+// The component never decides anything: both actions re-check the capability
 // and the path prefix server-side (§3.1/§12).
 import { useRouter } from 'next/navigation';
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/primitives/Button';
 import { Overlay } from '@/components/overlays/Overlay';
-import { createClient } from '@/lib/supabase/client';
-import { uploadPrescriptionAction } from '@/lib/ocr/actions';
+import { createPrescriptionUploadAction, uploadPrescriptionAction } from '@/lib/ocr/actions';
 
 const FIELD = 'w-full rounded-md px-lg text-body leading-body text-text-primary min-h-11 md:min-h-8';
 
@@ -52,24 +52,35 @@ export function PrescriptionIntakeControl({
     setPending(true);
     setError(null);
 
-    // 1. The object write, to the exact path the storage policies expect.
-    const objectId = crypto.randomUUID();
-    const extension = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '';
-    const storagePath = `${orgId}/${patientId}/${objectId}${extension}`;
-    const supabase = createClient();
-    const { error: uploadError } = await supabase.storage
-      .from('patient-documents')
-      .upload(storagePath, file, { contentType: file.type, upsert: false });
-    if (uploadError) {
+    // 1. The server reserves the object path and mints a time-boxed upload URL.
+    const target = await createPrescriptionUploadAction({
+      patientId,
+      filename: file.name,
+      mimeType: file.type,
+      sizeBytes: file.size,
+    });
+    if (!target.ok) {
       setPending(false);
       setError("That image couldn't be stored. Try again.");
       return;
     }
 
-    // 2. The server-side validation + work item.
+    // 2. The object write, to the exact path the server reserved.
+    const upload = await fetch(target.uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type },
+    });
+    if (!upload.ok) {
+      setPending(false);
+      setError("That image couldn't be stored. Try again.");
+      return;
+    }
+
+    // 3. The server-side validation + work item.
     const result = await uploadPrescriptionAction({
       patientId,
-      storagePath,
+      storagePath: target.storagePath,
       filename: file.name,
       mimeType: file.type,
       sizeBytes: file.size,

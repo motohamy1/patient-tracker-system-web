@@ -5,12 +5,16 @@
 // medications, labs, imaging, allergies), projects them through the PURE
 // generator in generate.ts, and stores the result as unreviewed
 // system-derived insight rows. Review is a separate, attributable decision
-// (provider_doctor + nurse, mirrored by CAN_REVIEW_AI); the guard trigger in
-// 0010 takes reviewer identity from the session, never from this payload.
+// (provider_doctor + nurse, mirrored by CAN_REVIEW_AI); the guard triggers
+// take reviewer identity from the session (`app.user_id`, set by
+// withAppUser), never from this payload. Writes therefore run inside
+// withAppUser so the DB triggers can attribute the actor.
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
+import { withAppUser } from '@/lib/db/client';
+import { getSessionUser } from '@/lib/auth/session';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { CAN_AUTHOR_CLINICAL, CAN_REVIEW_AI, runsCapability, type Capability } from '@/lib/auth/capabilities';
 import { listAllergies } from '@/lib/allergies/queries';
@@ -29,7 +33,9 @@ async function requireStaff(capability: Capability) {
   const resolution = await resolveWorkspaceRole('provider');
   if (resolution.kind !== 'signed-in') return null;
   if (!runsCapability(resolution.role, capability)) return null;
-  return resolution;
+  const user = await getSessionUser();
+  if (!user) return null;
+  return { orgId: resolution.orgId, userId: user.id };
 }
 
 function revalidateAiSurfaces(patientId: string) {
@@ -75,41 +81,56 @@ export async function generateAiInsightsAction(input: unknown): Promise<AiInsigh
     new Date(),
   );
 
-  const supabase = await createClient();
+  const sql = getSql();
 
-  // The patient must exist in this org (RLS-scoped read; no-leak on miss).
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('id', parsed.data.patientId)
-    .eq('org_id', actor.orgId)
-    .maybeSingle();
-  if (patientError) return { ok: false, kind: 'error' };
-  if (!patient) return { ok: false, kind: 'not-found' };
+  // The patient must exist in this org (explicit org scope; no-leak on miss).
+  let patient: { id: string } | null = null;
+  try {
+    const rows = (await sql`
+      select id from public.patients
+      where id = ${parsed.data.patientId} and org_id = ${actor.orgId}
+    `) as unknown as { id: string }[];
+    patient = rows[0] ?? null;
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (patient === null) return { ok: false, kind: 'not-found' };
 
-  // Housekeeping: the definer RPC drops only this patient's pending rows.
-  const { error: supersedeError } = await supabase.rpc('supersede_pending_ai_insights', {
-    p_patient_id: parsed.data.patientId,
-  });
-  if (supersedeError) return { ok: false, kind: 'error' };
+  // Housekeeping + storage run under the actor's session: the definer RPC and
+  // the INSERT trigger both read identity from `app.user_id`.
+  try {
+    await withAppUser(actor.userId, async (tx) => {
+      await tx.query('select public.supersede_pending_ai_insights($1)', [parsed.data.patientId]);
 
-  if (insights.length > 0) {
-    const { error: insertError } = await supabase.from('ai_insights').insert(
-      insights.map((insight) => ({
-        org_id: actor.orgId,
-        patient_id: parsed.data.patientId,
-        kind: insight.kind,
-        title: insight.title,
-        body: insight.body,
-        // jsonb wants mutable shapes; the generator's readonly arrays are
-        // copied so the stored value is plain JSON.
-        evidence: insight.evidence.map((ref) => ({ ...ref })),
-        window: insight.window !== null ? { ...insight.window } : null,
-        // provenance/verification/review_state omitted → 0010's INSERT guard
-        // normalizes them to system-derived / ai-extracted / pending.
-      })),
-    );
-    if (insertError) return { ok: false, kind: 'error' };
+      if (insights.length > 0) {
+        // Content columns only: provenance/verification/review_state are
+        // omitted → the INSERT guard normalizes them to
+        // system-derived / ai-extracted / pending.
+        const columns = ['org_id', 'patient_id', 'kind', 'title', 'body', 'evidence', '"window"'];
+        const values: unknown[] = [];
+        const tuples = insights.map((insight, index) => {
+          const base = index * columns.length;
+          values.push(
+            actor.orgId,
+            parsed.data.patientId,
+            insight.kind,
+            insight.title,
+            insight.body,
+            // jsonb wants a serialized shape; the generator's readonly arrays
+            // are stringified so the stored value is plain JSON.
+            JSON.stringify(insight.evidence),
+            insight.window !== null ? JSON.stringify(insight.window) : null,
+          );
+          return `(${Array.from({ length: columns.length }, (_, offset) => `$${base + offset + 1}`).join(', ')})`;
+        });
+        await tx.query(
+          `insert into public.ai_insights (${columns.join(', ')}) values ${tuples.join(', ')}`,
+          values,
+        );
+      }
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
   }
 
   revalidateAiSurfaces(parsed.data.patientId);
@@ -128,18 +149,22 @@ export async function reviewAiInsightAction(input: unknown): Promise<AiInsightAc
   const actor = await requireStaff(CAN_REVIEW_AI);
   if (!actor) return { ok: false, kind: 'forbidden' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('ai_insights')
-    .update({ review_state: parsed.data.decision })
-    .eq('id', parsed.data.insightId)
-    .eq('org_id', actor.orgId)
-    .select('id, patient_id')
-    .maybeSingle();
+  let updated: { id: string; patient_id: string } | null = null;
+  try {
+    updated = await withAppUser(actor.userId, async (tx) => {
+      const { rows } = await tx.query<{ id: string; patient_id: string }>(
+        `update public.ai_insights set review_state = $1
+         where id = $2 and org_id = $3
+         returning id, patient_id`,
+        [parsed.data.decision, parsed.data.insightId, actor.orgId],
+      );
+      return rows[0] ?? null;
+    });
+  } catch {
+    return { ok: false, kind: 'error' };
+  }
+  if (updated === null) return { ok: false, kind: 'not-found' };
 
-  if (error) return { ok: false, kind: 'error' };
-  if (!data) return { ok: false, kind: 'not-found' };
-
-  revalidateAiSurfaces(data.patient_id);
-  return { ok: true, insightId: data.id, reviewState: parsed.data.decision };
+  revalidateAiSurfaces(updated.patient_id);
+  return { ok: true, insightId: updated.id, reviewState: parsed.data.decision };
 }

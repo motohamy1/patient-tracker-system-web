@@ -1,13 +1,14 @@
 // src/lib/visits/queries.ts — the Phase-7 server-side visit retrieval layer.
 //
-// RLS (migration 0006) enforces org scoping regardless of what this module is
-// handed; the explicit `.eq('org_id', …)` is defense in depth, not the
-// authorization boundary (0005 discipline). Server Component / server action
+// Neon + explicit org scoping: the RLS policies are inert on the single-owner
+// connection (neon/README.md posture note), so the explicit
+// `org_id = ${orgId}` predicate on every read IS the authorization boundary —
+// not defense in depth (0005 discipline). Server Component / server action
 // call sites only — never import from a client file.
 //
 // The projection (07-04) reads the SAME rows the Visits tab shows, so the
 // timeline and the tab can never tell different stories about a visit.
-import { createClient } from '@/lib/supabase/server';
+import { getSql } from '@/lib/db/neon';
 import type { VisitSource, VisitStage } from '@/lib/visits/status';
 
 export type VisitRecord = {
@@ -25,9 +26,6 @@ export type VisitRecord = {
   createdAt: string;
   updatedAt: string;
 };
-
-const SELECT_COLUMNS =
-  'id, patient_id, stage, scheduled_at, visit_type, location, reason, documentation, follow_up, follow_up_at, source, created_at, updated_at';
 
 type VisitRow = {
   id: string;
@@ -63,31 +61,31 @@ function mapRow(row: VisitRow): VisitRecord {
   };
 }
 
-/** The patient's visits, newest first (bound predicates only, ASVS V5). */
+/** The patient's visits, newest first (bound parameters only, ASVS V5). */
 export async function listVisits(orgId: string, patientId: string): Promise<VisitRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('visits')
-    .select(SELECT_COLUMNS)
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId)
-    .order('scheduled_at', { ascending: false })
-    .order('id', { ascending: false });
+  const sql = getSql();
+  const rows = (await sql`
+    select id, patient_id, stage, scheduled_at, visit_type, location, reason, documentation,
+           follow_up, follow_up_at, source, created_at, updated_at
+    from public.visits
+    where org_id = ${orgId} and patient_id = ${patientId}
+    order by scheduled_at desc, id desc
+  `) as unknown as VisitRow[];
 
-  if (error) throw new Error(`listVisits failed: ${error.message}`);
-  return ((data ?? []) as VisitRow[]).map(mapRow);
+  return rows.map(mapRow);
 }
 
-/** One visit, org-scoped; null when RLS hides it (no-leak denial upstream). */
+/** One visit, org-scoped; null when no row is visible (no-leak denial upstream). */
 export async function getVisit(orgId: string, visitId: string): Promise<VisitRecord | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('visits')
-    .select(SELECT_COLUMNS)
-    .eq('org_id', orgId)
-    .eq('id', visitId)
-    .maybeSingle();
+  const sql = getSql();
+  const rows = (await sql`
+    select id, patient_id, stage, scheduled_at, visit_type, location, reason, documentation,
+           follow_up, follow_up_at, source, created_at, updated_at
+    from public.visits
+    where org_id = ${orgId} and id = ${visitId}
+    limit 1
+  `) as unknown as VisitRow[];
 
-  if (error) throw new Error(`getVisit failed: ${error.message}`);
-  return data ? mapRow(data as VisitRow) : null;
+  const row = rows[0];
+  return row ? mapRow(row) : null;
 }

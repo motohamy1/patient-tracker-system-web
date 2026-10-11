@@ -29,11 +29,20 @@ const STATUS_DOT: Record<Exclude<OfflineSyncStatus, 'hidden'>, string> = {
 };
 
 export function OfflineSyncStrip() {
-  const [status, setStatus] = useState<OfflineSyncStatus>(() =>
-    typeof navigator === 'undefined' || navigator.onLine ? 'hidden' : 'offline',
-  );
+  // SSR-SAFE INITIAL STATE. The server must render exactly what the first
+  // client render produces, or React reports a hydration mismatch. The previous
+  // initializer read `typeof navigator === 'undefined' || navigator.onLine` — but
+  // Node >= 21 (Next's server runtime) exposes a global `navigator` whose
+  // `onLine` is `undefined`, so the SERVER evaluated the `undefined` as falsy
+  // and rendered the offline strip while the browser hid it: the strip was the
+  // exact node React diffed. Always start 'hidden' and reconcile connectivity
+  // after hydration, where reading `navigator` can no longer diverge from the
+  // server.
+  const [status, setStatus] = useState<OfflineSyncStatus>('hidden');
 
   useEffect(() => {
+    if (navigator.onLine === false) setStatus('offline');
+
     function handleOffline() {
       setStatus('offline');
     }

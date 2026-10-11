@@ -1,28 +1,28 @@
 // src/lib/patients/queries.ts — the Phase-4 server-side retrieval layer
-// (PROV-02, D-17..D-20, UX-07). The ONLY place user text meets PostgREST.
+// (PROV-02, D-17..D-20, UX-07). The ONLY place user text meets the database.
 //
 // D-18: search is server-side — the client debounces a URL param and never
 // filters rows itself. D-19: search composes WITH the active filter in ONE
 // query (a single indexed `search_text ilike` over the trgm GIN index from
 // migration 0005; never four OR'd column filters — 04-RESEARCH Pattern 2 /
 // Pitfall 1). D-20: cumulative paging — `shown` grows the fetched window
-// (range(0, shown+limit)) so "Load more" appends and never drops rows already
+// (`limit shown+limit+1`) so "Load more" appends and never drops rows already
 // on screen; a limit+1 probe row yields `hasMore`. `total` comes from a single
-// `count: 'exact'` over the same predicate for the "{n} of {total} patients"
+// `count(*) over ()` over the same predicate for the "{n} of {total} patients"
 // count line (04-UI-SPEC §4.3).
 //
-// RLS (migration 0005) enforces org scoping regardless of what this function
-// is handed; the explicit `.eq('org_id', orgId)` is defense in depth, not the
-// authorization boundary. Server Component call sites only — never import from
-// a client file.
-import { createClient } from '@/lib/supabase/server';
+// Neon + explicit org scoping: RLS policies are inert on the single-owner
+// connection (neon/README.md posture note), so the `org_id = ${orgId}`
+// predicate on every query IS the authorization boundary. Server Component
+// call sites only — never import from a client file.
+import { getSql } from '@/lib/db/neon';
 import type { PatientStatus } from '@/lib/patients/status';
 
 /**
- * A PostgREST read that failed on PRIVILEGE, not on connectivity: SQLSTATE
- * 42501 / `permission denied`. Callers branch on this type to render the
- * no-leak denial copy instead of the §7 connection-error copy — message-text
- * sniffing would tie security behaviour to English prose.
+ * A read that failed on PRIVILEGE, not on connectivity: SQLSTATE 42501 /
+ * `permission denied`. Callers branch on this type to render the no-leak
+ * denial copy instead of the §7 connection-error copy — message-text sniffing
+ * would tie security behaviour to English prose.
  */
 export class SupabasePermissionError extends Error {}
 
@@ -32,14 +32,15 @@ export type PatientInviteRow = {
   redeemedAt: string | null;
 };
 
-type PostgrestErrorLike = { message: string; code?: string };
+type QueryErrorLike = { message?: string; code?: string };
 
-/** Wrap a PostgREST failure with its surface name, preserving privilege failures. */
-function asQueryError(surface: string, error: PostgrestErrorLike): Error {
-  const message = `${surface} failed: ${error.message}`;
-  return error.code === '42501' || error.message.includes('permission denied')
-    ? new SupabasePermissionError(message)
-    : new Error(message);
+/** Wrap a query failure with its surface name, preserving privilege failures. */
+function asQueryError(surface: string, error: unknown): Error {
+  const message = (error as QueryErrorLike)?.message ?? String(error);
+  const code = (error as QueryErrorLike)?.code;
+  return code === '42501' || message.includes('permission denied')
+    ? new SupabasePermissionError(`${surface} failed: ${message}`)
+    : new Error(`${surface} failed: ${message}`);
 }
 
 export type PatientFolderRow = {
@@ -69,9 +70,6 @@ export type ListPatientsQuery = {
 export function escapeLike(input: string): string {
   return input.replace(/[\\%_]/g, (m) => `\\${m}`);
 }
-
-const SELECT_COLUMNS =
-  'id, first_name, last_name, dob, sex, mrn, status, user_id, last_activity_at';
 
 function ageFrom(dob: string): number {
   const born = new Date(dob);
@@ -114,8 +112,6 @@ export type PatientRecord = PatientFolderRow & {
   updatedAt: string;
 };
 
-const RECORD_COLUMNS = `${SELECT_COLUMNS}, created_at, updated_at`;
-
 type PatientRecordRow = PatientRowRecord & {
   created_at: string;
   updated_at: string;
@@ -124,28 +120,33 @@ type PatientRecordRow = PatientRowRecord & {
 /**
  * One patient for the workspace Overview (WSP-02, Phase-5 T-01).
  *
- * The id arrives pre-validated as a UUID (patientIdSchema) and is bound as a
- * PostgREST equality predicate — never interpolated into a string, a path or
- * an interpreter (ASVS V5, T-02-52). The explicit `.eq('org_id', orgId)` is
- * defense in depth on top of migration 0005's RLS: a member of another
- * organization gets `null`, and the caller renders the no-leak denial state
- * rather than asking the database twice (AUTH-03).
+ * The id arrives pre-validated as a UUID (patientIdSchema) and is bound as an
+ * equality parameter — never interpolated into a string, a path or an
+ * interpreter (ASVS V5, T-02-52). The explicit `org_id = ${orgId}` predicate is
+ * the org-scoping enforcement on the single-owner Neon connection: a member of
+ * another organization gets `null`, and the caller renders the no-leak denial
+ * state rather than asking the database twice (AUTH-03).
  *
  * Server Component call sites only — never import from a client file.
  */
 export async function getPatient(orgId: string, patientId: string): Promise<PatientRecord | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('patients')
-    .select(RECORD_COLUMNS)
-    .eq('org_id', orgId)
-    .eq('id', patientId)
-    .maybeSingle();
+  const sql = getSql();
+  let rows: PatientRecordRow[];
+  try {
+    rows = (await sql`
+      select id, first_name, last_name, dob, sex, mrn, status, user_id, last_activity_at,
+             created_at, updated_at
+      from public.patients
+      where org_id = ${orgId} and id = ${patientId}
+      limit 1
+    `) as unknown as PatientRecordRow[];
+  } catch (error) {
+    throw asQueryError('getPatient', error);
+  }
 
-  if (error) throw asQueryError('getPatient', error);
-  if (!data) return null;
+  const row = rows[0];
+  if (!row) return null;
 
-  const row = data as PatientRecordRow;
   return {
     ...mapRow(row),
     createdAt: row.created_at,
@@ -155,79 +156,85 @@ export async function getPatient(orgId: string, patientId: string): Promise<Pati
 
 /**
  * This patient's invitations, newest first (Phase-5 T-03, WSP-02 "invite
- * sent"). Readable only by invite-managing roles under 0002's RLS policy —
- * any other role reads an empty list, never an error, and the composer simply
- * shows fewer events. Org scope is pinned explicitly, defense in depth over
- * RLS. Bound predicates only (ASVS V5, T-02-52).
+ * sent"). The 0002 policy's role-based narrowing is inert on the single-owner
+ * Neon connection, so the org scope is an explicit predicate: a caller outside
+ * the org gets an empty list, never an error, and the composer simply shows
+ * fewer events. Bound parameters only (ASVS V5, T-02-52).
  */
 export async function listPatientInvitations(
   orgId: string,
   patientId: string,
 ): Promise<PatientInviteRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('invitations')
-    .select('id, created_at, redeemed_at')
-    .eq('org_id', orgId)
-    .eq('patient_id', patientId)
-    .order('created_at', { ascending: false })
-    .limit(5);
+  const sql = getSql();
+  let rows: Array<{ id: string; created_at: string; redeemed_at: string | null }>;
+  try {
+    rows = (await sql`
+      select id, created_at, redeemed_at
+      from public.invitations
+      where org_id = ${orgId} and patient_id = ${patientId}
+      order by created_at desc
+      limit 5
+    `) as unknown as Array<{ id: string; created_at: string; redeemed_at: string | null }>;
+  } catch (error) {
+    throw asQueryError('listPatientInvitations', error);
+  }
 
-  if (error) throw asQueryError('listPatientInvitations', error);
-
-  return ((data ?? []) as Array<{ id: string; created_at: string; redeemed_at: string | null }>).map(
-    (row) => ({
-      id: row.id,
-      createdAt: row.created_at,
-      redeemedAt: row.redeemed_at,
-    }),
-  );
+  return rows.map((row) => ({
+    id: row.id,
+    createdAt: row.created_at,
+    redeemedAt: row.redeemed_at,
+  }));
 }
 
 export async function listPatients(
   query: ListPatientsQuery,
 ): Promise<{ rows: PatientFolderRow[]; hasMore: boolean; total: number }> {
   const { orgId, q, filter = 'all', day, shown = 0, limit = 24 } = query;
-  const supabase = await createClient();
+  const sql = getSql();
   const windowRows = shown + limit; // cumulative: rows 0..windowRows inclusive
 
-  let builder = supabase
-    .from('patients')
-    .select(SELECT_COLUMNS, { count: 'exact' })
-    .eq('org_id', orgId);
-
+  // A null pattern disables the search half of the predicate; the OR-guard
+  // below keeps ONE query text for every filter/search combination (D-19).
   const trimmed = q?.trim() ?? '';
-  if (trimmed !== '') {
-    builder = builder.ilike('search_text', `%${escapeLike(trimmed.toLowerCase())}%`);
-  }
+  const pattern = trimmed === '' ? null : `%${escapeLike(trimmed.toLowerCase())}%`;
 
-  if (filter === 'attention') {
-    builder = builder.in('status', ['follow_up', 'needs_review']);
-  } else if (filter === 'critical') {
-    builder = builder.eq('status', 'critical');
-  } else if (filter === 'today') {
+  const attention = filter === 'attention';
+  const critical = filter === 'critical';
+
+  let dayStart: string | null = null;
+  let dayEnd: string | null = null;
+  if (filter === 'today') {
     // D-14: created OR updated within the client's LOCAL calendar day. `day`
-    // is regex-validated (schemas.ts) before it can reach this .or() string.
-    const dayStart = new Date(`${day ?? new Date().toISOString().slice(0, 10)}T00:00:00`);
-    const dayEnd = new Date(dayStart.getTime() + 86_400_000);
-    const start = dayStart.toISOString();
-    const end = dayEnd.toISOString();
-    builder = builder.or(
-      `and(created_at.gte.${start},created_at.lt.${end}),and(updated_at.gte.${start},updated_at.lt.${end})`,
-    );
+    // is regex-validated (schemas.ts) before it can reach this predicate.
+    const start = new Date(`${day ?? new Date().toISOString().slice(0, 10)}T00:00:00`);
+    dayStart = start.toISOString();
+    dayEnd = new Date(start.getTime() + 86_400_000).toISOString();
   }
 
-  const { data, error, count } = await builder
-    .order('last_activity_at', { ascending: false })
-    .order('id', { ascending: false }) // stable tiebreak (Pitfall 3)
-    .range(0, windowRows); // inclusive → windowRows + 1 probe row
+  let rows: Array<PatientRowRecord & { total: number }>;
+  try {
+    rows = (await sql`
+      select id, first_name, last_name, dob, sex, mrn, status, user_id, last_activity_at,
+             (count(*) over ())::int as total
+      from public.patients
+      where org_id = ${orgId}
+        and (${pattern}::text is null or search_text ilike ${pattern})
+        and (${attention}::boolean is not true or status in ('follow_up', 'needs_review'))
+        and (${critical}::boolean is not true or status = 'critical')
+        and (${dayStart}::timestamptz is null
+             or ((created_at >= ${dayStart} and created_at < ${dayEnd})
+                 or (updated_at >= ${dayStart} and updated_at < ${dayEnd})))
+      order by last_activity_at desc, id desc
+      limit ${windowRows + 1}
+    `) as unknown as Array<PatientRowRecord & { total: number }>;
+  } catch (error) {
+    throw new Error(`listPatients failed: ${(error as QueryErrorLike)?.message ?? String(error)}`);
+  }
 
-  if (error) throw new Error(`listPatients failed: ${error.message}`);
-
-  const mapped = ((data ?? []) as PatientRowRecord[]).map(mapRow);
+  const mapped = rows.map(mapRow);
   return {
     rows: mapped.slice(0, windowRows),
     hasMore: mapped.length > windowRows,
-    total: count ?? mapped.length,
+    total: Number(rows[0]?.total ?? 0),
   };
 }

@@ -1,11 +1,12 @@
 // tests/unit/auth-workspace.test.ts — the resolution chain proof (AUTH-01/03, D-12).
 //
-// Supabase is mocked at the module boundary (never a network call): the mocked
-// `createClient` serves scripted `getClaims` results and scripted membership
-// rows, the same module-boundary mocking the component tests apply to
-// motion/react. `server-only` and `next/navigation` are mocked too — the
-// vitest `node` project has no react-server condition, and redirect() must be
-// recorded rather than thrown here.
+// The new data layer is mocked at the module boundary (never a network call):
+// the mocked session seam (`@/lib/auth/session`) serves the verified user and
+// the mocked `getSql()` serves scripted membership rows — the same
+// module-boundary mocking the component tests apply to motion/react.
+// `server-only` and `next/navigation` are mocked too — the vitest `node`
+// project has no react-server condition, and redirect() must be recorded
+// rather than thrown here.
 //
 // Asserted: every WorkspaceResolution branch; the D-10/D-12 pick between
 // multi-organization memberships; the fail-closed unknown-role row; every
@@ -14,30 +15,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const harness = vi.hoisted(() => ({
-  claims: undefined as { claims: { sub: string } } | null | undefined,
-  claimsError: null as { message: string } | null,
-  memberships: undefined as Array<{ org_id: string; role: string }> | undefined,
-  membershipsError: null as { message: string } | null,
+  user: undefined as { id: string; email: string } | null | undefined,
+  memberships: undefined as Array<{ org_id: string; role: string; created_at: string }> | undefined,
+  sql: vi.fn(),
   redirect: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
 vi.mock('next/navigation', () => ({ redirect: harness.redirect }));
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: async () => ({
-    auth: {
-      getClaims: async () => ({ data: harness.claims, error: harness.claimsError }),
-    },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          order: async () => ({ data: harness.memberships, error: harness.membershipsError }),
-        }),
-      }),
-    }),
-  }),
-}));
+// The session seam: session.ts maps "no session" and "verification failed" to
+// the same null (it never throws), so the mock only ever yields a user or null.
+vi.mock('@/lib/auth/session', () => ({ getSessionUser: async () => harness.user }));
+vi.mock('@/lib/db/neon', () => ({ getSql: () => harness.sql }));
 
+// Dynamic import is required: vi.mock() is hoisted above static imports, but
+// the mocked factories must be registered before these modules evaluate.
 const { resolveWorkspaceRole } = await import('@/lib/auth/workspace');
 const {
   CREATE_ORG_PATH,
@@ -47,29 +39,23 @@ const {
   redirectForRole,
 } = await import('@/lib/auth/redirect');
 
-const claimed = { claims: { sub: '11111111-1111-1111-1111-111111111111' } };
+const signedInUser = { id: '11111111-1111-1111-1111-111111111111', email: 'doc@example.com' };
 
 beforeEach(() => {
-  harness.claims = claimed;
-  harness.claimsError = null;
+  harness.user = signedInUser;
   harness.memberships = [];
-  harness.membershipsError = null;
+  harness.sql.mockReset().mockImplementation(async () => harness.memberships);
   harness.redirect.mockClear();
 });
 
 function memberships(rows: Array<{ org_id: string; role: string }>): void {
-  harness.memberships = rows;
+  harness.memberships = rows.map((row) => ({ ...row, created_at: '2026-10-07T00:00:00Z' }));
 }
 
 describe('resolveWorkspaceRole — the discriminated result space', () => {
-  it('returns unauthenticated when no verifiable claims exist', async () => {
-    harness.claims = null;
+  it('returns unauthenticated when no verifiable session exists', async () => {
+    harness.user = null;
     expect(await resolveWorkspaceRole('provider')).toEqual({ kind: 'unauthenticated' });
-  });
-
-  it('returns unauthenticated on a claims-verification error (fail closed)', async () => {
-    harness.claimsError = { message: 'bad signature' };
-    expect(await resolveWorkspaceRole('patient')).toEqual({ kind: 'unauthenticated' });
   });
 
   it('returns unaffiliated with zero membership rows', async () => {
@@ -82,6 +68,11 @@ describe('resolveWorkspaceRole — the discriminated result space', () => {
     expect(await resolveWorkspaceRole('provider')).toEqual({ kind: 'unaffiliated' });
   });
 
+  it('fails CLOSED when the membership read itself errors', async () => {
+    harness.sql.mockRejectedValueOnce(new Error('connection refused'));
+    expect(await resolveWorkspaceRole('provider')).toEqual({ kind: 'unaffiliated' });
+  });
+
   it('resolves the role + orgId of the group-matching membership', async () => {
     memberships([{ org_id: 'org-a', role: 'provider_doctor' }]);
     expect(await resolveWorkspaceRole('provider')).toEqual({
@@ -89,6 +80,17 @@ describe('resolveWorkspaceRole — the discriminated result space', () => {
       role: 'provider_doctor',
       orgId: 'org-a',
     });
+  });
+
+  it('scopes the membership read to the session user, ordered earliest-first', async () => {
+    memberships([{ org_id: 'org-a', role: 'provider_doctor' }]);
+    await resolveWorkspaceRole('provider');
+    const [strings, ...values] = harness.sql.mock.calls[0];
+    const text = strings.join('?');
+    expect(text).toContain('from public.memberships');
+    expect(text).toContain('user_id');
+    expect(text).toContain('order by created_at asc');
+    expect(values).toContain(signedInUser.id);
   });
 
   it('picks the group-matching membership deterministically across organizations', async () => {
