@@ -66,12 +66,12 @@ import {
 const DEFAULT_WIDTH = 1024;
 /** Edge inset so the first and last node never touch the band's rim. */
 const EDGE_PADDING = 24;
-/** Node diameter follows the reference (QA row 8: node diameter ±10%). */
-const NODE_RADIUS = 4;
+/** Node radius follows the cardiology reference: a filled accent disc that can hold its glyph (QA row 8's diameter law is re-measured against this reference at the owner's gate). */
+const NODE_RADIUS = 13;
 /** Divider half-length around the axis (reference hairline lattice). */
 const DIVIDER_HALF_LENGTH = 24;
-/** Cluster badge radius (the reference's small accent count badge). */
-const BADGE_RADIUS = 7;
+/** Cluster badge radius (the reference's dark count disc). */
+const BADGE_RADIUS = 13;
 /** Detail card width — also its positioning clamp (w-64 = 16rem = 256px). */
 const CARD_WIDTH = 256;
 
@@ -526,20 +526,34 @@ export function ClinicalTimeline({
                   }
                 }}
               >
-                {/* 44px invisible hit area (UX-05/§26) — the mark stays small.
+                {/* 44px invisible hit area (UX-05/§26) — the mark stays round.
                     A rect keeps the drawn-node geometry exact. */}
                 <rect x={-22} y={AXIS_Y - 22} width={44} height={44} className="fill-transparent" />
-                {/* Inactive node: light with a stroked rim (reference §5).
-                    The selected node reads active through the accent fill —
-                    inside the one sanctioned accent list (INV-05). */}
+                {/* The cardiology node: ONE filled accent disc with the
+                    event's document mark set inside it, selected reads as an
+                    ink rim (the one sanctioned accent list, INV-05). The
+                    glyph is hand-drawn, round-capped, and it anchors to the
+                    exact node centre — never a borrowed icon-pack shape. */}
                 <circle
                   cy={AXIS_Y}
-                  r={isSelected ? BADGE_RADIUS : NODE_RADIUS}
-                  className={
-                    isSelected ? 'fill-accent stroke-text-primary' : 'fill-surface stroke-text-primary'
-                  }
-                  strokeWidth={1}
+                  r={isSelected ? NODE_RADIUS + 2 : NODE_RADIUS}
+                  className="fill-accent stroke-text-primary"
+                  strokeWidth={isSelected ? 1.5 : 0}
                 />
+                <g className="stroke-text-primary">
+                  <rect
+                    x={-4.5}
+                    y={AXIS_Y - 6.5}
+                    width={9}
+                    height={13}
+                    rx={3}
+                    className="fill-none"
+                    strokeWidth={1.4}
+                    strokeLinejoin="round"
+                  />
+                  <line x1={-2} x2={2} y1={AXIS_Y - 2} y2={AXIS_Y - 2} strokeWidth={1.4} strokeLinecap="round" />
+                  <line x1={-2} x2={2} y1={AXIS_Y + 1.5} y2={AXIS_Y + 1.5} strokeWidth={1.4} strokeLinecap="round" />
+                </g>
               </g>
             );
           })}
@@ -607,19 +621,23 @@ export function ClinicalTimeline({
         />
       ) : null}
 
-      {/* The bottom scrubber shares this exact transform (TL-06). */}
+      {/* The bottom scrubber shares this exact transform (TL-06) and the
+          same real events for its density dots. */}
       <TimelineScrubber
         scale={geometry.scale}
         bandWidth={Math.max(width, 1)}
         pad={EDGE_PADDING}
         transform={transform}
         onTransform={applyTransform}
+        events={filteredEvents}
       />
     </div>
   );
 }
 
-/** The category filter — real pill controls, active one emphasized by fill. */
+/** The category filter — real pill controls, active one emphasized by fill.
+    Each option carries its own drawn glyph the same way the dark band's tab
+    pills do; there is no icon pack row here, one glyph per living category. */
 function FilterChips({
   category,
   categories,
@@ -645,8 +663,10 @@ function FilterChips({
             aria-pressed={active}
             onClick={() => onSelect(option.value)}
             className={[
-              'inline-flex min-h-11 items-center justify-center rounded-pill px-md text-label leading-label text-text-primary md:min-h-8',
-              active ? 'bg-surface-raised shadow-raised' : 'bg-transparent',
+              'inline-flex min-h-11 items-center justify-center gap-xs rounded-pill px-md text-label leading-label md:min-h-8',
+              active
+                ? 'bg-surface-raised shadow-raised text-text-primary'
+                : 'bg-surface-muted text-text-secondary',
             ].join(' ')}
           >
             {option.label}

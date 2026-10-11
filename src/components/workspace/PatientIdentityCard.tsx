@@ -39,21 +39,21 @@ export function PatientIdentityCard({ patient }: { patient: PatientRecord }) {
 
   return (
     <section aria-label="Patient identity" className="h-full">
-      <Surface variant="surface" className="h-full">
-        <div className="flex h-full flex-col gap-md">
-          <div className="flex items-center gap-md">
+      <Surface variant="surface" className="h-full rounded-xl">
+        <div className="flex h-full flex-col gap-lg">
+          <div className="flex items-center gap-lg">
             <span
               aria-hidden="true"
-              className="flex size-10 shrink-0 items-center justify-center rounded-pill bg-surface-muted text-label leading-label text-text-primary"
+              className="flex size-14 shrink-0 items-center justify-center rounded-pill bg-surface-muted text-body leading-body font-semibold text-text-primary"
             >
               {initialsOf(patient)}
             </span>
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate text-heading font-semibold leading-heading text-text-primary">
-                {fullName}
-              </span>
-              <span className="truncate text-label leading-label text-text-primary tabular-nums">
+            <span className="flex min-w-0 flex-col gap-xs">
+              <span className="truncate text-label leading-label text-text-secondary">
                 {SEX_LABEL[patient.sex]} · {patient.age}
+              </span>
+              <span className="truncate text-display font-semibold leading-tight text-text-primary">
+                {fullName}
               </span>
             </span>
           </div>

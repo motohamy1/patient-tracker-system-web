@@ -55,11 +55,8 @@ export type TabBarProps = {
   allowIcons?: boolean;
 };
 
-const CONTAINER_CLASSES = [
-  'flex items-center gap-xs overflow-x-auto [scrollbar-width:none]',
-  INSET_FILL,
-  'rounded-pill p-xs',
-].join(' ');
+const CONTAINER_LAYOUT =
+  'flex items-center gap-xs overflow-x-auto [scrollbar-width:none] rounded-pill p-xs';
 
 const ITEM_BASE =
   'inline-flex min-h-11 items-center justify-center gap-xs rounded-pill px-md py-sm text-label leading-label text-text-primary';
@@ -73,11 +70,22 @@ export function TabBar({
   allowIcons = true,
 }: TabBarProps) {
   const isNavigation = items.some((item) => Boolean(item.href));
-  const containerClasses = [CONTAINER_CLASSES, className].filter(Boolean).join(' ');
+  // A caller-owned container fill (the dark band instance passes one) REPLACES
+  // the recessed track instead of colliding with it — two bg utilities never
+  // fight over stylesheet order (Surface override law).
+  const callerOwnsFill = /(?:^|\s)bg-/.test(className ?? '');
+  const containerClasses = [callerOwnsFill ? '' : INSET_FILL, CONTAINER_LAYOUT, className]
+    .filter(Boolean)
+    .join(' ');
 
   const groupChildren = items.map((item) => {
     const isActive = item.value === value;
-    const activeFill = isActive ? 'bg-surface-raised' : 'bg-transparent';
+    // Both states carry visible pills: active = the raised white fill plus
+    // shadow, inactive = the plain surface fill (the reference's pills float
+    // as light chips, e.g. on the dark band — a transparent inactive item
+    // would vanish there). In the track form both sit inside the recessed
+    // INSET_FILL track, unchanged.
+    const activeFill = isActive ? 'bg-surface-raised' : 'bg-surface';
     const activeShadow = isActive ? 'shadow-raised' : '';
     const itemClasses = [ITEM_BASE, activeFill, activeShadow].filter(Boolean).join(' ');
     const content = (

@@ -71,11 +71,21 @@ export function Surface({
   // and the winner would be stylesheet order rather than intent. The one
   // sanctioned case is the Critical Alerts salmon panel (`bg-critical`).
   const callerOwnsFill = /(?:^|\s)bg-/.test(className ?? '');
+  // Same override law for the radius: a caller-provided `rounded-*` utility
+  // (the workspace's larger reference radii) replaces the variant's radius
+  // step instead of colliding with it by stylesheet order.
+  const callerOwnsRadius = /(?:^|\s)rounded-/.test(className ?? '');
   // A field is not a card: `canvas` never takes padding, whatever the size.
   const padding = variant === 'canvas' ? '' : size ? SURFACE_SIZE_PADDING[size] : spec.padding;
   // The caller's className is merged last so layout utilities can be added
   // without editing the primitive, and never replaces the variant classes.
-  const classes = [callerOwnsFill ? '' : spec.fill, spec.radius, padding, spec.shadow, className]
+  const classes = [
+    callerOwnsFill ? '' : spec.fill,
+    callerOwnsRadius ? '' : spec.radius,
+    padding,
+    spec.shadow,
+    className,
+  ]
     .filter(Boolean)
     .join(' ');
 

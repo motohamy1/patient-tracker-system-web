@@ -1,12 +1,9 @@
-// ContextStatRow — the Overview's compact context row beside the identity
-// area (WSP-02 "what matters now / what needs follow-up"; PRODUCT-MASTER-SPEC
-// §7 "concise current clinical context" + "contextual status/attention
-// indicators"; reference §5 upper rows: stat cards with large tabular
-// numerals at near-parity tone, separated by `shadow.raised`).
+// ContextStatRow — the Overview's open-air metric strip beside the identity
+// card (WSP-02 "precise current clinical context" + "contextual status/
+// attention indicators"; reference §5 upper rows: stat columns with large
+// tabular numerals ON the field — no card boxes, thin rounded dividers).
 //
-// Three context cards + the vitals snapshot region, each anchored
-// top-and-bottom so the row fills the identity card's height without air
-// sinking to the bottom:
+// Four honest columns:
 //   1. Current status — the attention indicator, drawn from the stored
 //      five-value vocabulary through PATIENT_STATUS_TOKEN (D-10) and nothing
 //      else: no new severity model, no accent paint (INV-04, INV-05).
@@ -14,22 +11,22 @@
 //      exact date beneath.
 //   3. Record opened — whole months since the patient was created, with the
 //      exact date beneath.
-//   4. Vital signs — the reference's vitals snapshot region, rendered as a
-//      deliberate §24 state that names what will appear: no placeholder
-//      number, sparkline or bar (§27, Phase-4 D-18; ticket 04).
+//   4. Vital signs — the reference's vitals column, rendered as a deliberate
+//      §24 state that names what will appear: no placeholder number,
+//      sparkline or bar (§27, Phase-4 D-18).
 //
-// Every statistical value carries `tabular-nums`; type uses only `font.size`
-// steps and the weights 400/600 (QA row 7). No card holds one line of content
-// (INV-12), no gamified vocabulary appears (INV-06), and the only colors are
-// semantic tokens (INV-01).
+// Every statistical value carries `tabular-nums` (QA row 7); type uses only
+// `font.size` steps and the weights 400/600 (QA row 7). No card holds one
+// line of content (INV-12), no gamified vocabulary appears (INV-06), and the
+// only colors are semantic tokens (INV-01). The dividers are the reference's
+// thin separators, drawn as rounded-pill ticks so no unrounded rule ships
+// (INV-11's shape law) and never as a border on a box.
 //
 // Server Component: no hook, no client directive. Dates are computed against
 // the render clock; the exact dates beneath each numeral keep the values
 // honest when the rounded count is 0.
 import type { ReactNode } from 'react';
 import { Pill } from '@/components/primitives/Pill';
-import { Surface } from '@/components/primitives';
-import { STAT_ROW_GRID } from '@/components/workspace/grids';
 import type { PatientRecord } from '@/lib/patients/queries';
 import { PATIENT_STATUS_LABELS, PATIENT_STATUS_TOKEN } from '@/lib/patients/status';
 
@@ -47,7 +44,7 @@ function wholeMonthsSince(iso: string, now: number): number {
   return Math.max(0, months);
 }
 
-function StatCard({
+function Metric({
   label,
   value,
   unit,
@@ -62,29 +59,26 @@ function StatCard({
   children?: ReactNode;
 }) {
   return (
-    <section aria-label={label} className="h-full">
-      <Surface variant="surface" className="h-full">
-        <div className="flex h-full flex-col justify-between gap-md">
-          <span className="text-label leading-label text-text-secondary">{label}</span>
-          {children ? (
-            <span className="flex items-center">{children}</span>
-          ) : (
-            <span className="flex items-baseline gap-xs">
-              <span className="text-display font-semibold leading-tight text-text-primary tabular-nums">
-                {value}
-              </span>
-              {unit ? (
-                <span className="text-body leading-body text-text-primary">{unit}</span>
-              ) : null}
-            </span>
-          )}
-          <span className="text-label leading-label text-text-secondary tabular-nums">
-            {supporting}
+    <div className="flex min-w-0 flex-col gap-sm self-center">
+      <span className="text-label leading-label text-text-secondary">{label}</span>
+      {children ? (
+        children
+      ) : (
+        <span className="flex items-baseline gap-xs">
+          <span className="text-display font-semibold leading-tight text-text-primary tabular-nums">
+            {value}
           </span>
-        </div>
-      </Surface>
-    </section>
+          {unit ? <span className="text-body leading-body text-text-primary">{unit}</span> : null}
+        </span>
+      )}
+      <span className="text-label leading-label text-text-secondary tabular-nums">{supporting}</span>
+    </div>
   );
+}
+
+/** The reference's thin separator — a rounded tick, never an unrounded rule. */
+function Divider() {
+  return <span aria-hidden="true" className="hidden h-10 w-px rounded-pill bg-border-subtle lg:block" />;
 }
 
 export function ContextStatRow({ patient }: { patient: PatientRecord }) {
@@ -95,30 +89,30 @@ export function ContextStatRow({ patient }: { patient: PatientRecord }) {
   const monthsSinceOpened = wholeMonthsSince(patient.createdAt, now);
 
   return (
-    <div className={STAT_ROW_GRID} aria-label="Current context">
-      <StatCard
-        label="Current status"
-        supporting={`Updated ${patient.updatedAt.slice(0, 10)}`}
-      >
+    <div className="flex items-center gap-lg" aria-label="Current context">
+      <Metric label="Current status" supporting={`Updated ${patient.updatedAt.slice(0, 10)}`}>
         <Pill tone={tone} label={statusLabel} />
-      </StatCard>
-      <StatCard
+      </Metric>
+      <Divider />
+      <Metric
         label="Last activity"
         value={daysSinceActivity}
         unit={daysSinceActivity === 1 ? 'day' : 'days'}
         supporting={patient.lastActivityAt.slice(0, 10)}
       />
-      <StatCard
+      <Divider />
+      <Metric
         label="Record opened"
         value={monthsSinceOpened}
         unit={monthsSinceOpened === 1 ? 'month' : 'months'}
         supporting={patient.createdAt.slice(0, 10)}
       />
-      <StatCard label="Vital signs" supporting="Recorded during visits.">
+      <Divider />
+      <Metric label="Vital signs" supporting="Recorded during visits.">
         <span className="text-body font-semibold leading-body text-text-primary">
           No readings yet
         </span>
-      </StatCard>
+      </Metric>
     </div>
   );
 }

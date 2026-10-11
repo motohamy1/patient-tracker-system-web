@@ -171,7 +171,8 @@ None yet.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 261011-a7f | Frame wrap + top-bar gutter fix: html gutter paints `frame`, provider/patient shells float chrome on one continuous frame field with a rounded inset canvas field (patient-tracking-dashboard grammar, D-01 light frame) | 2026-10-11 | uncommitted (owner standing instruction) | [261011-a7f-frame-wrap-topbar-gutter](./quick/261011-a7f-frame-wrap-topbar-gutter/) |
+| 261011-a7f | Frame wrap + top-bar gutter fix: html gutter paints `frame`, provider/patient shells float chrome on one continuous frame field with a rounded inset canvas field (patient-tracking-dashboard grammar, D-01 light frame) | 2026-10-11 | 175380c | [261011-a7f-frame-wrap-topbar-gutter](./quick/261011-a7f-frame-wrap-topbar-gutter/) |
+| 261011-b1e | Patient workspace = the cardiology reference: dark top band (close circle, patient name + status Pill title, pill tabs), open-air metric strip, card-less timeline on the light field, accent node discs + scrubber density dots | 2026-10-11 | uncommitted | [261011-b1e-patient-workspace-dark-band](./quick/261011-b1e-patient-workspace-dark-band/) |
 
 ## Deferred Items
 

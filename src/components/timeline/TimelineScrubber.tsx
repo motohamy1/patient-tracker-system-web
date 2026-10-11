@@ -90,6 +90,7 @@ export function TimelineScrubber({
   pad,
   transform,
   onTransform,
+  events = [],
 }: {
   scale: TimelineScale;
   /** The band's width — the coordinate space the transform lives in. */
@@ -97,6 +98,8 @@ export function TimelineScrubber({
   pad: number;
   transform: TimelineTransform;
   onTransform: (next: TimelineTransform) => void;
+  /** The REAL events for the density dots (the reference's scrubber marks). */
+  events?: readonly { at: string }[];
 }) {
   const holderRef = useRef<HTMLDivElement>(null);
   const trackWidth = useElementWidth(holderRef, 1024);
@@ -214,6 +217,22 @@ export function TimelineScrubber({
             className="fill-text-primary"
             opacity={0.85}
           />
+
+          {/* Density dots: every real event lands as one small accent dot on
+              the track, drawn ABOVE the scrim — the reference's scrubber
+              marks sit on the dark window the same way. The accent clears
+              both surfaces it can land on (INV-04). Decoration only. */}
+          <g aria-hidden="true">
+            {events.map((event) => (
+              <circle
+                key={`${event.at}-${event.at.includes('.') ? event.at.slice(11, 23) : ''}`}
+                cx={trackScale(new Date(event.at))}
+                cy={SCRUBBER_HEIGHT / 2}
+                r={2.5}
+                className="fill-accent"
+              />
+            ))}
+          </g>
         </svg>
       </div>
     </div>

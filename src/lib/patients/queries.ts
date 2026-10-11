@@ -154,6 +154,60 @@ export async function getPatient(orgId: string, patientId: string): Promise<Pati
   };
 }
 
+/** The narrow header row the workspace top bar needs (identity + status). */
+export type PatientHeaderRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  sex: string;
+  status: PatientStatus;
+};
+
+/**
+ * The patient record's banner identity: name, sex and status only — the one
+ * extra read the workspace top bar takes so the dark band can carry the
+ * patient instead of a placeholder. Same org-scoping discipline as
+ * `getPatient`: the id is bound as an equality parameter, a cross-org visitor
+ * gets `null` and the bar falls back to its generic title, and the query
+ * never interpolates the value into anything (ASVS V5, T-02-52).
+ *
+ * Server Component call sites only — never import from a client file.
+ */
+export async function getPatientHeader(
+  orgId: string,
+  patientId: string,
+): Promise<PatientHeaderRow | null> {
+  const sql = getSql();
+  let rows: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    sex: string;
+    status: PatientStatus;
+  }[];
+  try {
+    rows = (await sql`
+      select id, first_name, last_name, sex, status
+      from public.patients
+      where org_id = ${orgId} and id = ${patientId}
+      limit 1
+    `) as unknown as typeof rows;
+  } catch (error) {
+    throw asQueryError('getPatientHeader', error);
+  }
+
+  const row = rows[0];
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    sex: row.sex,
+    status: row.status,
+  };
+}
+
 /**
  * This patient's invitations, newest first (Phase-5 T-03, WSP-02 "invite
  * sent"). The 0002 policy's role-based narrowing is inert on the single-owner

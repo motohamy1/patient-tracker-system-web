@@ -64,7 +64,7 @@ export function EventDetailCard({
       role="dialog"
       aria-label={`Event detail: ${event.label}`}
       style={style}
-      className="absolute z-10 flex w-64 flex-col gap-sm rounded-lg bg-surface-raised p-lg shadow-overlay"
+      className="absolute z-10 flex w-64 flex-col gap-sm rounded-xl bg-surface-raised p-lg shadow-overlay"
     >
       <div className="flex items-start justify-between gap-md">
         <span className="text-heading font-semibold leading-heading text-text-primary">

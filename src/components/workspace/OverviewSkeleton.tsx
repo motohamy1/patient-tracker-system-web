@@ -10,12 +10,9 @@
 // CSS. No border, no third shadow, no status tint: a skeleton states nothing
 // about a patient.
 import { LoadingSkeleton } from '@/components/state/LoadingSkeleton';
-import { BOTTOM_ROW_GRID, STAT_ROW_GRID, UPPER_GRID } from '@/components/workspace/grids';
+import { BOTTOM_ROW_GRID, UPPER_GRID } from '@/components/workspace/grids';
 
 const BLOCK_CLASSES = 'skeleton-pulse rounded-lg bg-surface-muted';
-
-/** Four stat cards beside the identity card (the reference's upper row). */
-const STAT_BLOCKS = 4;
 
 /** The bottom row: wide card + two side cards (QA row 5: 55 / 22.5 / 22.5). */
 const BOTTOM_ROW = `${BLOCK_CLASSES} h-40`;
@@ -28,11 +25,8 @@ export function OverviewSkeleton() {
 
       <div className={UPPER_GRID}>
         <div aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />
-        <div className={STAT_ROW_GRID}>
-          {Array.from({ length: STAT_BLOCKS }, (_, index) => (
-            <div key={index} aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />
-          ))}
-        </div>
+        {/* The open-air metric strip: one muted block the same height. */}
+        <div aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />
       </div>
 
       <div aria-hidden="true" className={`${BLOCK_CLASSES} h-44`} />

@@ -9,6 +9,11 @@
 // knows its own slug. Each workspace route renders `WorkspaceTopBar` with its
 // own `activeSlug`, so the active tab is correct on first paint for every tab
 // and the bare workspace URL (which redirects) is never a dead end.
+//
+// The workspace's dark chrome band (reference: patient-tracking-dashboard.jpg;
+// the owner's visual instruction reopens the no-dark-frame default for this
+// one surface) is painted by `WorkspaceTopBar` itself, because only that
+// component knows the active tab's slug.
 import type { ReactNode } from 'react';
 
 export default function WorkspaceLayout({ children }: { children: ReactNode }) {
