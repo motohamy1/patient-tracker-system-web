@@ -6,7 +6,7 @@
 //
 // DETERMINISM: the modal opens EMPTY (Chromium's native date input shows only
 // its dd/mm/yyyy placeholder, never today's value) and the grid behind it is
-// the fixed supabase/seed.sql fixture set — no now()-derived text is in frame,
+// the fixed seeded fixture set — no now()-derived text is in frame,
 // so no mask is needed on THIS surface (the computed age fragment on the
 // provider-home surface is masked in surfaces.spec.ts instead).
 //

@@ -13,8 +13,9 @@
 // (auth.setup.ts) signs in as the seeded owner first, and each group below
 // applies `test.use({ storageState: AUTH_STATE.owner })`.
 //
-// The seeded fixture invitation lives in supabase/seed.sql; only its digest is
-// stored, and the raw token is 'phase3-fixture-invite'.
+// The seeded fixture invitation lives in the acceptance seed (retired
+// supabase/seed.sql); only its digest is stored, and the raw token is
+// 'phase3-fixture-invite'.
 import { test, expect } from '@playwright/test';
 import { AUTH_STATE } from './auth';
 

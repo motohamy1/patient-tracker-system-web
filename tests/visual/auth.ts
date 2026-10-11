@@ -11,13 +11,14 @@
 // storageState file paths that the setup project (`auth.setup.ts`) writes and
 // the specs consume via `test.use({ storageState })`.
 //
-// CREDENTIALS ARE THE SEEDED LOCAL DEV ACCOUNTS, NOT SECRETS. supabase/seed.sql
-// creates owner@clinic.test and patient@clinic.test (among the six AUTH-08
-// acceptance accounts) and every one of them shares the documented local-only
-// dev password `Phase3Dev!pass`. These are fixed dev addresses that never
-// resemble real accounts, and the harness runs only against the local Supabase
-// stack at 127.0.0.1:54321 (read from .env.local as
-// NEXT_PUBLIC_SUPABASE_URL). No production credential ever enters this file.
+// CREDENTIALS ARE THE SEEDED LOCAL DEV ACCOUNTS, NOT SECRETS. owner@clinic.test
+// and patient@clinic.test are two of the six AUTH-08 acceptance accounts; every
+// one shares the documented local-only dev password `Phase3Dev!pass`. These are
+// fixed dev addresses that never resemble real accounts, and the harness runs
+// only against the local dev server. The Supabase seed file that used to create
+// them is retired (neon/README.md → Dev users), so they must exist in the Neon
+// auth branch before this harness runs. No production credential ever enters
+// this file.
 //
 // LANDING URLS ARE THE D-12 RULE. A successful sign-in pushes /provider
 // (login-form.tsx), then the layout slot resolves the role: a staff/owner
