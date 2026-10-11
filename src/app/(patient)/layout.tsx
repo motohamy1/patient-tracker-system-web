@@ -44,7 +44,7 @@ export default async function PatientLayout({ children }: { children: ReactNode 
         ariaLabel="Patient navigation"
       />
       <OfflineSyncStrip />
-      <div className="flex min-w-0 flex-1 flex-col rounded-xl bg-canvas">
+      <div className="flex min-w-0 flex-1 flex-col overflow-clip rounded-xl bg-canvas">
         <div className="mx-auto w-full max-w-[64rem] px-lg pt-lg">
           <SyncWiring />
         </div>

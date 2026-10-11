@@ -23,6 +23,7 @@ import path from 'node:path';
 
 const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }));
 const queries = vi.hoisted(() => ({ listPatients: vi.fn(), escapeLike: vi.fn() }));
+const statsQueries = vi.hoisted(() => ({ getProviderHomeStats: vi.fn() }));
 const workspace = vi.hoisted(() => ({ resolveWorkspaceRole: vi.fn() }));
 const actions = vi.hoisted(() => ({
   createPatientAction: vi.fn(),
@@ -32,6 +33,7 @@ const actions = vi.hoisted(() => ({
 
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/patients/queries', () => queries);
+vi.mock('@/lib/stats/queries', () => statsQueries);
 vi.mock('@/lib/auth/workspace', () => workspace);
 vi.mock('@/lib/patients/actions', () => actions);
 vi.mock('next/navigation', () => ({ useRouter: () => nav, redirect: vi.fn() }));
@@ -99,6 +101,40 @@ beforeEach(() => {
     orgId: 'org-1',
   });
   queries.listPatients.mockResolvedValue({ rows: [row()], hasMore: false, total: 1 });
+  statsQueries.getProviderHomeStats.mockResolvedValue(statsFixture());
+});
+
+/** The Daily Stats read in its honest full shape (reference grammar §6). */
+function statsFixture() {
+  const days = ['2026-10-04', '2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10'];
+  return {
+    totalPatients: 12,
+    newPatientsToday: 1,
+    todaysVisits: 2,
+    completedToday: 1,
+    series: days.map((day) => ({ day, visits: 0, completed: 0, newPatients: 0 })),
+  };
+}
+
+describe('/provider — Daily Stats (reference grammar §6, D-28)', () => {
+  it('renders the panel with its four real-value stat cards', async () => {
+    const { doc } = await renderPage({});
+    const headings = Array.from(doc!.querySelectorAll('h2')).map((h2) => h2.textContent);
+    expect(headings).toContain('Daily Stats');
+    const text = doc!.body.textContent ?? '';
+    expect(text).toContain('Patients');
+    expect(text).toContain('New today');
+    expect(text).toContain("Today's visits");
+    expect(text).toContain('Completed today');
+    expect(text).toContain('12');
+  });
+
+  it('degrades to one honest unavailability line, never invented numbers', async () => {
+    statsQueries.getProviderHomeStats.mockRejectedValue(new Error('db down'));
+    const { doc } = await renderPage({});
+    expect(doc!.body.textContent).toContain('Daily stats are unavailable right now.');
+    expect(doc!.body.textContent).not.toMatch(/Last 7 days/);
+  });
 });
 
 describe('/provider — URL state reaches listPatients unchanged (PROV-02, D-18)', () => {

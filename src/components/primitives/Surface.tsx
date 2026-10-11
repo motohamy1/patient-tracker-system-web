@@ -66,11 +66,16 @@ export function Surface({
 }: SurfaceProps) {
   const Element: ElementType = as ?? 'div';
   const spec = SURFACE_VARIANTS[variant];
+  // A caller-provided fill utility REPLACES the variant fill instead of
+  // colliding with it: two `bg-*` utilities on one element share specificity,
+  // and the winner would be stylesheet order rather than intent. The one
+  // sanctioned case is the Critical Alerts salmon panel (`bg-critical`).
+  const callerOwnsFill = /(?:^|\s)bg-/.test(className ?? '');
   // A field is not a card: `canvas` never takes padding, whatever the size.
   const padding = variant === 'canvas' ? '' : size ? SURFACE_SIZE_PADDING[size] : spec.padding;
   // The caller's className is merged last so layout utilities can be added
   // without editing the primitive, and never replaces the variant classes.
-  const classes = [spec.fill, spec.radius, padding, spec.shadow, className]
+  const classes = [callerOwnsFill ? '' : spec.fill, spec.radius, padding, spec.shadow, className]
     .filter(Boolean)
     .join(' ');
 

@@ -79,7 +79,7 @@ export default async function ProviderLayout({ children }: { children: ReactNode
           ariaLabel="Provider navigation"
         />
         <OfflineSyncStrip />
-        <div className="flex min-w-0 flex-1 flex-col rounded-xl bg-canvas">
+        <div className="flex min-w-0 flex-1 flex-col overflow-clip rounded-xl bg-canvas">
           {children}
         </div>
       </div>

@@ -36,11 +36,13 @@ import { ProviderSearchControl } from '@/components/patients/ProviderSearchContr
 import { RetrievalControls } from '@/components/patients/RetrievalControls';
 import { TodaySchedulePanel } from '@/components/schedule/TodaySchedulePanel';
 import { CriticalAlertsPanel } from '@/components/alerts/CriticalAlertsPanel';
+import { DailyStatsPanel } from '@/components/stats/DailyStatsPanel';
 import { CAN_MANAGE_MEMBERSHIP, CAN_MESSAGE, runsCapability } from '@/lib/auth/capabilities';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { listPatients } from '@/lib/patients/queries';
 import { listDaySchedule } from '@/lib/schedule/queries';
 import { listCriticalAlerts } from '@/lib/alerts/queries';
+import { getProviderHomeStats, type ProviderHomeStats } from '@/lib/stats/queries';
 import { listPatientsQuerySchema, type ListPatientsQueryInput } from '@/lib/patients/schemas';
 
 export const dynamic = 'force-dynamic';
@@ -119,6 +121,14 @@ export default async function ProviderHomePage({
   } catch {
     alerts = [];
   }
+  // The Daily Stats read degrades on its own: a failure renders the panel's
+  // honest unavailability line, never invented numbers (reference grammar §6).
+  let stats: ProviderHomeStats | null = null;
+  try {
+    stats = await getProviderHomeStats(resolution.orgId, day);
+  } catch {
+    stats = null;
+  }
 
   return (
     <Surface variant="canvas" className="flex flex-1 flex-col bg-canvas p-lg">
@@ -136,9 +146,11 @@ export default async function ProviderHomePage({
           <NewPatientControl insetFill={INSET_FILL} className="w-full" />
         </div>
 
-        {/* The reference's three-column dashboard (D-28): schedule left,
-            profiles center, alerts right — stacked in one column below the
-            1280px band edge with the profiles first (order-*). */}
+        {/* The reference's three-column dashboard (D-28, grammar §6): schedule
+            left, profiles center, and on the right the Critical Alerts panel
+            plus Daily Stats as a 2x2 of mini stat cards — one column stack.
+            Stacked in one column below the 1280px band edge with the profiles
+            first (order-*). */}
         <div className="flex flex-col gap-lg xl:grid xl:grid-cols-[minmax(0,17rem)_minmax(0,1fr)_minmax(0,19rem)] xl:items-start">
           <div className="order-2 xl:order-1">
             <TodaySchedulePanel rows={schedule} />
@@ -178,8 +190,9 @@ export default async function ProviderHomePage({
             />
           </Surface>
 
-          <div className="order-3">
+          <div className="order-3 flex flex-col gap-lg">
             <CriticalAlertsPanel rows={alerts} />
+            <DailyStatsPanel stats={stats} />
           </div>
         </div>
       </div>
