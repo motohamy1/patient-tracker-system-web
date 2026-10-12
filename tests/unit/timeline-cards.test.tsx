@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TimelineCards, type TimelineCardPlacement } from '@/components/timeline/TimelineCards';
+import { ClinicalTimeline } from '@/components/timeline/ClinicalTimeline';
 import type { CareEvent } from '@/lib/timeline/events';
 
 /** Synthetic clinical values that must NEVER appear in the band's DOM. */
@@ -129,5 +130,38 @@ describe('TimelineCards — real data only, wired controls (INV-08)', () => {
     for (const path of paths) {
       expect(path.getAttribute('d')).toBe('M7 7l10 10M17 7v10H7');
     }
+  });
+});
+
+// ── the visible band zoom affordance (quick task 261012-e2y, task 2) ───────
+
+describe('ClinicalTimeline — visible band zoom controls', () => {
+  it('renders working +/- controls and the ctrl+wheel hint on the band', () => {
+    const events = [RECORD_CREATED, VISIT_EVENT, MEDICATION_EVENT].sort((a, b) =>
+      a.at.localeCompare(b.at),
+    );
+    const markup = renderToStaticMarkup(
+      createElement(ClinicalTimeline, { events }),
+    );
+    const doc = new DOMParser().parseFromString(markup, 'text/html');
+    // the scrubber also carries a zoom pair, so the band adds one of each
+    const zoomIn = doc.querySelectorAll('button[aria-label="Zoom in"]');
+    const zoomOut = doc.querySelectorAll('button[aria-label="Zoom out"]');
+    expect(zoomIn.length).toBe(2);
+    expect(zoomOut.length).toBe(2);
+    // band controls sit inside the band (26px editors), not the scrubber row,
+    // whose pair is its own 44px surface-button pair
+    const bandZoomIn = Array.from(zoomIn).filter((button) =>
+      button.className.includes('size-[26px]'),
+    );
+    expect(bandZoomIn.length).toBe(1);
+    expect(bandZoomIn[0].className).toContain('bg-timeline-well');
+    // the wheel decision is stated on screen, never silent
+    expect(doc.body.textContent).toContain('Ctrl + scroll to zoom');
+  });
+
+  it('does not crash on the empty-record early return', () => {
+    const markup = renderToStaticMarkup(createElement(ClinicalTimeline, { events: [] }));
+    expect(markup).toContain('No timeline events yet');
   });
 });

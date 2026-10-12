@@ -34,7 +34,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { select } from 'd3-selection';
-import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom';
+import { zoom as d3Zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
 import { AXIS_Y, LATTICE_TOP, MONTH_RAIL_Y, TIMELINE_BAND_HEIGHT, buildTimeScale, monthTicks } from '@/lib/timeline/scale';
 import {
   availableCategories,
@@ -138,6 +138,8 @@ export function ClinicalTimeline({
 }) {
   const holderRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  /** The attached d3 zoom behavior — the one door for programmatic zoom. */
+  const behaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const width = useElementWidth(holderRef, DEFAULT_WIDTH);
 
   const [transform, setTransform] = useState<TimelineTransform>(
@@ -241,6 +243,7 @@ export function ClinicalTimeline({
       });
 
     select(svg).call(behavior);
+    behaviorRef.current = behavior;
     if (initialTransform !== undefined) {
       // A caller-supplied transform (scrubber sync) enters through the same
       // behavior, so the imperative frame and the React state agree.
@@ -418,6 +421,34 @@ export function ClinicalTimeline({
     applyTransform(
       transformForCenter(geometry.scale, Math.max(width, 1), EDGE_PADDING, centerMs, transform.k * factor),
     );
+  };
+
+  /**
+   * The band zoom buttons (visible affordance task, 261012-e2y): identical
+   * state the scrubber drives, entered through the d3 behavior so per-frame
+   * `applyFrame`, the bounded `translateExtent` and the 'end' clamp all run
+   * on the exact path the scrubber's +/- uses (anchored at the visible
+   * window's centre, the same math timeline scrubber precedent). At the
+   * scale extent the target k equals the current k — a no-op by clamping,
+   * so the control never paints a false disabled state.
+   */
+  const zoomStep = (direction: 1 | -1) => {
+    const behavior = behaviorRef.current;
+    const svg = svgRef.current;
+    if (behavior === null || svg === null) return;
+    const centerMs = window_.fromMs + (window_.toMs - window_.fromMs) / 2;
+    const targetK = Math.min(
+      Math.max(transform.k * (direction > 0 ? 1.5 : 1 / 1.5), 1),
+      MAX_ZOOM_K,
+    );
+    const next = transformForCenter(
+      geometry.scale,
+      Math.max(width, 1),
+      EDGE_PADDING,
+      centerMs,
+      targetK,
+    );
+    select(svg).call(behavior.transform, zoomIdentity.translate(next.tx, 0).scale(next.k));
   };
 
   /** Keyboard (TL-08): arrows pan, +/- zoom, Escape dismisses the detail. */
@@ -729,6 +760,39 @@ export function ClinicalTimeline({
             events (§23/§27) — the decorative sample layer they replaced is
             deleted. Each card is a real control wired to this selection. */}
         <TimelineCards cards={featuredCards} onSelect={selectEvent} />
+
+        {/* The visible zoom affordance (261012-e2y): working +/- controls on
+            the band itself and the ctrl+wheel rule stated on-screen, so the
+            deliberate no-plain-wheel-zoom decision is never silent. The
+            buttons re-enter the SAME d3-zoom behavior the scrubber drives
+            (identical shared transform); at the scale extent they clamp,
+            they never paint a fake-disabled state. */}
+        <div className="absolute right-md top-sm flex items-center gap-xs">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            onClick={() => zoomStep(-1)}
+            className="inline-flex size-[26px] items-center justify-center rounded-pill bg-timeline-well p-sm text-timeline-ink shadow-control transition-colors hover:bg-timeline-surface active:bg-timeline-surface"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+              <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            onClick={() => zoomStep(1)}
+            className="inline-flex size-[26px] items-center justify-center rounded-pill bg-timeline-well p-sm text-timeline-ink shadow-control transition-colors hover:bg-timeline-surface active:bg-timeline-surface"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+              <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <span className="font-plex-code text-caption leading-caption text-timeline-ink-soft">
+            Ctrl + scroll to zoom
+          </span>
+        </div>
       </div>
 
       {selectedEvent !== null && cardStyle !== null ? (
