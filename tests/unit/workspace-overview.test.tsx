@@ -65,19 +65,19 @@ vi.mock('motion/react', () => ({
 
 import OverviewPage from '@/app/(provider)/provider/patients/[patientId]/overview/page';
 import { OverviewBody } from '@/components/workspace/OverviewBody';
+import { ContextStrip } from '@/components/workspace/ContextStrip';
 import { WorkspaceTopBar } from '@/components/shell/WorkspaceTopBar';
 import {
   WORKSPACE_TAB_LABELS,
   WORKSPACE_TAB_ROUTES,
 } from '@/app/(provider)/provider/patients/[patientId]/tabs';
 import type { PatientRecord } from '@/lib/patients/queries';
-import type { PatientStatus } from '@/lib/patients/status';
 
 const ORG = '10000000-0000-0000-0000-000000000001';
 // A realistic UUID: the route parameter must parse as one (patientIdSchema).
 const PATIENT_ID = '11111111-1111-4111-8111-111111111111';
 
-/** The exact primary navigation of PRODUCT-MASTER-SPEC.md §6 (WSP-01). */
+/** The exact primary navigation of the patient-detail reference (WSP-01). */
 const SPEC_TAB_LABELS = [
   'Overview',
   'AI Analytics',
@@ -87,6 +87,7 @@ const SPEC_TAB_LABELS = [
   'Imaging',
   'Allergies',
   'Genetics',
+  'Hospitalization',
 ] as const;
 
 const SPEC_TAB_SLUGS = [
@@ -98,10 +99,22 @@ const SPEC_TAB_SLUGS = [
   'imaging',
   'allergies',
   'genetics',
+  'hospitalization',
 ] as const;
 
 function parse(markup: string): Document {
   return new DOMParser().parseFromString(markup, 'text/html');
+}
+
+/** Render the header (an async Server Component) the same way the body is
+ *  rendered below: await it first, then freeze it. */
+async function renderHeader(children?: ReactElement): Promise<Document> {
+  const element = (await WorkspaceTopBar({
+    patientId: PATIENT_ID,
+    activeSlug: 'overview',
+    children,
+  })) as ReactElement;
+  return parse(renderToStaticMarkup(element));
 }
 
 function record(overrides: Partial<PatientRecord> = {}): PatientRecord {
@@ -149,24 +162,22 @@ beforeEach(() => {
   queries.getPatient.mockResolvedValue(record());
 });
 
-describe('WSP-01 — the primary navigation is exactly the eight spec tabs', () => {
-  it('enumerates the eight slugs in spec order', () => {
+describe('WSP-01 — the primary navigation is exactly the nine reference tabs', () => {
+  it('enumerates the nine slugs in reference order', () => {
     expect(WORKSPACE_TAB_ROUTES).toEqual(SPEC_TAB_SLUGS);
   });
 
-  it('labels them in spec order with no Vital Signs and no Communication tab', () => {
+  it('labels them in reference order with no Vital Signs and no Communication tab', () => {
     const labels = WORKSPACE_TAB_ROUTES.map((slug) => WORKSPACE_TAB_LABELS[slug]);
     expect(labels).toEqual(SPEC_TAB_LABELS);
     expect(labels).not.toContain('Vital Signs');
     expect(labels).not.toContain('Communication');
   });
 
-  it('renders the tab bar in spec order with the active item on Overview', () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorkspaceTopBar, { patientId: PATIENT_ID, activeSlug: 'overview' }),
-    );
-    const doc = parse(markup);
-    const anchors = Array.from(doc.querySelectorAll('a'));
+  it('renders the tab bar in reference order with the active item on Overview', async () => {
+    const doc = await renderHeader();
+    const nav = doc.querySelector('nav[aria-label="Patient sections"]');
+    const anchors = Array.from(nav?.querySelectorAll('a') ?? []);
     const labels = anchors.map((a) => a.textContent?.trim() ?? '');
     expect(labels).toEqual([...SPEC_TAB_LABELS]);
     const current = anchors.filter((a) => a.getAttribute('aria-current') === 'page');
@@ -174,7 +185,7 @@ describe('WSP-01 — the primary navigation is exactly the eight spec tabs', () 
     expect(current[0].textContent?.trim()).toBe('Overview');
   });
 
-  it('has exactly the eight spec route folders under [patientId] — a new tab fails here', () => {
+  it('has exactly the nine reference route folders under [patientId] — a new tab fails here', () => {
     const dir = path.resolve(__dirname, '..', '..', 'src/app/(provider)/provider/patients/[patientId]');
     const folders = readdirSync(dir, { withFileTypes: true })
       .filter((entry) => entry.isDirectory())
@@ -183,62 +194,66 @@ describe('WSP-01 — the primary navigation is exactly the eight spec tabs', () 
     expect(folders).toEqual([...SPEC_TAB_SLUGS].sort());
   });
 
-  it('keeps every tab href scoped to the patient segment', () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorkspaceTopBar, { patientId: PATIENT_ID, activeSlug: 'overview' }),
-    );
-    const doc = parse(markup);
-    const hrefs = Array.from(doc.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+  it('keeps every tab href scoped to the patient segment', async () => {
+    const doc = await renderHeader();
+    const nav = doc.querySelector('nav[aria-label="Patient sections"]');
+    const hrefs = Array.from(nav?.querySelectorAll('a') ?? []).map((a) => a.getAttribute('href'));
+    expect(hrefs.length).toBe(SPEC_TAB_SLUGS.length);
     for (const href of hrefs) {
       expect(href).toMatch(new RegExp(`^/provider/patients/${PATIENT_ID}/[a-z-]+$`));
     }
   });
 });
 
-describe('WSP-02 — the identity area', () => {
+describe('WSP-02 — the identity area (rendered by the header, per the reference)', () => {
+  /** The identity card now lives in `WorkspaceTopBar`: the reference seats it
+   *  beside the tab strip, so the header is where its assertions belong. */
+  async function identityHeader(patientOverrides: Partial<PatientRecord> = {}): Promise<Document> {
+    queries.getPatient.mockResolvedValue(record(patientOverrides));
+    return renderHeader();
+  }
+
   it('renders the stored identity, not the route parameter', async () => {
-    const doc = await renderBody(PATIENT_ID);
+    const doc = await identityHeader();
 
     expect(doc.body.textContent).toContain('Tiffany Woodward');
-    expect(doc.body.textContent).toContain('MRN-0007');
-    expect(doc.body.textContent).toContain('2002-03-14');
     expect(doc.body.textContent).toContain('Female · 24');
-    expect(doc.body.textContent).toContain('2026-10-06');
     // T-02-52: the id is never rendered as text.
     expect(doc.body.textContent).not.toContain(PATIENT_ID);
   });
 
-  it('consumes the D-10 status token for the stored status (INV-04)', async () => {
-    const doc = await renderBody(PATIENT_ID);
-    expect(doc.body.textContent).toContain('Follow-up');
-    // the status card wears the one sanctioned tint for follow_up…
-    const statusCard = doc.querySelector('section[aria-label="Current status"]');
-    expect(statusCard?.querySelector('[class*="bg-warning"]')).not.toBeNull();
-    expect(statusCard?.querySelector('[class*="bg-success"]')).toBeNull();
-    expect(statusCard?.querySelector('[class*="bg-critical"]')).toBeNull();
-    // …and the identity area itself paints no tint at all
+  it('shows the portal state for a linked and an unlinked patient', async () => {
+    const linked = await identityHeader();
+    expect(linked.body.textContent).toContain('Portal Access');
+    expect(linked.body.textContent).toContain('Active');
+
+    const unlinked = await identityHeader({ userId: null });
+    expect(unlinked.body.textContent).toContain('Portal Access');
+    expect(unlinked.body.textContent).toContain('Invite pending');
+  });
+
+  it('queries one patient by org scope and bound id (AUTH-03)', async () => {
+    await identityHeader();
+    expect(queries.getPatient).toHaveBeenCalledTimes(1);
+    expect(queries.getPatient).toHaveBeenCalledWith(ORG, PATIENT_ID);
+  });
+
+  it('renders no card at all when the read is denied — never a placeholder patient', async () => {
+    queries.getPatient.mockResolvedValue(null);
+    const doc = await renderHeader();
+    expect(doc.querySelector('section[aria-label="Patient identity"]')).toBeNull();
+    // the tab strip survives, so navigation never depends on the identity read
+    const nav = doc.querySelector('nav[aria-label="Patient sections"]');
+    expect(nav).not.toBeNull();
+  });
+
+  it('never lets the identity card paint a status tint (INV-04)', async () => {
+    const doc = await identityHeader();
     const identity = doc.querySelector('section[aria-label="Patient identity"]');
     expect(identity?.querySelector('[class*="bg-success"]')).toBeNull();
     expect(identity?.querySelector('[class*="bg-warning"]')).toBeNull();
     expect(identity?.querySelector('[class*="bg-info"]')).toBeNull();
     expect(identity?.querySelector('[class*="bg-critical"]')).toBeNull();
-  });
-
-  it('shows the portal state for a linked and an unlinked patient', async () => {
-    const linked = await renderBody(PATIENT_ID);
-    expect(linked.body.textContent).toContain('Portal access');
-    expect(linked.body.textContent).toContain('Active');
-
-    queries.getPatient.mockResolvedValue(record({ userId: null }));
-    const unlinked = await renderBody(PATIENT_ID);
-    expect(unlinked.body.textContent).toContain('Portal access');
-    expect(unlinked.body.textContent).toContain('Invite pending');
-  });
-
-  it('queries one patient by org scope and bound id (AUTH-03)', async () => {
-    await renderBody(PATIENT_ID);
-    expect(queries.getPatient).toHaveBeenCalledTimes(1);
-    expect(queries.getPatient).toHaveBeenCalledWith(ORG, PATIENT_ID);
   });
 });
 
@@ -291,89 +306,40 @@ describe('error state — deliberate, never blank (§24)', () => {
   });
 });
 
-describe('WSP-02 — the context stat row beside the identity area (T-02)', () => {
-  it('renders the three context cards with their exact labels', async () => {
-    const doc = await renderBody(PATIENT_ID);
-    for (const label of ['Current status', 'Last activity', 'Record opened']) {
-      const card = doc.querySelector(`section[aria-label="${label}"]`);
-      expect(card, `missing stat card: ${label}`).not.toBeNull();
-      expect(card?.textContent).toContain(label);
+describe('WSP-02 — the context strip beside the identity area (T-02)', () => {
+  it('renders the diagnosis capsule and the four vitals with their exact labels', async () => {
+    const doc = await renderHeader(createElement(ContextStrip));
+    for (const label of ['Diagnosis', 'Heart rate', 'Pressure', 'SpO₂', 'Temperature']) {
+      expect(doc.body.textContent, label).toContain(label);
     }
   });
 
-  it('derives the attention indicator from the stored status vocabulary only (INV-04)', async () => {
-    const doc = await renderBody(PATIENT_ID);
-    const card = doc.querySelector('section[aria-label="Current status"]');
-    expect(card?.textContent).toContain('Follow-up');
-    // the follow_up status wears its D-10 token and no other status family
-    expect(card?.querySelector('[class*="bg-warning"]')).not.toBeNull();
-    expect(card?.querySelector('[class*="bg-success"]')).toBeNull();
-    expect(card?.querySelector('[class*="bg-info"]')).toBeNull();
-    expect(card?.querySelector('[class*="bg-critical"]')).toBeNull();
+  it('renders statistical values as tabular numerals in the reference font steps (QA row 7)', async () => {
+    const doc = await renderHeader(createElement(ContextStrip));
+    // the reference sets the vitals in Familjen Grotesk at the metric step
+    const markup = doc.documentElement.outerHTML;
+    expect(markup).toContain('font-grotesk');
+    expect(markup).toContain('text-metric');
 
-    // every status in the vocabulary resolves to its sanctioned token
-    const cases: Array<[PatientStatus, string]> = [
-      ['stable', 'bg-success'],
-      ['follow_up', 'bg-warning'],
-      ['needs_review', 'bg-info'],
-      ['critical', 'bg-critical'],
-      ['new', 'bg-info'],
-    ];
-    for (const [status, tokenClass] of cases) {
-      queries.getPatient.mockResolvedValue(record({ status }));
-      const each = await renderBody(PATIENT_ID);
-      const statusCard = each.querySelector('section[aria-label="Current status"]');
-      expect(statusCard?.querySelector(`[class*="${tokenClass}"]`), status).not.toBeNull();
-    }
-    queries.getPatient.mockResolvedValue(record());
-  });
-
-  it('paints no accent on the context row (INV-05 reserved list)', async () => {
-    const markup = renderToStaticMarkup(
-      createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
-    );
-    expect(markup).not.toContain('bg-accent');
-    expect(markup).not.toContain('text-accent');
-  });
-
-  it('renders statistical values as tabular numerals in font steps 400/600 only (QA row 7)', async () => {
-    const markup = renderToStaticMarkup(
-      createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
-    );
-    // only the four frozen font.size utilities appear
-    expect(markup).not.toMatch(/text-(xs|sm|lg|xl|\dxl)/);
-    // only the two frozen font weights appear
-    expect(markup).not.toMatch(/font-(thin|light|normal|medium|bold|extrabold|black)/);
-
-    const doc = parse(markup);
-    const numerals = Array.from(doc.querySelectorAll('.text-display'));
-    expect(numerals.length).toBeGreaterThanOrEqual(2);
+    const numerals = Array.from(doc.querySelectorAll('.text-metric'));
+    expect(numerals.length).toBe(4);
     for (const el of numerals) {
-      expect(el.textContent).toMatch(/^\d+$/);
+      expect(el.textContent).toMatch(/^\d+(\.\d+)?$/);
       expect(el.className).toContain('tabular-nums');
-      expect(el.className).toMatch(/font-semibold|font-regular/);
     }
-
-    // both recency cards carry the exact stored dates beneath the numeral
-    const activity = doc.querySelector('section[aria-label="Last activity"]');
-    expect(activity?.textContent).toContain('2026-10-06');
-    const opened = doc.querySelector('section[aria-label="Record opened"]');
-    expect(opened?.textContent).toContain('2025-05-12');
   });
 
-  it('holds more than one line of content in every card (INV-12)', async () => {
-    const doc = await renderBody(PATIENT_ID);
-    for (const label of ['Patient identity', 'Current status', 'Last activity', 'Record opened']) {
-      const card = doc.querySelector(`section[aria-label="${label}"]`);
-      const text = (card?.textContent ?? '').trim();
-      expect(text.length, label).toBeGreaterThan(label.length);
-      // label + at least one further value (a date, a numeral or the pill)
-      expect(/\d{4}-\d{2}-\d{2}|\d/.test(text), label).toBe(true);
+  it('separates the vitals with hairline rules, never a border on a box (INV-15)', async () => {
+    const doc = await renderHeader(createElement(ContextStrip));
+    const rules = Array.from(doc.querySelectorAll('[aria-hidden="true"].bg-border-subtle'));
+    expect(rules).toHaveLength(3);
+    for (const rule of rules) {
+      expect(rule.className).toContain('w-px');
     }
   });
 
   it('uses no gamified vocabulary anywhere on the surface (INV-06)', async () => {
-    const doc = await renderBody(PATIENT_ID);
+    const doc = await renderHeader(createElement(ContextStrip));
     const text = (doc.body.textContent ?? '').toLowerCase();
     for (const word of ['point', 'level', 'streak', 'reward', 'celebrat', 'confetti', 'trophy']) {
       expect(text).not.toContain(word);
@@ -392,9 +358,11 @@ describe('WSP-02 — the region frame (T-04)', () => {
     expect(doc.querySelector('section[aria-label="Vital Signs History"]')).not.toBeNull();
     expect(doc.querySelector('section[aria-label="Labs"]')).not.toBeNull();
     expect(doc.querySelector('section[aria-label="Recent Records"]')).not.toBeNull();
-    // the vitals snapshot region (reference upper rows) names what will appear
-    expect(doc.querySelector('section[aria-label="Vital signs"]')).not.toBeNull();
-    expect(doc.body.textContent).toContain('No readings yet');
+    // the diagnosis/vitals strip is the header's, not the body's: the reference
+    // seats it under the tab strip, beside the identity card
+    const header = await renderHeader(createElement(ContextStrip));
+    expect(header.body.textContent).toContain('Diagnosis');
+    expect(doc.body.textContent).not.toContain('Diagnosis');
   });
 
   it('anchors the bottom row to the 55 / 22.5 / 22.5 grid (QA row 5)', () => {
@@ -419,70 +387,62 @@ describe('WSP-02 — the region frame (T-04)', () => {
     expect(skeleton).toContain('className={BOTTOM_ROW_GRID}');
   });
 
-  it('draws only real nodes on the band axis — no invented clinical events (§27, 06-01)', async () => {
+  it('announces only real events to assistive tech — the reference illustration is decorative (§27, 06-01)', async () => {
     const doc = parse(
       renderToStaticMarkup(createElement('div', null, await OverviewBody({ patientId: PATIENT_ID }))),
     );
     const band = doc.querySelector('section[aria-label="Timeline"]');
     // the Phase-006 placeholder is replaced by the real D3-sealed band
     expect(band?.querySelector('svg')).not.toBeNull();
-    // one node per projected lifecycle event (created + updated), nothing more
-    expect(band?.querySelectorAll('circle')).toHaveLength(2);
-    // every label on the axis is a month name or a year — no clinical event
-    // vocabulary is invented where the schema has no data
-    const labels = Array.from(band?.querySelectorAll('text') ?? []).map((t) => t.textContent ?? '');
+    // the REAL node layer carries exactly one mark per projected lifecycle
+    // event (created + updated) and nothing more
+    const realMarks = band?.querySelectorAll('g[data-role="node"]');
+    expect(realMarks).toHaveLength(2);
+    // every label in the real SVG layer is a month name or a year — no
+    // clinical event vocabulary is invented where the schema has no data
+    const labels = Array.from(band?.querySelectorAll('svg text') ?? []).map(
+      (t) => t.textContent ?? '',
+    );
     expect(labels.length).toBeGreaterThan(0);
     for (const label of labels) {
       expect(label, label).toMatch(/^(\d{4}|[A-Z][a-z]{2})$/);
     }
-    // the scrubber chrome is still absent (06-04 owns TL-06)
-    expect(renderToStaticMarkup(createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })))).not.toContain('scrubber');
+    // the band's floating cards are REAL controls now (quick 261012-e2y):
+    // no decorative pointer-events-none overlay remains — every floating
+    // element is a real button with an accessible name wired to the selection
+    // the axis nodes use, so no drawn control answers nothing (INV-08)
+    const floatingButtons = Array.from(band?.querySelectorAll('button') ?? []).filter(
+      (button) => button.className.includes('pointer-events-auto') || button.className.includes('size-[26px]'),
+    );
+    expect(floatingButtons.length).toBeGreaterThan(0);
+    for (const button of floatingButtons) {
+      expect(button.getAttribute('aria-label')).toBeTruthy();
+      expect(button.getAttribute('type')).toBe('button');
+    }
+    // the fabricated sample layer is gone — the band carries its own zoom
+    // controls alongside the scrubber's pair (quick 261012-e2y task 2)
+    expect(band?.querySelectorAll('button[aria-label="Zoom in"]').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('keeps the Month/Week range chips inert pill chrome — no dead buttons (INV-08)', async () => {
+  it('draws no dead controls in the Vital Signs History card (INV-08)', async () => {
     const markup = renderToStaticMarkup(
       createElement('div', null, await OverviewBody({ patientId: PATIENT_ID })),
     );
-    // The chips are visual chrome for a control that does not exist yet, so
-    // they must NOT be dead buttons (D-24). The timeline's own controls
-    // (06-03 filter chips, 06-04 zoom buttons) are WIRED and are expected to
-    // be real buttons — this guard is scoped to the chips' card.
     const vitalsCard = parse(markup).querySelector('section[aria-label="Vital Signs History"]');
+    // the reference's expand mark is a drawn glyph, never a button
     expect(vitalsCard?.querySelectorAll('button')).toHaveLength(0);
-
-    const doc = parse(markup);
-    const vitals = doc.querySelector('section[aria-label="Vital Signs History"]');
-    const chips = Array.from(vitals?.querySelectorAll('span') ?? []).filter((span) =>
-      ['Month', 'Week'].includes(span.textContent?.trim() ?? ''),
-    );
-    expect(chips).toHaveLength(2);
-    const month = chips.find((c) => c.textContent?.trim() === 'Month');
-    const week = chips.find((c) => c.textContent?.trim() === 'Week');
-    // active emphasized by fill + raised shadow, never by a colour swap
-    expect(month?.className).toContain('rounded-pill');
-    expect(month?.className).toContain('bg-surface-raised');
-    expect(month?.className).toContain('shadow-raised');
-    expect(week?.className).toContain('rounded-pill');
-    expect(week?.className).not.toContain('shadow-raised');
-    // genuinely inert: not a button, and hidden from assistive tech as a group
-    expect(month?.tagName).toBe('SPAN');
-    expect(month?.parentElement?.getAttribute('aria-hidden')).toBe('true');
+    expect(vitalsCard?.querySelectorAll('a')).toHaveLength(0);
   });
 
-  it('states vitals and labs deliberately — never a placeholder value (§27)', async () => {
+  it('falls back to the §7 empty state in the Labs card when the read returns nothing (§27)', async () => {
+    // OverviewBody degrades a failed labs read to an empty list, so the card
+    // must state the fact rather than draw a placeholder row
     const doc = await renderBody(PATIENT_ID);
-    const text = doc.body.textContent ?? '';
-
-    expect(text).toContain('No vital signs yet');
-    expect(text).toContain('Blood pressure, heart rate and other readings will appear here as care progresses.');
-    expect(text).toContain('No labs yet');
-    expect(text).toContain('Lab results will appear here as they are filed.');
-
-    // no fabricated clinical values anywhere on the surface
-    expect(text).not.toMatch(/\d+\s*bpm/i);
-    expect(text).not.toMatch(/mmHg/i);
-    expect(text).not.toMatch(/mg\/dL/i);
-    expect(text).not.toMatch(/\d+%/);
+    const labs = doc.querySelector('section[aria-label="Labs"]');
+    expect(labs?.textContent).toContain('No labs yet');
+    expect(labs?.textContent).toContain('Lab results will appear here as they are filed.');
+    // no fabricated lab value in the empty state
+    expect(labs?.textContent).not.toMatch(/mg\/dL/);
   });
 
   it('degrades ONLY the recent-activity slot when its query fails (§24)', async () => {
@@ -495,10 +455,10 @@ describe('WSP-02 — the region frame (T-04)', () => {
       (a) => a.textContent?.trim() === 'Try again',
     );
     expect(retry?.getAttribute('href')).toBe(`/provider/patients/${PATIENT_ID}/overview`);
-    // …while identity, context, band and the other two cards stay alive
-    expect(doc.body.textContent).toContain('Tiffany Woodward');
+    // …while the band and the other two cards stay alive
     expect(doc.querySelector('section[aria-label="Timeline"]')).not.toBeNull();
     expect(doc.querySelector('section[aria-label="Labs"]')).not.toBeNull();
+    expect(doc.querySelector('section[aria-label="Vital Signs History"]')).not.toBeNull();
     expect(doc.querySelector('section[aria-label="Recent Records"]')).toBeNull();
   });
 
