@@ -35,15 +35,23 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { select } from 'd3-selection';
 import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom';
-import { AXIS_Y, TIMELINE_BAND_HEIGHT, buildTimeScale, monthTicks } from '@/lib/timeline/scale';
+import { AXIS_Y, LATTICE_TOP, MONTH_RAIL_Y, TIMELINE_BAND_HEIGHT, buildTimeScale, monthTicks } from '@/lib/timeline/scale';
 import {
   availableCategories,
   CARE_EVENT_CATEGORY_LABELS,
   filterByCategory,
   type CareEvent,
   type CareEventCategory,
+  type CareEventKind,
 } from '@/lib/timeline/events';
 import { EventDetailCard } from '@/components/timeline/EventDetailCard';
+import {
+  TimelineCards,
+  FEATURED_CARD_KINDS,
+  CARD_EDGE,
+  CARD_MAX_WIDTH,
+  type TimelineCardPlacement,
+} from '@/components/timeline/TimelineCards';
 import { TimelineScrubber } from '@/components/timeline/TimelineScrubber';
 import { useElementWidth } from '@/components/timeline/useElementWidth';
 import { branchPath, hasChildren, layoutMilestones } from '@/lib/timeline/branches';
@@ -66,16 +74,49 @@ import {
 const DEFAULT_WIDTH = 1024;
 /** Edge inset so the first and last node never touch the band's rim. */
 const EDGE_PADDING = 24;
-/** Node radius follows the cardiology reference: a filled accent disc that can hold its glyph (QA row 8's diameter law is re-measured against this reference at the owner's gate). */
-const NODE_RADIUS = 13;
-/** Divider half-length around the axis (reference hairline lattice). */
-const DIVIDER_HALF_LENGTH = 24;
-/** Cluster badge radius (the reference's dark count disc). */
-const BADGE_RADIUS = 13;
 /** Detail card width — also its positioning clamp (w-64 = 16rem = 256px). */
 const CARD_WIDTH = 256;
+/** Ordinary events sit on the axis as small calm markers (§7.3). */
+const SMALL_NODE_RADIUS = 5;
+/** Meaningful milestones read larger and carry a document mark (§7.3) — the
+ *  reference draws them as 15px chartreuse discs on the axis. */
+const MILESTONE_RADIUS = 15;
+/** The reference's cluster mark: a 15px light disc on the axis with the count
+ *  in an 8px chartreuse badge offset to its upper-right. */
+const CLUSTER_RADIUS = 15;
+const CLUSTER_BADGE_RADIUS = 8;
 
 const DAY_MS = 86_400_000;
+
+/**
+ * Kinds that are MEANINGFUL milestones in their own right (§7.3): a visit, a
+ * diagnosis, a hospitalization, a procedure, a medication start/stop or an
+ * order is a real clinical turning point, so it earns the larger chartreuse
+ * node. The record's ORIGIN (`record-created`) and the patient's onboarding
+ * (`invite-redeemed`) are equally real turning points, so a sparse but honest
+ * record still anchors the axis rather than showing only faint dots. Everything
+ * else (record activity, single results) renders as a small marker — "do not
+ * make every event a large yellow circle". Whether an event is a milestone is
+ * decided ONLY from its real `kind` and whether it carries sub-events — never
+ * from invented emphasis (§27).
+ */
+const MILESTONE_KINDS: ReadonlySet<CareEventKind> = new Set<CareEventKind>([
+  'visit',
+  'diagnosis',
+  'hospitalization',
+  'procedure',
+  'medication-started',
+  'medication-stopped',
+  'lab-ordered',
+  'imaging-ordered',
+  'care-plan-change',
+  'record-created',
+  'invite-redeemed',
+]);
+
+function isMilestone(event: CareEvent): boolean {
+  return hasChildren(event) || MILESTONE_KINDS.has(event.kind);
+}
 
 type CategoryFilter = 'all' | CareEventCategory;
 
@@ -336,6 +377,41 @@ export function ClinicalTimeline({
     setSelectedKey(row.key);
   };
 
+  /** The same selection entry the axis nodes use — the cards do not invent a
+   *  parallel path; they look the event's row up in the SAME `rows` set the
+   *  node layer rendered. */
+  const selectEvent = (event: CareEvent) => {
+    const row = rows.find(
+      (candidate) => candidate.kind === 'event' && candidate.events[0].id === event.id,
+    );
+    if (row) setSelectedKey(row.key);
+  };
+
+  /**
+   * The featured floating cards (real data only, §27): the most recent
+   * featured-kind events inside the visible window, capped at 4. An event
+   * whose kind has no real card mapping (e.g. a bare record update) earns no
+   * card — that card type is dropped, never faked. Position is the event's
+   * rendered x (frameX over the live transform), clamped so no card pokes out
+   * of the band, with tops alternating clear of the node row's hit band
+   * (y 22–66) and inside the 442px band height.
+   */
+  const featuredCards: TimelineCardPlacement[] = [];
+  for (let i = filteredEvents.length - 1; i >= 0 && featuredCards.length < 4; i -= 1) {
+    const event = filteredEvents[i];
+    if (!FEATURED_CARD_KINDS.has(event.kind)) continue;
+    const atMs = new Date(event.at).getTime();
+    if (atMs < window_.fromMs || atMs > window_.toMs) continue;
+    const rawX = frameX(transform.k, transform.tx, geometry.scale(new Date(event.at)));
+    const minX = CARD_EDGE;
+    const maxX = Math.max(Math.max(width, 1) - CARD_MAX_WIDTH - CARD_EDGE, minX);
+    featuredCards.push({
+      event,
+      leftPx: Math.min(Math.max(rawX, minX), maxX),
+      topPx: featuredCards.length % 2 === 0 ? 72 : 210,
+    });
+  }
+
   /** Zoom about the visible window's centre (the +/- keys and the scrubber). */
   const zoomByCentered = (factor: number) => {
     const centerMs = window_.fromMs + (window_.toMs - window_.fromMs) / 2;
@@ -390,17 +466,25 @@ export function ClinicalTimeline({
     <div ref={holderRef} className="relative w-full">
       <FilterChips category={category} categories={categories} onSelect={setCategory} />
 
-      <svg
-        ref={svgRef}
-        role="group"
-        aria-label={summary}
-        viewBox={`0 0 ${Math.max(width, 1)} ${TIMELINE_BAND_HEIGHT}`}
-        className="block h-auto w-full touch-none"
-        tabIndex={0}
-        onKeyDown={onTimelineKeyDown}
-        onClick={() => setSelectedKey(null)}
-      >
-        {/* Lattice + axis are decoration and stay hidden from assistive tech. */}
+      {/* The reference's timeline canvas is 442px tall — taller than the
+          322px drawing — because the floating event cards hang below the
+          month rail. The SVG sits at the top of that canvas and the
+          illustration layer fills the same box. */}
+      <div className="relative min-h-[442px]">
+        <svg
+          ref={svgRef}
+          role="group"
+          aria-label={summary}
+          viewBox={`0 0 ${Math.max(width, 1)} ${TIMELINE_BAND_HEIGHT}`}
+          className="block h-auto w-full touch-none"
+          tabIndex={0}
+          onKeyDown={onTimelineKeyDown}
+          onClick={() => setSelectedKey(null)}
+        >
+        {/* Lattice + axis are decoration and stay hidden from assistive tech.
+            The reference draws full-height month dividers in the `timelineGrid`
+            ink, a 1.4px `timelineInk` axis at 55% opacity, and the month rail
+            along the bottom of the band in IBM Plex Sans. */}
         <g aria-hidden="true">
           {lattice.map((tick) => (
             <g
@@ -412,9 +496,9 @@ export function ClinicalTimeline({
               <line
                 x1={0}
                 x2={0}
-                y1={AXIS_Y - DIVIDER_HALF_LENGTH}
-                y2={AXIS_Y + DIVIDER_HALF_LENGTH}
-                className="stroke-border-subtle"
+                y1={LATTICE_TOP}
+                y2={MONTH_RAIL_Y}
+                className="stroke-timeline-grid"
                 strokeWidth={1}
               />
             </g>
@@ -429,23 +513,24 @@ export function ClinicalTimeline({
             >
               <text
                 x={0}
-                y={AXIS_Y + DIVIDER_HALF_LENGTH + 14}
+                y={MONTH_RAIL_Y}
                 textAnchor="middle"
-                className="text-label fill-text-primary"
+                className="font-plex text-[12.5px] font-medium fill-timeline-ink-soft"
               >
                 {tick.isYearStart ? tick.year : tick.label}
               </text>
             </g>
           ))}
 
-          {/* The hairline axis — fixed to the band, translated by nobody. */}
+          {/* The axis — fixed to the band, translated by nobody. */}
           <line
             x1={0}
             x2={Math.max(width, 1)}
             y1={AXIS_Y}
             y2={AXIS_Y}
-            className="stroke-border-subtle"
-            strokeWidth={1}
+            className="stroke-timeline-ink"
+            strokeWidth={1.4}
+            strokeOpacity={0.55}
           />
         </g>
 
@@ -485,19 +570,28 @@ export function ClinicalTimeline({
                       design, the touch target is not (UX-05/§26). A rect, not
                       a circle, so the drawn-node geometry stays exact. */}
                   <rect x={-22} y={AXIS_Y - 22} width={44} height={44} className="fill-transparent" />
-                  {/* Filled accent node + count badge — the §8.4 dense-zoom
-                      language. The count is centered on the badge with BOTH
-                      anchors plus dominant-baseline, never off-axis. */}
-                  <circle cy={AXIS_Y} r={BADGE_RADIUS} className="fill-accent" />
-                  <text
-                    x={0}
-                    y={AXIS_Y}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    className="text-label fill-text-primary"
-                  >
-                    {row.count}
-                  </text>
+                  {/* The reference's dense-zoom mark: a light disc on the axis
+                      with the count in a chartreuse badge on its shoulder. The
+                      count is centred on the badge with BOTH anchors plus
+                      dominant-baseline, never off-axis. */}
+                  <circle
+                    cy={AXIS_Y}
+                    r={CLUSTER_RADIUS}
+                    className="fill-surface-timeline stroke-rail-track"
+                    strokeWidth={1}
+                  />
+                  <g transform={`translate(12,${AXIS_Y - 12})`}>
+                    <circle r={CLUSTER_BADGE_RADIUS} className="fill-marker" />
+                    <text
+                      x={0}
+                      y={0}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="font-plex-code text-[10.5px] font-semibold fill-timeline-ink"
+                    >
+                      {row.count}
+                    </text>
+                  </g>
                 </g>
               );
             }
@@ -529,31 +623,48 @@ export function ClinicalTimeline({
                 {/* 44px invisible hit area (UX-05/§26) — the mark stays round.
                     A rect keeps the drawn-node geometry exact. */}
                 <rect x={-22} y={AXIS_Y - 22} width={44} height={44} className="fill-transparent" />
-                {/* The cardiology node: ONE filled accent disc with the
-                    event's document mark set inside it, selected reads as an
-                    ink rim (the one sanctioned accent list, INV-05). The
-                    glyph is hand-drawn, round-capped, and it anchors to the
-                    exact node centre — never a borrowed icon-pack shape. */}
-                <circle
-                  cy={AXIS_Y}
-                  r={isSelected ? NODE_RADIUS + 2 : NODE_RADIUS}
-                  className="fill-accent stroke-text-primary"
-                  strokeWidth={isSelected ? 1.5 : 0}
-                />
-                <g className="stroke-text-primary">
-                  <rect
-                    x={-4.5}
-                    y={AXIS_Y - 6.5}
-                    width={9}
-                    height={13}
-                    rx={3}
-                    className="fill-none"
-                    strokeWidth={1.4}
-                    strokeLinejoin="round"
+                {isMilestone(event) ? (
+                  <>
+                    {/* Milestone (§7.3): a filled chartreuse node carrying the
+                        event's hand-drawn document mark; selection adds an ink
+                        rim. The glyph is round-capped and anchored to the exact
+                        node centre — never a borrowed icon-pack shape. */}
+                    <circle
+                      cy={AXIS_Y}
+                      r={isSelected ? MILESTONE_RADIUS + 2 : MILESTONE_RADIUS}
+                      className="fill-marker stroke-timeline-ink"
+                      strokeWidth={isSelected ? 1.5 : 0}
+                    />
+                    <g className="stroke-timeline-ink">
+                      <rect
+                        x={-5}
+                        y={AXIS_Y - 7.5}
+                        width={10}
+                        height={15}
+                        rx={2.5}
+                        className="fill-none"
+                        strokeWidth={1.5}
+                        strokeLinejoin="round"
+                      />
+                      <line x1={-2} x2={2} y1={AXIS_Y - 3} y2={AXIS_Y - 3} strokeWidth={1.5} strokeLinecap="round" />
+                      <line x1={-2} x2={2} y1={AXIS_Y + 1} y2={AXIS_Y + 1} strokeWidth={1.5} strokeLinecap="round" />
+                    </g>
+                  </>
+                ) : (
+                  /* Ordinary event (§7.3): a small calm marker on the axis —
+                     never a large yellow circle. Selection is the one time an
+                     ordinary marker turns chartreuse (selected emphasis). */
+                  <circle
+                    cy={AXIS_Y}
+                    r={isSelected ? SMALL_NODE_RADIUS + 2 : SMALL_NODE_RADIUS}
+                    className={
+                      isSelected
+                        ? 'fill-marker stroke-timeline-ink'
+                        : 'fill-surface-timeline stroke-timeline-ink'
+                    }
+                    strokeWidth={1.5}
                   />
-                  <line x1={-2} x2={2} y1={AXIS_Y - 2} y2={AXIS_Y - 2} strokeWidth={1.4} strokeLinecap="round" />
-                  <line x1={-2} x2={2} y1={AXIS_Y + 1.5} y2={AXIS_Y + 1.5} strokeWidth={1.4} strokeLinecap="round" />
-                </g>
+                )}
               </g>
             );
           })}
@@ -582,7 +693,8 @@ export function ClinicalTimeline({
                     frameX(transform.k, transform.tx, placement.childBaseX),
                     placement.childY,
                   )}
-                  className="fill-none stroke-text-primary"
+                  className="fill-none stroke-timeline-ink"
+                  strokeOpacity={0.5}
                   strokeWidth={1}
                 />
               )),
@@ -603,7 +715,7 @@ export function ClinicalTimeline({
                   <circle
                     cy={placement.childY}
                     r={3}
-                    className="fill-surface stroke-text-primary"
+                    className="fill-surface-timeline stroke-timeline-ink"
                     strokeWidth={1}
                   />
                 </g>
@@ -611,7 +723,13 @@ export function ClinicalTimeline({
             )}
           </g>
         ) : null}
-      </svg>
+        </svg>
+
+        {/* The band's floating event cards: rendered from the patient's REAL
+            events (§23/§27) — the decorative sample layer they replaced is
+            deleted. Each card is a real control wired to this selection. */}
+        <TimelineCards cards={featuredCards} onSelect={selectEvent} />
+      </div>
 
       {selectedEvent !== null && cardStyle !== null ? (
         <EventDetailCard
@@ -665,8 +783,8 @@ function FilterChips({
             className={[
               'inline-flex min-h-11 items-center justify-center gap-xs rounded-pill px-md text-label leading-label md:min-h-8',
               active
-                ? 'bg-surface-raised shadow-raised text-text-primary'
-                : 'bg-surface-muted text-text-secondary',
+                ? 'bg-timeline-surface font-semibold text-timeline-ink shadow-control'
+                : 'bg-timeline-well text-timeline-ink-soft',
             ].join(' ')}
           >
             {option.label}
