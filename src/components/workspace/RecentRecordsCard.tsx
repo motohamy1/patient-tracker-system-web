@@ -1,20 +1,24 @@
-// RecentRecordsCard — the Overview's bottom-row "what changed" card
-// (WSP-02; ticket 03; reference §5 bottom row: "Recent Records (salmon
-// `critical`-family type pill) at about 22.5%").
+// RecentRecordsCard — the Overview's "what changed" card, rebuilt to the
+// patient-detail reference (Paper "Xanthic honey", artboard "Patient Overview —
+// merged reference").
 //
-// The card renders the composed patient-scoped trail (activity.ts) — record
-// created, record updated, invite sent/redeemed — newest first, capped at
-// RECENT_ACTIVITY_LIMIT so the card keeps the reference's compact density.
-// Each row is a date block (day numeral + month, tabular) beside a type pill
-// in the frozen `critical` family: that is the §5 grammar for this card, not
-// a new tint (INV-04), and the label text carries the meaning so the pill
-// never encodes by hue alone (1.4.1).
+// WHAT THE REFERENCE DRAWS: full-bleed rows, each a 32px rounded icon well
+// beside a two-line stack (bold title over a muted date/source line), the rows
+// separated by gap alone — no date block, no pill, no divider rail. The first
+// row carries the `critical` tint and the rest the canvas tint, which is the
+// reference's own emphasis rhythm rather than a per-kind mapping.
+//
+// DATA (WSP-02; §Data / §27): the rows are the composed patient-scoped trail
+// (activity.ts) — record created, record updated, invite sent/redeemed — newest
+// first, capped at RECENT_ACTIVITY_LIMIT. Nothing is invented; the title is the
+// event's own label and the sub-line is its stored instant read off the UTC
+// calendar date characters (the FolderCard precedent), so a 23:30Z timestamp
+// never renders as two different days on the same screen.
 //
 // No divider rail (INV-11): rows separate by `gap` alone. No dead header
-// control: the reference's "..." affordance is chrome this phase cannot wire,
-// so it is not drawn (no fake interactivity). Empty reads the §7 contract
-// verbatim; loading and error states are the frame's business
-// (OverviewSkeleton / StateVariant), never this card's.
+// control: the reference's expand mark is drawn in the shell, not wired here.
+// Empty reads the §7 contract verbatim; loading and error states are the
+// frame's business (OverviewSkeleton / StateVariant), never this card's.
 //
 // Server Component: no hook, no client directive.
 import { BottomCardShell } from '@/components/workspace/BottomCardShell';
@@ -38,12 +42,7 @@ const MONTH_ABBR = [
 
 /**
  * An ISO-8601 date → { day: "06", month: "Oct" }, read off the UTC CALENDAR
- * DATE characters — not via `new Date()`'s local getters. Postgres hands back
- * UTC instants; the stat row prints them with `.slice(0, 10)` (the
- * FolderCard precedent), so this card must agree with that card or one
- * 23:30Z timestamp renders as two different days on the same screen.
- * String arithmetic also makes the value timezone-independent by
- * construction — no test or reviewer machine can disagree with it.
+ * DATE characters — not via `new Date()`'s local getters.
  */
 function dateParts(iso: string): { day: string; month: string } {
   if (!/^\d{4}-\d{2}-\d{2}/.test(iso)) return { day: '--', month: '' };
@@ -54,11 +53,34 @@ function dateParts(iso: string): { day: string; month: string } {
   };
 }
 
+/** The reference's rounded icon well. */
+function IconWell({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-surface text-text-primary">
+      {children}
+    </span>
+  );
+}
+
+/** The record/document glyph the reference draws in the first row. */
+function DocumentGlyph() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+      <rect x="2.5" y="3" width="11" height="10" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5 6.5h6M5 9.5h4" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function RecentRecordsCard({ events }: { events: readonly ActivityEvent[] }) {
   const shown = events.slice(0, RECENT_ACTIVITY_LIMIT);
 
   return (
-    <BottomCardShell label="Recent Records" heading="Recent Records">
+    <BottomCardShell
+      label="Recent Records"
+      heading="Recent Records"
+      bodyClassName="justify-center gap-sm"
+    >
       {shown.length === 0 ? (
         <div className="mt-auto flex flex-col gap-xs">
           <span className="text-body font-semibold leading-body text-text-primary">
@@ -69,19 +91,26 @@ export function RecentRecordsCard({ events }: { events: readonly ActivityEvent[]
           </span>
         </div>
       ) : (
-        <ul className="mt-auto flex flex-col gap-md">
-          {shown.map((event) => {
+        <ul className="flex flex-col gap-sm">
+          {shown.map((event, index) => {
             const { day, month } = dateParts(event.at);
             return (
-              <li key={event.key} className="flex items-center gap-md">
-                <span className="flex w-10 shrink-0 flex-col">
-                  <span className="text-heading font-semibold leading-heading text-text-primary tabular-nums">
-                    {day}
+              <li
+                key={event.key}
+                className={`flex items-center gap-md rounded-md px-md py-sm ${
+                  index === 0 ? 'bg-critical' : 'bg-canvas'
+                }`}
+              >
+                <IconWell>
+                  <DocumentGlyph />
+                </IconWell>
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate text-label leading-label font-semibold text-text-primary">
+                    {event.label}
                   </span>
-                  <span className="text-label leading-label text-text-secondary">{month}</span>
-                </span>
-                <span className="inline-flex min-w-0 items-center rounded-pill bg-critical px-md py-sm text-label leading-label text-text-primary">
-                  <span className="truncate">{event.label}</span>
+                  <span className="truncate text-caption leading-caption text-text-secondary">
+                    {month} {day}
+                  </span>
                 </span>
               </li>
             );

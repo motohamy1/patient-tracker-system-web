@@ -34,21 +34,31 @@ describe('ClinicalTimeline — real nodes on a real axis', () => {
     // 3 real events, two of them inside one quarter → 2 marks (1 + cluster of 2)
     expect(marks).toHaveLength(2);
     expect(Array.from(marks).map((m) => m.getAttribute('data-count'))).toEqual(['1', '2']);
-    // the cluster badge carries the count in the accent family (INV-05 list)
-    expect(doc.querySelector('circle.fill-accent')).not.toBeNull();
-    // individual nodes are token-painted, no accent (reserved list, INV-05)
+    // the cluster's count sits in a chartreuse badge on the disc's shoulder
+    // (the reference's dense-zoom mark) — never painted with the reserved accent
+    const cluster = doc.querySelector('g[data-role="node"][data-count="2"]');
+    const badge = cluster?.querySelector('g circle.fill-marker');
+    expect(badge).not.toBeNull();
+    expect(badge?.parentElement?.querySelector('text')?.textContent).toBe('2');
+    // the reserved accent appears nowhere in the band (INV-05)
+    expect(doc.querySelector('.fill-accent')).toBeNull();
+    // the individual mark is a MILESTONE (record-created is a milestone kind),
+    // so it carries the reference's chartreuse disc and ink document glyph
     const individual = marks[0].querySelector('circle');
-    expect(individual?.getAttribute('class')).toContain('fill-surface');
-    expect(individual?.getAttribute('class')).toContain('stroke-text-primary');
+    expect(individual?.getAttribute('class')).toContain('fill-marker');
+    expect(individual?.getAttribute('class')).toContain('stroke-timeline-ink');
   });
 
-  it('renders the reference lattice: 1px hairline axis + month dividers + labels', () => {
+  it('renders the reference lattice: full-height month dividers + the ink axis', () => {
     const events = projectCareEvents(PATIENT, INVITES);
     const doc = renderBand(events);
-    const lines = Array.from(doc.querySelectorAll('line'));
-    for (const line of lines) {
+    // the month dividers are the only `timelineGrid` rules in the band
+    const dividers = Array.from(doc.querySelectorAll('line')).filter((line) =>
+      line.getAttribute('class')?.includes('timeline-grid'),
+    );
+    expect(dividers.length).toBeGreaterThan(0);
+    for (const line of dividers) {
       expect(line.getAttribute('stroke-width')).toBe('1');
-      expect(line.getAttribute('class')).toBe('stroke-border-subtle');
     }
     const labels = Array.from(doc.querySelectorAll('text')).map((t) => t.textContent);
     expect(labels).toContain('Jun');
@@ -78,15 +88,21 @@ describe('ClinicalTimeline — real nodes on a real axis', () => {
     expect(doc.body.textContent).toContain('Document a visit to place the first event.');
   });
 
-  it('keeps the frame: recessed fill, no border, raised-on-canvas separation', () => {
+  it('keeps the frame: the band is the canvas field, separated by shadow and radius only', () => {
     const markup = renderToStaticMarkup(
       createElement(TimelineBand, { events: projectCareEvents(PATIENT, INVITES) }),
     );
-    expect(markup).toContain('bg-surface-muted');
-    // no Tailwind border UTILITY (a stroke token is not a border — match
-    // class-list positions, so `stroke-border-subtle` cannot false-positive)
+    // the reference band is the SAME fill as the page — no third elevation and
+    // no recessed panel, only the two soft shadows and the rounded silhouette
+    expect(markup).toContain('bg-canvas');
+    expect(markup).toContain('rounded-card');
+    expect(markup).toContain('shadow-band-inner');
+    expect(markup).toContain('shadow-band-edge');
+    expect(markup).not.toContain('bg-surface-muted');
+    // no Tailwind border UTILITY (INV-15/INV-16 — a perimeter edge never
+    // appears; match class-list positions so `stroke-border-subtle` cannot
+    // false-positive)
     expect(markup).not.toMatch(/[\s"']border-[a-z]/);
-    expect(markup).not.toContain('scrubber');
     expect(markup).toContain('<h2');
   });
 });
@@ -128,28 +144,32 @@ describe('ClinicalTimeline — the zoom layer (TL-03/TL-04)', () => {
     expect(doc.querySelector('svg')?.outerHTML).not.toContain('scale(');
   });
 
-  it('clusters dense stretches into an accent count badge (INV-05 reserved list)', () => {
+  it('clusters dense stretches into a count badge on the disc shoulder (INV-05 reserved list)', () => {
     const doc = renderTimeline(ZOOM_EVENTS);
-    const badge = doc.querySelector('circle.fill-accent');
+    const cluster = doc.querySelector('g[data-role="node"][data-count="5"]');
+    expect(cluster).not.toBeNull();
+    const badge = cluster?.querySelector('g circle.fill-marker');
     expect(badge).not.toBeNull();
-    const badgeGroup = badge?.closest('g');
-    const count = badgeGroup?.querySelector('text');
+    // the count sits in the badge, dead-centred by BOTH anchors
+    const count = badge?.parentElement?.querySelector('text');
     expect(count?.textContent).toBe('5');
-    // the count text is dead-centered on the badge by BOTH anchors
     expect(count?.getAttribute('text-anchor')).toBe('middle');
     expect(count?.getAttribute('dominant-baseline')).toBe('central');
     expect(count?.getAttribute('x')).toBe('0');
-    expect(count?.getAttribute('y')).toBe(badge?.getAttribute('cy'));
+    expect(count?.getAttribute('y')).toBe('0');
+    // the reserved accent never appears anywhere in the band (INV-05)
+    expect(doc.querySelector('.fill-accent')).toBeNull();
   });
 
-  it('keeps the axis hairline fixed at 1px regardless of zoom', () => {
+  it('keeps the axis ink stroke at the reference weight (INV-05 reserved list)', () => {
     const zoomed = renderToStaticMarkup(
       createElement(ClinicalTimeline, { events: ZOOM_EVENTS, initialTransform: { k: 4, tx: -120 } }),
     );
-    const axisMatch = zoomed.match(/<line x1="0" x2="1024"[^>]*>/);
+    const axisMatch = zoomed.match(/<line x1="0" x2="1024"[^>]*stroke-timeline-ink[^>]*>/);
     expect(axisMatch).not.toBeNull();
-    expect(axisMatch![0]).toContain('stroke-width="1"');
-    expect(axisMatch![0]).toContain('stroke-border-subtle');
+    // the reference draws the axis at 1.4px in `timelineInk`, not as an accent
+    expect(axisMatch![0]).toContain('stroke-width="1.4"');
+    expect(axisMatch![0]).not.toMatch(/accent/);
   });
 
   it('reports the real range and cluster count in its accessible name', () => {
@@ -172,9 +192,10 @@ describe('ClinicalTimeline — the zoom layer (TL-03/TL-04)', () => {
     // 500 events, one per hour, ~21 days visible at base zoom → week buckets
     const marks = doc.querySelectorAll('g[data-role="node"]');
     expect(marks.length).toBeLessThan(80);
-    // every mark carries exactly one circle (node rim or cluster badge)
+    // every mark is one node rim or one cluster disc + its badge — never an
+    // unbounded pile of circles
     for (const mark of marks) {
-      expect(mark.querySelectorAll('circle')).toHaveLength(1);
+      expect(mark.querySelectorAll('circle').length).toBeLessThanOrEqual(2);
     }
   });
 });

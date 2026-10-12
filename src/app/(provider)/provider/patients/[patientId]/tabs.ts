@@ -18,6 +18,7 @@ import {
   ChartLine,
   Dna,
   FlaskConical,
+  Hospital,
   LayoutDashboard,
   Pill,
   ScanLine,
@@ -34,6 +35,7 @@ export const WORKSPACE_TAB_ROUTES = [
   'imaging',
   'allergies',
   'genetics',
+  'hospitalization',
 ] as const;
 
 export type WorkspaceTabSlug = (typeof WORKSPACE_TAB_ROUTES)[number];
@@ -50,6 +52,7 @@ export const WORKSPACE_TAB_LABELS: Record<WorkspaceTabSlug, string> = {
   imaging: 'Imaging',
   allergies: 'Allergies',
   genetics: 'Genetics',
+  hospitalization: 'Hospitalization',
 };
 
 export const WORKSPACE_TAB_ICONS: Record<WorkspaceTabSlug, LucideIcon> = {
@@ -61,6 +64,7 @@ export const WORKSPACE_TAB_ICONS: Record<WorkspaceTabSlug, LucideIcon> = {
   imaging: ScanLine,
   allergies: TriangleAlert,
   genetics: Dna,
+  hospitalization: Hospital,
 };
 
 /** Build the href for one workspace tab from the route parameter. */

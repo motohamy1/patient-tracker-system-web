@@ -17,13 +17,16 @@
 // `SupabasePermissionError`. All three land on the no-leak denial state — the
 // copy never says whether the record exists (UX-02, AUTH-03).
 //
-// Layout, top to bottom (reference §5):
-//   1. Upper rows — identity card (19rem) beside the context/vitals stat row;
-//   2. Timeline band — the framed host Phase 006 fills, honestly empty;
-//   3. Bottom row — Vital Signs History (≈55%), Labs (≈22.5%) and Recent
+// Layout, top to bottom (reference §5 / "Patient Overview — merged reference"):
+//   1. Timeline band — the framed host Phase 006 fills, honestly empty;
+//   2. Bottom row — Vital Signs History (≈55%), Labs (≈22.5%) and Recent
 //      Records (≈22.5%) on the shared bottom-row grid (QA row 5), each in its
 //      own failure posture: the recent-activity query degrades to the §7
 //      error/denial state in ITS slot only, never blanking the surface.
+//
+// The identity card and the diagnosis/vitals strip are NOT here: the reference
+// seats them in the header, beside the tab strip, so they render from
+// `WorkspaceTopBar` instead (see that component for the two-column split).
 //
 // Server Component: no hook, no client directive.
 import { Lock } from 'lucide-react';
@@ -32,13 +35,11 @@ import { OverviewAttentionStrip } from '@/components/ai/OverviewAttentionStrip';
 import { CareTasksRegion } from '@/components/care-tasks/CareTasksRegion';
 import { loadCareTaskState } from '@/lib/care-tasks/load';
 import { StateVariant } from '@/components/state/StateVariant';
-import { ContextStatRow } from '@/components/workspace/ContextStatRow';
 import { LabsCard } from '@/components/workspace/LabsCard';
-import { PatientIdentityCard } from '@/components/workspace/PatientIdentityCard';
 import { RecentRecordsCard } from '@/components/workspace/RecentRecordsCard';
 import { TimelineBand } from '@/components/workspace/TimelineBand';
 import { VitalsHistoryCard } from '@/components/workspace/VitalsHistoryCard';
-import { BOTTOM_ROW_GRID, UPPER_GRID } from '@/components/workspace/grids';
+import { BOTTOM_ROW_GRID } from '@/components/workspace/grids';
 import { composeRecentEvents } from '@/lib/patients/activity';
 import { listAiInsights, type AiInsightRecord } from '@/lib/ai/queries';
 import { projectCareEvents } from '@/lib/timeline/events';
@@ -220,11 +221,6 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
 
   return (
     <>
-      <section aria-label="Patient overview" className={UPPER_GRID}>
-        <PatientIdentityCard patient={patient} />
-        <ContextStatRow patient={patient} />
-      </section>
-
       <TimelineBand events={timelineEvents} />
 
       <OverviewAttentionStrip items={attentionInsights} patientId={patientId} />
@@ -240,7 +236,7 @@ export async function OverviewBody({ patientId }: { patientId: string }) {
 
       <div className={BOTTOM_ROW_GRID}>
         <VitalsHistoryCard />
-        <LabsCard />
+        <LabsCard results={labResults} />
         {activityPosture === 'error' ? (
           <StateVariant surface="recent records" retryHref={tabHref(patientId, 'overview')} />
         ) : activityPosture === 'denied' ? (

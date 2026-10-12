@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   AXIS_Y,
+  MONTH_RAIL_Y,
   TIMELINE_BAND_HEIGHT,
   buildTimeScale,
   eventDomain,
@@ -93,7 +94,10 @@ describe('monthTicks — the d3-time lattice', () => {
 
 describe('band geometry constants (QA row 8 measures against the reference)', () => {
   it('keeps the band height and the axis inside it', () => {
-    expect(TIMELINE_BAND_HEIGHT).toBe(176);
+    // the reference's timeline canvas is a 322px-tall drawing
+    expect(TIMELINE_BAND_HEIGHT).toBe(322);
     expect(AXIS_Y).toBeLessThan(TIMELINE_BAND_HEIGHT);
+    // the axis sits high so branches and cards hang below it
+    expect(AXIS_Y).toBeLessThan(MONTH_RAIL_Y);
   });
 });

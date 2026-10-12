@@ -8,6 +8,19 @@
 @import "tailwindcss";
 @import "../styles/tokens.generated.css";
 
+/* The three families the patient-detail reference sets by name. Declared as
+   theme font tokens so each becomes a `font-*` utility (`font-grotesk`,
+   `font-plex`, `font-plex-code`) instead of a scattered inline font-family.
+   The theme key is deliberately NOT the next/font variable name it reads —
+   `--font-familjen: var(--font-familjen)` would be self-referential. They are
+   opt-in: nothing adopts them implicitly, so the Inter base and every other
+   surface are untouched. */
+@theme {
+  --font-grotesk: var(--font-familjen), system-ui, sans-serif;
+  --font-plex: var(--font-plex-sans), system-ui, sans-serif;
+  --font-plex-code: var(--font-plex-mono), ui-monospace, monospace;
+}
+
 @layer base {
   html {
     font-family: var(--font-inter), system-ui, sans-serif;
@@ -20,6 +33,17 @@
        top bar's `frame` band is never visibly cut off before the window
        edge. The workspace surfaces own the `canvas` field themselves. */
     background-color: var(--color-frame);
+  }
+
+  /* The patient workspace paints ONE flat cream field edge to edge — there is
+     no olive band left for the gutter to continue. The reserved `stable` gutter
+     sits outside the app field and therefore takes the ROOT background, so
+     without this it would read as a second, slightly different cream strip
+     down the right edge of the workspace. Scoping by the layout's own marker
+     keeps the provider shell and the patient home (which still band their
+     panels in `frame`) on the rule above. */
+  html:has(.workspace-field) {
+    background-color: var(--color-canvas);
   }
 
   body {

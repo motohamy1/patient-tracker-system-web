@@ -149,14 +149,18 @@ describe('RecentRecordsCard — §5 grammar and §7 copy', () => {
     expect(doc.querySelectorAll('li')).toHaveLength(3);
   });
 
-  it('paints the type pill in the frozen critical family, text carrying the meaning (INV-04)', () => {
+  it('tints the newest row with the frozen critical family, text carrying the meaning (INV-04)', () => {
     const doc = render(EVENTS);
-    const pills = doc.querySelectorAll('li .bg-critical');
-    expect(pills.length).toBe(3);
+    const rows = Array.from(doc.querySelectorAll('li'));
+    // the reference's emphasis rhythm: the newest row wears `critical`, the
+    // rest sit on the canvas tint
+    expect(rows[0].className).toContain('bg-critical');
+    for (const row of rows.slice(1)) {
+      expect(row.className).toContain('bg-canvas');
+    }
     // label ink is textPrimary, never the tint itself
-    for (const pill of pills) {
-      expect(pill.className).toContain('text-text-primary');
-      expect(pill.className).toContain('rounded-pill');
+    for (const row of rows) {
+      expect(row.querySelector('.text-text-primary')).not.toBeNull();
     }
     expect(doc.querySelector('.bg-warning')).toBeNull();
     expect(doc.querySelector('.bg-success')).toBeNull();
@@ -181,16 +185,14 @@ describe('RecentRecordsCard — §5 grammar and §7 copy', () => {
     expect(doc.querySelectorAll('li')).toHaveLength(0);
   });
 
-  it('sets tabular-nums on the day numeral and draws no divider rail (INV-11, QA row 7)', () => {
+  it('draws no divider rail and no dead header control (INV-11, INV-08, QA row 7)', () => {
     const markup = renderToStaticMarkup(createElement(RecentRecordsCard, { events: EVENTS }));
-    expect(markup).toContain('tabular-nums');
     // no rules, no borders, no divide-* — rows separate by gap alone
     expect(markup).not.toMatch(/\bborder-/);
     expect(markup).not.toMatch(/\bdivide-/);
-    expect(markup).not.toMatch(/\bborder-t\b|\bborder-b\b/);
     // frozen type scale only
     expect(markup).not.toMatch(/text-(xs|sm|lg|xl|\dxl)/);
-    expect(markup).not.toMatch(/font-(thin|light|normal|medium|bold|extrabold|black)/);
+    expect(markup).not.toMatch(/font-(thin|light|normal|extrabold|black)/);
     // no dead header control (the reference "..." chrome is not faked)
     expect(markup).not.toContain('<button');
   });

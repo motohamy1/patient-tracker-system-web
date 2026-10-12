@@ -1,23 +1,30 @@
-// TimelineScrubber — the compact bottom scrubber (TL-06; ticket 06-04;
-// reference §5: full-width capsule track, circular +/- buttons, thin ticks of
-// varying heights, year labels, dark viewport window at overlay depth).
+// TimelineScrubber — the COMPACT bottom scrubber (TL-06; §8.1/§8.2).
 //
-// It shares ONE transform with the timeline: the track maps the FULL event
-// domain ([§8.6] months, years, density), the window is the visible slice,
-// and every interaction — window drag, track click/drag, +/- — returns the
-// next transform through the same pure helpers the timeline itself uses
-// (`transformForCenter`, `visibleWindow`), so the two surfaces can never
-// disagree. `d3-brush` is not needed: the window drag IS a brush over the
-// same d3 time scale, expressed with pointer events (equivalent, and it
-// keeps one source of truth for the range).
+// One transform with the timeline: the track maps the record's temporal extent,
+// the window is the visible slice, and every interaction — window drag, track
+// click/drag, +/- — returns the next transform through the same pure helpers the
+// timeline itself uses (`transformForCenter`, `visibleWindow`), so the two
+// surfaces can never disagree. `d3-brush` is not needed: the window drag IS a
+// brush over the same d3 time scale, expressed with pointer events.
 //
-// Mobile (UX-05/§26): the scrubber is never dropped below 768px; the +/-
-// buttons are 44px targets and the window drag is pointer-based, so touch
-// works without a hover.
+// REDESIGN (2026-10-12, §8.1): the scrubber is visually SECONDARY to the main
+// timeline — a compact capsule track on a muted warm surface, thin ticks with
+// restrained year labels, a DARK OLIVE selected viewport window, and small
+// chartreuse event-density marks only where real events exist. It is never a
+// thick charcoal band.
+//
+// SENSIBLE TEMPORAL MARGINS (§8.2): the track maps the event domain PADDING by
+// a modest margin on each side, so at the resting zoom the visible window is a
+// PORTION of the track rather than a bar stretched across the whole thing (the
+// "oversized dark rectangle" failure). The margins are pure presentation — the
+// density dots still land on the real event instants, and the window always
+// describes the true visible range, so no event date is misrepresented.
+//
+// Mobile (UX-05/§26): the scrubber is never dropped; the +/- buttons are 44px
+// targets and the window drag is pointer-based, so touch works without a hover.
 //
 // The window's dark fill is the scrubber's scrim, derived from `textPrimary`
-// (`fill-text-primary` with opacity) — no new token (INV-17) — and it is the
-// overlay-level element by construction.
+// (INV-17) — no new token — the overlay-level element by construction.
 //
 // Server/client: 'use client' (pointer + size measurement).
 'use client';
@@ -38,24 +45,39 @@ import {
 const MinusGlyph = makeIcon(Minus);
 const PlusGlyph = makeIcon(Plus);
 
-const SCRUBBER_HEIGHT = 48;
-const TRACK_Y = 8;
-const TRACK_H = 24;
+const SCRUBBER_HEIGHT = 44;
+/** The track is the full capsule; the selected window is inset 6px inside it,
+ *  which is the reference's own relationship (a 32px window in a 44px track). */
+const TRACK_Y = 0;
+const TRACK_H = 44;
 const WINDOW_Y = 6;
-const WINDOW_H = 28;
+const WINDOW_H = 32;
 const DAY_MS = 86_400_000;
+
+/** Temporal margin around the event domain: 25% of the span, or 30 days min. */
+const MARGIN_RATIO = 0.25;
+const MIN_MARGIN_MS = 30 * DAY_MS;
 
 const ZOOM_STEP = 1.6;
 
-function TrackTicks({ trackScale, trackWidth }: { trackScale: TimelineScale; trackWidth: number }) {
-  // The lattice over the WHOLE domain (not the visible window): the scrubber
-  // shows the record's full extent, months and years, at a fixed scale.
-  const domain = trackScale.domain() as [Date, Date];
-  const ticks = monthTicks(trackScale, domain, trackWidth);
+function TrackTicks({
+  trackScale,
+  trackWidth,
+  trackDomain,
+}: {
+  trackScale: TimelineScale;
+  trackWidth: number;
+  trackDomain: readonly [Date, Date];
+}) {
+  // The lattice over the WHOLE padded track (not the visible window): the
+  // scrubber shows the record's temporal context at a fixed scale. The
+  // reference draws a taller tick on each year and a shorter one on each
+  // month, both centred on the capsule.
+  const ticks = monthTicks(trackScale, trackDomain, trackWidth);
   return (
     <g aria-hidden="true">
       {ticks.map((tick) => {
-        const height = tick.isYearStart ? 16 : 8;
+        const height = tick.isYearStart ? 20 : 12;
         return (
           <line
             key={`tick-${tick.date.toISOString()}`}
@@ -63,7 +85,7 @@ function TrackTicks({ trackScale, trackWidth }: { trackScale: TimelineScale; tra
             x2={tick.x}
             y1={SCRUBBER_HEIGHT / 2 - height / 2}
             y2={SCRUBBER_HEIGHT / 2 + height / 2}
-            className="stroke-border-subtle"
+            className="stroke-rail-tick"
             strokeWidth={1}
           />
         );
@@ -73,9 +95,10 @@ function TrackTicks({ trackScale, trackWidth }: { trackScale: TimelineScale; tra
         .map((tick) => (
           <text
             key={`year-${tick.date.toISOString()}`}
-            x={tick.x + 3}
+            x={tick.x}
             y={SCRUBBER_HEIGHT - 4}
-            className="text-label fill-text-primary"
+            textAnchor="middle"
+            className="font-plex-code text-[10.5px] fill-rail-label"
           >
             {tick.year}
           </text>
@@ -106,8 +129,14 @@ export function TimelineScrubber({
   const dragRef = useRef<{ pointerId: number; mode: 'window' | 'track'; startX: number; startCenterMs: number } | null>(null);
 
   const domain = scale.domain() as [Date, Date];
-  const domainMs: [number, number] = [domain[0].getTime(), domain[1].getTime()];
-  const trackScale = scaleTime().domain(domain).range([0, Math.max(trackWidth, 1)]);
+  const spanMs = Math.max(domain[1].getTime() - domain[0].getTime(), DAY_MS);
+  const marginMs = Math.max(spanMs * MARGIN_RATIO, MIN_MARGIN_MS);
+  const trackDomain: [Date, Date] = [
+    new Date(domain[0].getTime() - marginMs),
+    new Date(domain[1].getTime() + marginMs),
+  ];
+  const trackSpanMs = trackDomain[1].getTime() - trackDomain[0].getTime();
+  const trackScale = scaleTime().domain(trackDomain).range([0, Math.max(trackWidth, 1)]);
 
   const window_ = visibleWindow(scale, transform, Math.max(bandWidth, 1));
   const windowFromX = trackScale(new Date(window_.fromMs));
@@ -117,7 +146,7 @@ export function TimelineScrubber({
 
   /** Move by a pixel delta on the track (linear time scale → linear px). */
   const dragTo = (mode: 'window' | 'track', x: number) => {
-    const msPerPx = (domainMs[1] - domainMs[0]) / Math.max(trackWidth, 1);
+    const msPerPx = trackSpanMs / Math.max(trackWidth, 1);
     if (mode === 'window') {
       const drag = dragRef.current;
       if (!drag) return;
@@ -142,12 +171,12 @@ export function TimelineScrubber({
   };
 
   return (
-    <div className="mt-sm flex w-full items-center gap-sm" role="group" aria-label="Timeline range">
+    <div className="mt-[85px] flex w-full items-center gap-sm" role="group" aria-label="Timeline range">
       <button
         type="button"
         aria-label="Zoom out"
         onClick={() => zoomBy(1 / ZOOM_STEP)}
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-surface text-text-primary"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-timeline-surface text-timeline-ink shadow-control"
       >
         <MinusGlyph size="sm" />
       </button>
@@ -155,7 +184,7 @@ export function TimelineScrubber({
         type="button"
         aria-label="Zoom in"
         onClick={() => zoomBy(ZOOM_STEP)}
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-surface text-text-primary"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-timeline-surface text-timeline-ink shadow-control"
       >
         <PlusGlyph size="sm" />
       </button>
@@ -193,45 +222,86 @@ export function TimelineScrubber({
           onPointerUp={(event) => endDrag(event.pointerId)}
           onPointerCancel={(event) => endDrag(event.pointerId)}
         >
-          {/* Capsule track (reference: surfaceMuted family — the band's own
-              recessed tone made explicit as the track). */}
+          {/* Capsule track — the reference's `scrubberTrack` fill. Its inset
+              ring is a second 1px-inset stroke, so the boundary reads as the
+              reference's inset shadow rather than a drawn border (INV-15). */}
           <rect
             x={0}
             y={TRACK_Y}
             width={Math.max(trackWidth, 1)}
             height={TRACK_H}
             rx={TRACK_H / 2}
-            className="fill-surface"
+            className="fill-rail-track"
+          />
+          <rect
+            x={1}
+            y={TRACK_Y + 1}
+            width={Math.max(trackWidth, 1) - 2}
+            height={TRACK_H - 2}
+            rx={(TRACK_H - 2) / 2}
+            className="fill-none stroke-timeline-ink"
+            strokeOpacity={0.08}
+            strokeWidth={2}
           />
 
-          <TrackTicks trackScale={trackScale} trackWidth={trackWidth} />
+          <TrackTicks
+            trackScale={trackScale}
+            trackWidth={trackWidth}
+            trackDomain={trackDomain}
+          />
 
-          {/* The dark viewport window — scrim derived from textPrimary, no
-              new token (INV-17); round caps, overlay-level element. */}
+          {/* Density dots: every real event lands as one small dot on the
+              track (§8.1) — drawn where the event truly sits, muted against
+              the track fill. */}
+          <g aria-hidden="true">
+            {events.map((event, index) => (
+              <circle
+                key={`${event.at}-${index}`}
+                cx={trackScale(new Date(event.at))}
+                cy={SCRUBBER_HEIGHT / 2}
+                r={2.2}
+                className="fill-rail-label"
+              />
+            ))}
+          </g>
+
+          {/* The selected viewport window — the reference's dark olive capsule.
+              Round caps, overlay level. */}
           <rect
             x={windowX}
             y={WINDOW_Y}
             width={windowW}
             height={WINDOW_H}
             rx={WINDOW_H / 2}
-            className="fill-text-primary"
-            opacity={0.85}
+            className="fill-scrubber-window"
           />
 
-          {/* Density dots: every real event lands as one small accent dot on
-              the track, drawn ABOVE the scrim — the reference's scrubber
-              marks sit on the dark window the same way. The accent clears
-              both surfaces it can land on (INV-04). Decoration only. */}
+          {/* The same real events again, clipped to the window and painted in
+              the node accent — the reference brightens the dots that fall
+              inside the selection rather than drawing invented ones. */}
           <g aria-hidden="true">
-            {events.map((event) => (
-              <circle
-                key={`${event.at}-${event.at.includes('.') ? event.at.slice(11, 23) : ''}`}
-                cx={trackScale(new Date(event.at))}
-                cy={SCRUBBER_HEIGHT / 2}
-                r={2.5}
-                className="fill-accent"
-              />
-            ))}
+            <defs>
+              <clipPath id="scrubber-window-clip">
+                <rect
+                  x={windowX}
+                  y={WINDOW_Y}
+                  width={windowW}
+                  height={WINDOW_H}
+                  rx={WINDOW_H / 2}
+                />
+              </clipPath>
+            </defs>
+            <g clipPath="url(#scrubber-window-clip)">
+              {events.map((event, index) => (
+                <circle
+                  key={`win-${event.at}-${index}`}
+                  cx={trackScale(new Date(event.at))}
+                  cy={SCRUBBER_HEIGHT / 2}
+                  r={2.4}
+                  className="fill-marker"
+                />
+              ))}
+            </g>
           </g>
         </svg>
       </div>

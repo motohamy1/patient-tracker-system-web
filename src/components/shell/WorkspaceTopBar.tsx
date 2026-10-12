@@ -1,48 +1,50 @@
-// WorkspaceTopBar — the patient-workspace top bar (02-UI-SPEC.md §6.4).
-// Server Component: async, no hook, no client directive.
+// WorkspaceTopBar — the patient-workspace header, rebuilt to the patient
+// detail reference (Paper "Xanthic honey", artboard "Patient Overview — merged
+// reference").
 //
-// THE DARK BAND (2026-10-11, reference: patient-tracking-dashboard.jpg; the
-// owner's visual instruction reopens the no-dark-frame default for this one
-// surface): the reference's top band is dark with everything floating on it —
-// a close circle, the big title (here: the PATIENT, not the sample
-// "Cardiology" label — D-13 forbids reusing reference copy; the highlight is
-// the stored status, the honest stand-in for a diagnosis highlight until a
-// diagnosis table exists), then the search pill and the tab pills. The band
-// spans the light field edge-to-edge through negative margins and takes the
-// field's rounded top corners from the hosting field's clip.
+// THE REFERENCE'S ARRANGEMENT: the identity card sits at the LEFT and runs the
+// full height of the header, while the tab strip and the context strip stack in
+// the column beside it. Reproducing that means the identity card has to live
+// here rather than in the page body — otherwise the tab strip starts at the
+// left gutter instead of clearing the card, and the two regions stop lining up
+// beside it.
 //
-// The tab set is EXACTLY the eight from `WORKSPACE_TAB_ROUTES`. The active
-// tab is supplied by the owning route: each tab page renders this bar with
-// its own `activeSlug`, because an App Router layout cannot read its child
+// LAYOUT (reference coordinates → responsive equivalents):
+//   * header content starts 33px below the panel edge (reference `top: 33`)
+//   * card | gutter | right column, gutter = 22px (reference 409 − 387)
+//   * right column: the tab strip at the card's own top, the context strip
+//     11px below the pills — the reference's own offsets. The context strip is
+//     inset 41px from the column's left edge, matching where the reference
+//     seats the diagnosis capsule relative to the first pill.
+//   * the tab strip bleeds into the right gutter (`-mr-xl`) and scrolls, so the
+//     ninth pill runs to the panel edge exactly as the reference draws it while
+//     every tab stays reachable (responsive-rules §4).
+//
+// The reference's search capsule and profile pill are GONE in this revision —
+// they are not drawn, so they are not built. What remains in the top-right is
+// only the tab strip.
+//
+// The tab set is EXACTLY the nine from `WORKSPACE_TAB_ROUTES`, in order. The
+// active tab is supplied by the owning route: each tab page renders this bar
+// with its own `activeSlug`, because an App Router layout cannot read its child
 // segment (D-03).
 //
-// THE PATIENT IDENTITY: one narrow org-scoped read (`getPatientHeader`, same
-// org-space discipline as `getPatient`) carries the patient's name and
-// status into the title slot. A failed read falls back to the generic
-// "Patient record" title — the band never renders a placeholder patient and
-// never fails the tab bar to fetch its name.
+// Identity comes from one org-scoped `getPatient` read; a failed or denied read
+// renders NO card rather than a placeholder patient, so the right column simply
+// takes the full width (AUTH-03, UX-02).
+//
+// Ink: the reference dropped the olive band, so this header paints on `canvas`
+// and every label takes its ink from the reference's own tokens — active tab
+// `textPrimary`, idle tab label `tabIdle`, idle tab glyph `tabIdleIcon`.
 //
 // The `[patientId]` parameter is consumed only through `tabHref` and the
-// UUID-parsed header read — never rendered, and never passed to a path, a
+// UUID-parsed identity read — never rendered, and never passed to a path, a
 // template, a log or any interpreter (ASVS V5, T-02-52).
-//
-// Ink rule (inverse of the light bar's): on the dark band every label paints
-// `text-surface`, never `frameForeground` (§4.3's contrast law, inverted).
 import Link from 'next/link';
-import { X } from 'lucide-react';
-import { Pill } from '@/components/primitives/Pill';
-import { TabBar } from '@/components/primitives/TabBar';
-import type { TabItem } from '@/components/primitives/TabBar';
+import type { ReactNode } from 'react';
 import { makeIcon } from '@/components/primitives';
-import { CompactControl } from '@/components/primitives/CompactControl';
-import {
-  PATIENT_STATUS_LABELS,
-  PATIENT_STATUS_TOKEN,
-} from '@/lib/patients/status';
-import {
-  getPatientHeader,
-  type PatientHeaderRow,
-} from '@/lib/patients/queries';
+import { PatientIdentityCard } from '@/components/workspace/PatientIdentityCard';
+import { getPatient, type PatientRecord } from '@/lib/patients/queries';
 import { resolveWorkspaceRole } from '@/lib/auth/workspace';
 import { patientIdSchema } from '@/lib/patients/schemas';
 import {
@@ -53,19 +55,19 @@ import {
 } from '@/app/(provider)/provider/patients/[patientId]/tabs';
 import type { WorkspaceTabSlug } from '@/app/(provider)/provider/patients/[patientId]/tabs';
 
-const CloseGlyph = makeIcon(X);
-
-const TAB_ICONS: Record<WorkspaceTabSlug, ReturnType<typeof makeIcon>> = Object.fromEntries(
+const TAB_GLYPHS: Record<WorkspaceTabSlug, ReturnType<typeof makeIcon>> = Object.fromEntries(
   WORKSPACE_TAB_ROUTES.map((slug) => [slug, makeIcon(WORKSPACE_TAB_ICONS[slug])]),
 ) as Record<WorkspaceTabSlug, ReturnType<typeof makeIcon>>;
 
-async function resolveHeader(patientId: string): Promise<PatientHeaderRow | null> {
+async function resolvePatient(patientId: string): Promise<PatientRecord | null> {
   const resolution = await resolveWorkspaceRole('provider');
   const parsedId = patientIdSchema.safeParse(patientId);
   if (resolution.kind !== 'signed-in' || !parsedId.success) return null;
   try {
-    return await getPatientHeader(resolution.orgId, parsedId.data);
+    return await getPatient(resolution.orgId, parsedId.data);
   } catch {
+    // A denied or failed identity read renders no card — never a placeholder
+    // patient, and never a leak about whether the record exists (UX-02).
     return null;
   }
 }
@@ -73,57 +75,59 @@ async function resolveHeader(patientId: string): Promise<PatientHeaderRow | null
 export async function WorkspaceTopBar({
   patientId,
   activeSlug,
+  children,
 }: {
   patientId: string;
   activeSlug: WorkspaceTabSlug;
+  /** The context strip (diagnosis + vitals), rendered under the tabs. */
+  children?: ReactNode;
 }) {
-  const header = await resolveHeader(patientId);
-  const fullName = header !== null ? `${header.firstName} ${header.lastName}` : null;
-
-  const items: TabItem[] = WORKSPACE_TAB_ROUTES.map((slug) => {
-    const Glyph = TAB_ICONS[slug];
-    return {
-      value: slug,
-      label: WORKSPACE_TAB_LABELS[slug],
-      icon: <Glyph size="sm" />,
-      href: tabHref(patientId, slug),
-    };
-  });
+  const patient = await resolvePatient(patientId);
 
   return (
-    <header className="-mx-lg flex min-h-[calc(var(--spacing-2xl)*2)] items-center gap-md bg-text-primary px-lg">
-      <Link
-        href="/provider"
-        aria-label="Close patient record"
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-surface text-text-primary"
-      >
-        <CloseGlyph size="lg" />
-      </Link>
-      <span className="flex min-w-0 items-center gap-md">
-        {fullName !== null && header !== null ? (
-          <>
-            <span className="truncate text-display font-semibold leading-tight text-surface">
-              {fullName}
-            </span>
-            <Pill
-              tone={PATIENT_STATUS_TOKEN[header.status]}
-              label={PATIENT_STATUS_LABELS[header.status]}
-            />
-          </>
-        ) : (
-          <span className="truncate text-display font-semibold leading-tight text-surface">
-            Patient record
-          </span>
-        )}
-      </span>
-      <CompactControl
-        variant="search"
-        label="Search patients"
-        inputId="workspace-search"
-        placeholder="Search patients"
-        className="ml-auto max-md:hidden"
-      />
-      <TabBar items={items} value={activeSlug} ariaLabel="Patient sections" className="min-w-0" />
+    <header className="mx-auto w-full max-w-[90rem] px-xl pb-[43px] pt-[33px]">
+      <div className="flex w-full gap-[22px]">
+        {patient !== null ? <PatientIdentityCard patient={patient} /> : null}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* The nine workspace tabs. The reference's pills are 78px tall —
+              comfortably over the 44px touch floor — and `-mr-xl` lets the
+              strip run into the right gutter so the last pill meets the panel
+              edge as the reference draws it, while `overflow-x-auto` keeps all
+              nine reachable (responsive-rules §4). */}
+          <nav
+            aria-label="Patient sections"
+            className="-mr-xl flex items-start gap-sm overflow-x-auto [scrollbar-width:none]"
+          >
+            {WORKSPACE_TAB_ROUTES.map((slug) => {
+              const Glyph = TAB_GLYPHS[slug];
+              const isActive = slug === activeSlug;
+              return (
+                <Link
+                  key={slug}
+                  href={tabHref(patientId, slug)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={[
+                    'inline-flex h-[78px] shrink-0 items-center gap-sm rounded-pill px-[18px] text-compact leading-[16px] transition-colors',
+                    isActive
+                      ? 'bg-highlight font-semibold text-text-primary'
+                      : 'bg-surface-raised font-medium text-tab-idle-icon',
+                  ].join(' ')}
+                >
+                  <Glyph size="sm" />
+                  <span className={isActive ? '' : 'text-tab-idle'}>
+                    {WORKSPACE_TAB_LABELS[slug]}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {children !== undefined && children !== null ? (
+            <div className="mt-[11px] pl-[41px]">{children}</div>
+          ) : null}
+        </div>
+      </div>
     </header>
   );
 }

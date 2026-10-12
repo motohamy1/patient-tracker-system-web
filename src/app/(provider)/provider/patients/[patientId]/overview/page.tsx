@@ -19,6 +19,7 @@
 import { Suspense } from 'react';
 import { Surface } from '@/components/primitives';
 import { WorkspaceTopBar } from '@/components/shell/WorkspaceTopBar';
+import { ContextStrip } from '@/components/workspace/ContextStrip';
 import { OverviewBody } from '@/components/workspace/OverviewBody';
 import { OverviewSkeleton } from '@/components/workspace/OverviewSkeleton';
 
@@ -33,9 +34,15 @@ export default async function OverviewPage({
 
   return (
     <>
-      <WorkspaceTopBar patientId={patientId} activeSlug="overview" />
-      <Surface variant="canvas" className="flex flex-1 bg-canvas p-lg">
-        <div className="mx-auto flex w-full max-w-[80rem] flex-col gap-xl">
+      {/* The reference seats the identity card, the tab strip and the
+          diagnosis/vitals strip in ONE header region; the context strip is
+          passed in as the header's lower slot so the two columns stay aligned
+          beside the identity card. */}
+      <WorkspaceTopBar patientId={patientId} activeSlug="overview">
+        <ContextStrip />
+      </WorkspaceTopBar>
+      <Surface variant="canvas" className="flex flex-1 bg-canvas px-xl pb-xl">
+        <div className="mx-auto flex w-full max-w-[87rem] flex-col gap-xl">
           <Suspense fallback={<OverviewSkeleton />}>
             <OverviewBody patientId={patientId} />
           </Suspense>

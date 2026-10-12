@@ -14,11 +14,21 @@
 import { scaleTime, type ScaleTime } from 'd3-scale';
 import { utcMonth, type CountableTimeInterval } from 'd3-time';
 
-/** Total band height in px — matches the skeleton's bank height (no CLS). */
-export const TIMELINE_BAND_HEIGHT = 176;
+/** Total band height in px — the desktop main band, calibrated to the patient
+ *  detail reference's timeline canvas (a 322px-tall drawing: axis high, cards
+ *  hanging beneath it, the month rail along the bottom). */
+export const TIMELINE_BAND_HEIGHT = 322;
 
-/** The axis baseline sits high enough for cards to hang below (later phases). */
-export const AXIS_Y = 72;
+/** The axis sits high in the band so milestone branches and clinical cards hang
+ *  below it (§7.2/§7.4), matching the reference's upper-axis composition. */
+export const AXIS_Y = 44;
+
+/** The month lattice runs from just under the band's top edge to the month
+ *  rail — the reference draws full-height dividers, not ticks around the axis. */
+export const LATTICE_TOP = 20;
+
+/** Baseline of the month rail, and the foot of every lattice divider. */
+export const MONTH_RAIL_Y = TIMELINE_BAND_HEIGHT - 22;
 
 /** One month of padding around a single-event domain so a node is never glued to the edge. */
 const SINGLE_EVENT_PADDING_MS = 30 * 86_400_000;

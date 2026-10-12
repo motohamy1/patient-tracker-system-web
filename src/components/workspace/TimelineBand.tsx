@@ -1,12 +1,16 @@
-// TimelineBand — the host of the clinical timeline (§5; reference:
-// patient-tracking-dashboard.jpg — the axis sits DIRECTLY on the light field,
-// never in a card box: a band surface is a third elevation the reference
-// does not draw, and recess would gray the exact zone the reference keeps
-// calm). The band owns the heading and the states; the timeline's axis
-// grammar, nodes, filter chips and scrubber live in `ClinicalTimeline`.
+// TimelineBand — the host of the clinical timeline, restyled to the patient
+// detail reference (Paper "Xanthic honey", artboard "Patient Overview — merged
+// reference").
 //
-// `events` arrive from the Server Component projection (real records only) —
-// the band adds no data of its own and never fabricates an axis (§27).
+// WHAT THE BAND IS: not a third elevation. It is the SAME cream field as the
+// page, given a rounded silhouette and separated from the ground by two soft
+// shadows — a light `surface` glow on its lower-right and a dark rim beneath.
+// It carries NO border and no top lip: the band reads as a distinct region
+// because of its rounding and its shadows alone (INV-15/INV-16 — a perimeter
+// edge never appears on a surface).
+//
+// `events` arrive from the Server Component projection (real records only) — the
+// band adds no data of its own and never fabricates an axis (§27).
 //
 // Server Component: no hook, no client directive (the timeline itself is the
 // client island and arrives through `ClinicalTimeline`).
@@ -15,11 +19,16 @@ import type { CareEvent } from '@/lib/timeline/events';
 
 export function TimelineBand({ events }: { events: readonly CareEvent[] }) {
   return (
-    <section aria-label="Timeline" className="flex min-h-44 flex-col gap-md">
+    <section
+      aria-label="Timeline"
+      className="flex min-h-44 flex-col rounded-card shadow-band-edge"
+    >
       <h2 className="sr-only text-heading font-semibold leading-heading text-text-primary">
         Timeline
       </h2>
-      <ClinicalTimeline events={events} />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-card bg-canvas shadow-band-inner">
+        <ClinicalTimeline events={events} />
+      </div>
     </section>
   );
 }

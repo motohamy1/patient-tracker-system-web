@@ -64,17 +64,17 @@ export function EventDetailCard({
       role="dialog"
       aria-label={`Event detail: ${event.label}`}
       style={style}
-      className="absolute z-10 flex w-64 flex-col gap-sm rounded-xl bg-surface-raised p-lg shadow-overlay"
+      className="absolute z-10 flex w-64 flex-col gap-sm rounded-panel bg-timeline-surface p-lg shadow-card-soft"
     >
       <div className="flex items-start justify-between gap-md">
-        <span className="text-heading font-semibold leading-heading text-text-primary">
+        <span className="font-plex text-heading font-semibold leading-heading text-timeline-ink">
           {event.label}
         </span>
         <button
           type="button"
           aria-label="Close event detail"
           onClick={onClose}
-          className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-surface-muted p-sm text-text-primary md:size-8"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill bg-timeline-well p-sm text-timeline-ink md:size-8"
         >
           <CloseGlyph size="sm" />
         </button>

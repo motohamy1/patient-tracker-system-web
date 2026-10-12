@@ -160,13 +160,19 @@ export type PatientHeaderRow = {
   firstName: string;
   lastName: string;
   sex: string;
+  /** Whole years derived from `dob` — the header's "Sex · Age" secondary line. */
+  age: number;
+  /** The medical record number — the header's compact identifier (§5.2). */
+  mrn: string;
   status: PatientStatus;
 };
 
 /**
- * The patient record's banner identity: name, sex and status only — the one
- * extra read the workspace top bar takes so the dark band can carry the
- * patient instead of a placeholder. Same org-scoping discipline as
+ * The patient record's banner identity: name, sex, age, MRN and status — the
+ * one extra read the workspace top bar takes so the olive band can carry the
+ * patient instead of a placeholder (§5.2). `dob` and `mrn` are already stored
+ * columns (see `PatientRowRecord`), exposed here so the header shows a truthful
+ * age and identifier without a second query. Same org-scoping discipline as
  * `getPatient`: the id is bound as an equality parameter, a cross-org visitor
  * gets `null` and the bar falls back to its generic title, and the query
  * never interpolates the value into anything (ASVS V5, T-02-52).
@@ -183,11 +189,13 @@ export async function getPatientHeader(
     first_name: string;
     last_name: string;
     sex: string;
+    dob: string;
+    mrn: string;
     status: PatientStatus;
   }[];
   try {
     rows = (await sql`
-      select id, first_name, last_name, sex, status
+      select id, first_name, last_name, sex, dob, mrn, status
       from public.patients
       where org_id = ${orgId} and id = ${patientId}
       limit 1
@@ -204,6 +212,8 @@ export async function getPatientHeader(
     firstName: row.first_name,
     lastName: row.last_name,
     sex: row.sex,
+    age: ageFrom(row.dob),
+    mrn: row.mrn,
     status: row.status,
   };
 }
